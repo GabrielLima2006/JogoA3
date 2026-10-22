@@ -255,7 +255,7 @@ DIALOGS = {
             "A capitã está caída no convés. Os lábios estão arroxeados: veneno.",
             "Na mão dela, um papel amassado: \"O tônico... o grumete... no porão.\"",
         ],
-        "repeat": ["Você promete a si {o} mesm{o}: vai descobrir quem fez isso."],
+        "repeat": ["Você promete a si mesm{o}: vai descobrir quem fez isso."],
     },
     "amigo": {
         "first": [

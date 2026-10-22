@@ -35,8 +35,8 @@ DEFAULT_BINDINGS = {
 CONTROLS_TEXT = [
     ("A / D ou setas", "mover"),
     ("Espaço", "pular (segure = mais alto)"),
-    ("Espaço no ar", "pulo duplo (quando encontrar)"),
-    ("Shift esquerdo", "dash (quando encontrar)"),
+    ("Espaço no ar", "pulo duplo (depois do chefe 1)"),
+    ("Shift esquerdo", "dash"),
     ("Botão esquerdo", "ataque rápido"),
     ("Botão direito", "ataque pesado"),
     ("W / S + ataque", "golpe p/ cima, diagonal ou baixo (no ar)"),

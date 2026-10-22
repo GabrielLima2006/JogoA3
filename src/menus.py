@@ -296,7 +296,7 @@ HOWTO_PAGES = [
     ("Controles", None),
     ("Objetivo", [
         "Explore o navio e a ilha, vença os 4 chefes e liberte os desaparecidos.",
-        "Habilidades novas (dash, pulo duplo) abrem caminhos que antes eram impossíveis.",
+        "O dash você já tem; o pulo duplo vem do primeiro chefe e abre o mastro e a ilha.",
         "Ache as 3 cartas da capitã para ver o final verdadeiro.",
         "Moedas compram melhorias na loja; amuletos dão bônus permanentes.",
         "Bola de cristal (W): salva o jogo e recupera os corações.",

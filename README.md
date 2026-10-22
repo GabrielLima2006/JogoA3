@@ -28,6 +28,17 @@ clique em **Mais informações** e depois em **Executar assim mesmo** (o execut�
 
 ## 2. Descrição
 
+> **Sinopse:** numa noite de tempestade, uma passageira que finge ser feiticeira vê a capitã do navio cair
+> envenenada e a tripulação ficar enfeitiçada. Do porão ao mastro, da ilha ao Templo da Maré, ela enfrenta
+> os cúmplices do Feiticeiro da Maré até descobrir que o vilão é seu melhor amigo de infância, que anos atrás
+> levou a culpa por um erro dela. Três cartas escondidas da capitã revelam a história inteira.
+>
+> História completa (personagens, falas, atos e finais): [docs/HISTORIA.md](docs/HISTORIA.md)
+
+**Duração estimada:** 40 a 60 minutos na primeira vez; 60 a 80 minutos para pegar tudo; 15 a 20 minutos
+para quem já conhece o caminho. (Estimativa; o tempo real aparece no HUD e fica salvo nos recordes.)
+
+
 Noite de tempestade. Você viaja no navio da capitã fingindo ser feiticeira, mas seu único truque de
 verdade é enganar bem e saber lutar. Gente do porto vem desaparecendo, a capitã
 cai envenenada e a tripulação começa a agir como se estivesse enfeitiçada.
@@ -39,7 +50,8 @@ inteira e liberam o final verdadeiro.
 - **3 áreas:** navio (cabine, convés, porão, cordame), ilha (praia, floresta, ruínas) e Templo da Maré.
 - **4 chefes:** O Grumete (Rei dos Ratos), O Imediato (Cavaleiro Rubro), A Irmã da Capitã (Lâmina
   da Tempestade) e o chefe final, O Melhor Amigo (Feiticeiro da Maré). Todos têm duas fases.
-- **Habilidades** que abrem caminho: dash (Passo ilusório) e pulo duplo (Levitação).
+- **Habilidades:** dash (Passo ilusório) desde o começo; pulo duplo (Levitação) depois do primeiro chefe,
+  abrindo caminho para o mastro e a ilha.
 - **Parkour:** plataformas móveis, tábuas que desabam, espinhos, água e saltos que exigem as habilidades.
 - **Itens:** moedas, comida que cura, amuletos, fragmentos de vida, loja e ferreiro.
 - **Três dificuldades** (7, 5 ou 4 corações).
@@ -66,8 +78,8 @@ No Windows também dá para usar o executável da pasta `dist/MareDeMentiras/` (
 |---|---|
 | A / D ou setas | Mover |
 | Espaço | Pular (segurar = pulo mais alto) |
-| Espaço no ar | Pulo duplo (depois de encontrar) |
-| Shift esquerdo | Dash (depois de encontrar) |
+| Espaço no ar | Pulo duplo (depois do primeiro chefe) |
+| Shift esquerdo | Dash |
 | Botão esquerdo do mouse | Ataque rápido |
 | Botão direito do mouse | Ataque pesado |
 | W / S + ataque | Golpe para cima, na diagonal ou para baixo (no ar, quica em inimigos e espinhos) |
@@ -119,9 +131,10 @@ Todos os assets de terceiros são gratuitos. Autor, link e licença de cada um e
 | Tiny Texture Pack 1 e 2 | Screaming Brain Studios (CC0) | Paredes de madeira do navio |
 | Fonte Alagard | Hewett Tsoi | Todos os textos (os acentos são desenhados pelo jogo) |
 
-Os personagens do navio (capitã, grumete, imediato, irmã, amigo, mercador), o Rei dos Ratos, o
-Feiticeiro da Maré, os ratos, as gaivotas, os canhões e os ícones de itens foram desenhados no código
-(`src/pixelart.py`).
+As animações de golpe, pulo, queda, dash, dano e morte da protagonista foram criadas pela equipe a partir
+do sprite original (`tools/gerar_feiticeira.py`). Os outros humanos (tripulação, irmã da capitã, capangas)
+são variações do sprite dela com outras cores, cabelos e acessórios (`src/elenco.py`). O Rei dos Ratos, o
+Feiticeiro da Maré, ratos, gaivotas, canhões e ícones de itens foram desenhados no código (`src/pixelart.py`).
 
 ## 8. Tecnologia
 

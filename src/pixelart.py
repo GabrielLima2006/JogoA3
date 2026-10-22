@@ -71,7 +71,11 @@ OUTLINE_SOFT = (34, 20, 44)
 
 
 def human(style, pose="idle", phase=0.0, facing=1):
-    """Humano no estilo da protagonista (~50 px). pose: idle, walk, attack, shoot, hurt."""
+    """Humano feito a partir do sprite da protagonista (ver elenco.py). pose: idle, walk, attack, shoot, hurt.
+    Quadro 80x64 com o pé 3 px acima da borda de baixo, centralizado."""
+    from . import elenco
+    if style in elenco.CAST:
+        return elenco.character(style, pose, phase, facing)
     q = round(phase * 8) / 8
     key = ("human", style, pose, q, facing)
     return cached(key, lambda: _human(style, pose, q, facing))
