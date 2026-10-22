@@ -70,6 +70,10 @@ Detalhes em `jogo/docs/DESENVOLVIMENTO.md` → "Próximos passos". Regra geral: 
 6. Chefes com identidade própria (não parecer cópia de chefes do Hollow): água no Rei dos Ratos, vergas e vento
    no Cavaleiro, canhões e cordas na Irmã, maré e ilusões no Feiticeiro.
 7. Menu de amuletos novo: tela própria, ícones, custo, espaços, mouse e teclado, prévia do efeito.
+8. Nomear os personagens (protagonista e os que hoje só têm cargo); atualizar falas, créditos, README e história.
+9. Arma de fogo com mira: item que, ao apertar uma tecla (sugestão Q ou botão do meio), vira o cursor em mira e o
+   clique atira na direção dele. Decidir munição/recarga, dano, andar mirando e ligação com a história
+   (ex.: pistola da Irmã da Capitã).
 
 ## Pendências
 - Grupo: nomes/RA, divisão de tarefas, seção de IA, links e licenças `[CONFIRMAR]` (README e `assets/CREDITOS.md`, lista `CREDITS` em `src/menus.py`).

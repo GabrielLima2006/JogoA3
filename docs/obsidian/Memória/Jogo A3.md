@@ -64,6 +64,6 @@ Detalhes e pendências em [[Guia para IAs colaboradoras]].
 
 ### Próximos passos pedidos (2026-10-22)
 Modelos no jogo, fluidez, animações, golpe diagonal com animação, level design vivo, chefes sem cópia do
-Hollow, menu de amuletos. Lista completa em [[Guia para IAs colaboradoras]].
+Hollow, menu de amuletos, nomes dos personagens, arma de fogo com mira no cursor. Lista completa em [[Guia para IAs colaboradoras]].
 
 Ver também: [[Gabriel]] · Voltar: [[Cérebro]]

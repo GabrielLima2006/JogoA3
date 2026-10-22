@@ -86,6 +86,13 @@ navio, à maré e à história da feiticeira que finge ser maga.
    a maré da arena e criar ilusões (tema da mentira).
 7. **Menu de amuletos:** tela própria, com ícones desenhados, descrição, custo e espaços livres, equipar e
    desequipar com mouse e teclado, e prévia do efeito.
+8. **Nomear os personagens:** hoje vários são chamados só pelo cargo (a capitã, o grumete, o imediato, a irmã,
+   o melhor amigo, a cozinheira, o mercador) e a protagonista não tem nome. Definir nomes e atualizar falas,
+   créditos, README e `docs/HISTORIA.md`.
+9. **Arma de fogo com mira:** um item novo (achado ou comprado) que, ao apertar uma tecla, faz o cursor do
+   mouse virar uma mira; o clique atira na direção do cursor. Pontos a decidir: tecla de ativar (sugestão: Q,
+   que está livre; ou segurar o botão do meio), munição ou recarga, dano, se dá para andar mirando, e como
+   isso conversa com a história (ex.: a pistola da Irmã da Capitã depois da luta com ela).
 
 ## Pendências
 
