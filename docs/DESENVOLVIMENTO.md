@@ -1,7 +1,7 @@
 # Desenvolvimento — decisões, estado e histórico
 
 Documento de referência do projeto: o que foi decidido, como o jogo está organizado e o que falta.
-A história completa está em [HISTORIA.md](HISTORIA.md).
+A história completa está em [HISTORIA.md](HISTORIA.md). As notas de planejamento (cofre do Obsidian) estão em [obsidian/](obsidian/LEIA-ME.md).
 
 ## Decisões de design
 
