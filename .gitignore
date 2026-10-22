@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# dados do jogador e logs
+saves/
+erro.txt
+
+# builds do executável
+build/
+dist/
+*.spec
+
+# notas locais de ferramentas
+AGENTS.md
+CLAUDE.md
