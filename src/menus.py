@@ -1,4 +1,4 @@
-"""Telas fora da partida: menu principal, novo jogo (protagonista e dificuldade),
+"""Telas fora da partida: menu principal, novo jogo (dificuldade),
 introdução, como jogar, recordes e créditos."""
 
 import math
@@ -133,88 +133,59 @@ class MenuState(Screen):
 
 # ---------------------------------------------------------------------------
 class NewGameState(Screen):
-    """Escolha do protagonista e depois da dificuldade."""
+    """Escolha da dificuldade (a protagonista é sempre a feiticeira)."""
+    PROTAGONIST = "ela"
 
     def __init__(self, app):
         super().__init__(app)
-        self.step = "protagonist"
-        self.protagonists = list(Game.PROTAGONISTS)
         self.difficulties = list(Game.DIFFICULTIES)
-        self.pi = 0
         self.di = self.difficulties.index("normal")
         self.cards = []
 
-    def _choices(self):
-        return self.protagonists if self.step == "protagonist" else self.difficulties
-
     def update(self, inp):
-        n = len(self._choices())
-        idx = self.pi if self.step == "protagonist" else self.di
+        n = len(self.difficulties)
         if inp.was_pressed("left") or inp.was_pressed("menu_up"):
-            idx = (idx - 1) % n
+            self.di = (self.di - 1) % n
             self.app.audio.play("ui_move")
         if inp.was_pressed("right") or inp.was_pressed("menu_down"):
-            idx = (idx + 1) % n
+            self.di = (self.di + 1) % n
             self.app.audio.play("ui_move")
         clicked = False
         for i, r in enumerate(self.cards):
             if r.collidepoint(inp.mouse_pos):
-                idx = i
+                self.di = i
                 clicked = clicked or inp.mouse_clicked
-        if self.step == "protagonist":
-            self.pi = idx
-        else:
-            self.di = idx
         if go_back(inp):
-            if self.step == "difficulty":
-                self.step = "protagonist"
-            else:
-                self.app.to_menu()
+            self.app.to_menu()
             return
         if inp.was_pressed("menu_confirm") or clicked:
             self.app.audio.play("ui_select")
-            if self.step == "protagonist":
-                self.step = "difficulty"
-            else:
-                progress = Progress()
-                progress.protagonist = self.protagonists[self.pi]
-                progress.difficulty = self.difficulties[self.di]
-                progress.chapter = 1
-                self.app.push(IntroState(self.app, progress))
+            progress = Progress()
+            progress.protagonist = self.PROTAGONIST
+            progress.difficulty = self.difficulties[self.di]
+            progress.chapter = 1
+            self.app.push(IntroState(self.app, progress))
 
     def draw(self, surf):
         draw_sea_background(surf, self.t)
         ui.dim(surf, 150)
         self.cards = []
-        if self.step == "protagonist":
-            title(surf, "Escolha o protagonista", 70, 50)
-            ui.text(surf, "Diz ser feiticeiro, mas luta com espada e lábia. Só muda a aparência.", 20,
-                    (W // 2, 112), Colors.UI_DIM, "center")
-            for i, key in enumerate(self.protagonists):
-                p = Game.PROTAGONISTS[key]
-                r = pygame.Rect(0, 0, 240, 270)
-                r.center = (W // 2 + (i - 0.5) * 290, 300)
-                self._card(surf, r, i == self.pi)
-                draw_protagonist(surf, key, r.centerx, r.y + 200, scale=3, t=self.t)
-                ui.text(surf, p["label"], 40, (r.centerx, r.bottom - 38), Colors.UI_TEXT, "center")
-                self.cards.append(r)
-            footer(surf, "A/D ou setas para escolher · Enter ou clique para confirmar · ESC volta")
-        else:
-            title(surf, "Dificuldade", 70, 50)
-            for i, key in enumerate(self.difficulties):
-                d = Game.DIFFICULTIES[key]
-                r = pygame.Rect(0, 0, 250, 210)
-                r.center = (W // 2 + (i - 1) * 280, 270)
-                self._card(surf, r, i == self.di)
-                ui.text(surf, d["label"], 40, (r.centerx, r.y + 40), Colors.UI_TEXT, "center")
-                hearts = 5 + d["hp_bonus"]
-                ui.text(surf, f"{hearts} corações", 24, (r.centerx, r.y + 80), Colors.UI_ACCENT, "center")
-                self._wrap(surf, d["desc"], r.x + 18, r.y + 110, r.w - 36)
-                self.cards.append(r)
-            if Progress.exists(self.app.save_path):
-                ui.text(surf, "Começar um novo jogo substitui o save atual.", 22, (W // 2, 410),
-                        Colors.HP_FULL, "center")
-            footer(surf, "A/D ou setas para escolher · Enter ou clique para começar · ESC volta")
+        title(surf, "Dificuldade", 70, 50)
+        draw_protagonist(surf, self.PROTAGONIST, W // 2 - 380, 150, scale=2, t=self.t, facing=1)
+        for i, key in enumerate(self.difficulties):
+            d = Game.DIFFICULTIES[key]
+            r = pygame.Rect(0, 0, 250, 210)
+            r.center = (W // 2 + (i - 1) * 280, 290)
+            self._card(surf, r, i == self.di)
+            ui.text(surf, d["label"], 40, (r.centerx, r.y + 40), Colors.UI_TEXT, "center")
+            hearts = 5 + d["hp_bonus"]
+            ui.text(surf, f"{hearts} corações", 24, (r.centerx, r.y + 80), Colors.UI_ACCENT, "center")
+            self._wrap(surf, d["desc"], r.x + 18, r.y + 110, r.w - 36)
+            self.cards.append(r)
+        if Progress.exists(self.app.save_path):
+            ui.text(surf, "Começar um novo jogo substitui o save atual.", 22, (W // 2, 430),
+                    Colors.HP_FULL, "center")
+        footer(surf, "A/D ou setas para escolher · Enter ou clique para começar · ESC volta")
 
     @staticmethod
     def _card(surf, r, selected):
@@ -423,8 +394,8 @@ CREDITS = [
     ("", 10, None),
     ("Arte e animação", 30, Colors.UI_ACCENT),
     ("Super Pixel Effects Gigapack - Will Tice / unTied Games (efeitos)", 22, Colors.UI_TEXT),
-    ("Metroidvania Forge - herói, cavaleiro, slime, tiles, objetos", 22, Colors.UI_TEXT),
-    ("Feiticeira (idle & walk) - protagonista Ela", 22, Colors.UI_TEXT),
+    ("Metroidvania Forge - capangas, cavaleiro, slime, tiles, objetos", 22, Colors.UI_TEXT),
+    ("Feiticeira (idle & walk) - protagonista", 22, Colors.UI_TEXT),
     ("Dark VFX 01-02 e Smear VFX 01 - magias e cortes", 22, Colors.UI_TEXT),
     ("UIBundleFree (Mediavel) - interface", 22, Colors.UI_TEXT),
     ("Ghostpixxells - pixelfood (comidas)", 22, Colors.UI_TEXT),

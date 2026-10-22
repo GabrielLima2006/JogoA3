@@ -28,8 +28,8 @@ clique em **Mais informações** e depois em **Executar assim mesmo** (o execut�
 
 ## 2. Descrição
 
-Noite de tempestade. Você viaja no navio da capitã fingindo ser feiticeiro (ou feiticeira), mas seu
-único truque de verdade é enganar bem e saber lutar. Gente do porto vem desaparecendo, a capitã
+Noite de tempestade. Você viaja no navio da capitã fingindo ser feiticeira, mas seu único truque de
+verdade é enganar bem e saber lutar. Gente do porto vem desaparecendo, a capitã
 cai envenenada e a tripulação começa a agir como se estivesse enfeitiçada.
 
 Explore o navio e a ilha onde ele atraca, enfrente quatro chefes com estilos de luta diferentes e
@@ -42,7 +42,7 @@ inteira e liberam o final verdadeiro.
 - **Habilidades** que abrem caminho: dash (Passo ilusório) e pulo duplo (Levitação).
 - **Parkour:** plataformas móveis, tábuas que desabam, espinhos, água e saltos que exigem as habilidades.
 - **Itens:** moedas, comida que cura, amuletos, fragmentos de vida, loja e ferreiro.
-- **Dois protagonistas** (ele ou ela) e **três dificuldades**.
+- **Três dificuldades** (7, 5 ou 4 corações).
 - **Dois finais:** comum e verdadeiro (com as 3 cartas).
 
 ## 3. Como rodar
@@ -111,8 +111,8 @@ Todos os assets de terceiros são gratuitos. Autor, link e licença de cada um e
 | Asset | Autor | Uso |
 |---|---|---|
 | Super Pixel Effects Gigapack (Free) | Will Tice / unTied Games | Efeitos de golpe, explosões, fumaça, fogo, raios |
-| Metroidvania Forge | [CONFIRMAR autor] | Herói, Cavaleiro Rubro, slime, tiles da ilha, objetos, sons e músicas |
-| Feiticeira (idle & walk) | [CONFIRMAR autor] | Protagonista "Ela" |
+| Metroidvania Forge | [CONFIRMAR autor] | Capangas, Cavaleiro Rubro, slime, tiles da ilha, objetos, sons e músicas |
+| Feiticeira (idle & walk) | [CONFIRMAR autor] | Protagonista |
 | Dark VFX 01–02 / Smear VFX 01 | [CONFIRMAR autor] | Magias do vilão e rastro dos golpes |
 | UIBundleFree (Mediavel) | [CONFIRMAR autor] | Interface |
 | pixelfood | Ghostpixxells | Comidas (itens de cura) |

@@ -538,7 +538,17 @@ class Player(Body):
         ay = frame.get_height() - 1
         fx = self.cx - cam_x
         fy = self.bottom - cam_y
-        if abs(self.scale_x - 1) > 0.03 or abs(self.scale_y - 1) > 0.03:
+        pose = self._attack_pose(atk) if (atk is not None and self.alive and skin.procedural_attacks) else None
+        if pose is not None:
+            lean, shift, sx, sy = pose
+            img = sprites.variant(frame, flip, white, 1, tint)
+            w = max(1, round(frame.get_width() * sx * self.scale_x))
+            h = max(1, round(frame.get_height() * sy * self.scale_y))
+            img = pygame.transform.scale(img, (w, h))
+            pivot_x = (frame.get_width() - 1 - ax if flip else ax) * w / frame.get_width()
+            _blit_rotated(surf, img, (fx + shift * atk.facing, fy), (pivot_x, h - 1), -lean * atk.facing)
+            self._draw_cast_glow(surf, fx + shift * atk.facing, fy, atk)
+        elif abs(self.scale_x - 1) > 0.03 or abs(self.scale_y - 1) > 0.03:
             # achatar/esticar (pulo e aterrissagem) mantendo os pés no chão
             w = max(1, int(frame.get_width() * self.scale_x))
             h = max(1, int(frame.get_height() * self.scale_y))
@@ -550,6 +560,47 @@ class Player(Body):
             sprites.blit_anchor(surf, frame, fx, fy, (ax, ay), flip=flip, white=white, tint=tint)
         if atk is not None:
             self._draw_attack(surf, cam_x, cam_y, atk)
+
+    def _attack_pose(self, atk):
+        """Pose de golpe feita por código (para quem não tem quadros de ataque):
+        inclina para trás no preparo, avança e inclina para a frente no golpe e volta na recuperação.
+        Retorna (inclinação em graus, deslocamento para a frente em px, escala x, escala y)."""
+        heavy = atk.spec.name == "heavy"
+        k = atk.phase_progress
+        dx, dy = atk.aim
+        big = 1.5 if heavy else 1.0
+        if dy < 0 and dx == 0:          # para cima: estica e joga o corpo para trás
+            peak = (-6 * big, 0, 0.94, 1.10)
+            back = (4 * big, -2, 1.04, 0.94)
+        elif dy > 0:                    # para baixo no ar: mergulha para a frente
+            peak = (28 * big, 4, 0.96, 1.04)
+            back = (-6, -2, 1.0, 1.0)
+        else:                           # para a frente (ou diagonal)
+            peak = (14 * big - (6 if dy < 0 else 0), 8 * big, 1.08, 0.95)
+            back = (-10 * big, -4 * big, 0.95, 1.05)
+        if atk.phase == "windup":
+            e = 1 - (1 - k) ** 2
+            return tuple(b * e if i < 2 else 1 + (b - 1) * e for i, b in enumerate(back))
+        if atk.phase == "active":
+            e = min(1.0, k * 2.5)
+            return tuple(b + (p - b) * e for b, p in zip(back, peak))
+        e = (1 - k) ** 2                # recuperação: volta ao normal
+        return tuple(p * e if i < 2 else 1 + (p - 1) * e for i, p in enumerate(peak))
+
+    def _draw_cast_glow(self, surf, x, foot_y, atk):
+        """Brilho de magia na mão durante o golpe."""
+        if atk.phase != "active":
+            return
+        dx, dy = atk.aim
+        if dx == 0 and dy == 0:
+            dx = atk.facing
+        hx = x + dx * 18
+        hy = foot_y - 30 + dy * 16
+        k = atk.phase_progress
+        r = int((9 if atk.spec.name == "heavy" else 6) * (1.2 - k * 0.6))
+        col = (255, 190, 110) if atk.spec.name == "heavy" else (170, 220, 255)
+        pygame.draw.circle(surf, col, (round(hx), round(hy)), r + 2)
+        pygame.draw.circle(surf, (255, 255, 255), (round(hx), round(hy)), max(1, r - 2))
 
     def _dash_ghost(self, ctx):
         """Rastro do dash: silhueta azulada do quadro atual, na posição de agora."""
@@ -607,3 +658,15 @@ class Player(Body):
 
 
 _SMEAR_CACHE = {}
+
+
+def _blit_rotated(surf, img, pivot_screen, pivot_img, angle):
+    """Gira `img` em volta de `pivot_img` (ponto da imagem) e cola esse ponto em `pivot_screen`."""
+    if abs(angle) < 0.5:
+        surf.blit(img, (round(pivot_screen[0] - pivot_img[0]), round(pivot_screen[1] - pivot_img[1])))
+        return
+    w, h = img.get_size()
+    offset = pygame.math.Vector2(w / 2 - pivot_img[0], h / 2 - pivot_img[1]).rotate(-angle)
+    rot = pygame.transform.rotate(img, angle)
+    rect = rot.get_rect(center=(round(pivot_screen[0] + offset.x), round(pivot_screen[1] + offset.y)))
+    surf.blit(rot, rect)

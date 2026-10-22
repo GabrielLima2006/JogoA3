@@ -7,8 +7,8 @@ conferidos na página do pacote antes da entrega: autor, link e licença exatos.
 | Pacote | Autor | Link | Licença | Arquivos no jogo |
 |---|---|---|---|---|
 | Super Pixel Effects Gigapack (Free) | Will Tice / unTied Games | [CONFIRMAR link] | Licença do pacote (`license.txt`): uso em jogos comerciais ou não, **com crédito**; proibido revender o pacote ou usar para treinar IA | `img/efeitos/` (golpe, golpe_forte, explosao, explosao_grande, fumaca_*, fogo, raio, raio_explosao, cura, brilho, alerta, moedas, coracoes, respingo, veneno) |
-| Metroidvania Forge (capítulos 1 a 6) | [CONFIRMAR autor] | [CONFIRMAR link] | [CONFIRMAR licença] | `img/personagens/heroi.png`, `img/chefes/cavaleiro_rubro*.png`, `img/inimigos/slime.png`, `img/tiles/ilha.png`, `img/objetos/` (caixas, bola_de_cristal, coracao, moldura_vida, poeira, porta, teclas, habilidades), `img/efeitos/cortes.png`, `sons/efeitos/*.wav`, `sons/musicas/*.ogg` |
-| Sample – idle & walk (feiticeira) | [CONFIRMAR autor] | [CONFIRMAR link] | [CONFIRMAR licença] | `img/personagens/feiticeira_parada.png`, `feiticeira_andando.png` |
+| Metroidvania Forge (capítulos 1 a 6) | [CONFIRMAR autor] | [CONFIRMAR link] | [CONFIRMAR licença] | `img/personagens/heroi.png` (capangas e piratas de escudo), `img/chefes/cavaleiro_rubro*.png`, `img/inimigos/slime.png`, `img/tiles/ilha.png`, `img/objetos/` (caixas, bola_de_cristal, coracao, moldura_vida, poeira, porta, teclas, habilidades), `img/efeitos/cortes.png`, `sons/efeitos/*.wav`, `sons/musicas/*.ogg` |
+| Sample – idle & walk (feiticeira) | [CONFIRMAR autor] | [CONFIRMAR link] | [CONFIRMAR licença] | `img/personagens/feiticeira_parada.png`, `feiticeira_andando.png` (protagonista) |
 | Dark VFX 01 e 02 | [CONFIRMAR autor] | [CONFIRMAR link] | [CONFIRMAR licença] | `img/efeitos/caveira_roxa.png`, `fantasma_roxo.png` |
 | Smear VFX 01 | [CONFIRMAR autor] | [CONFIRMAR link] | [CONFIRMAR licença] | `img/efeitos/corte_h.png`, `corte_v.png` |
 | UIBundleFree (folha Mediavel) | [CONFIRMAR autor] | [CONFIRMAR link] | [CONFIRMAR licença] | `img/ui/medieval.png` |

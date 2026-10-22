@@ -59,7 +59,7 @@ class Progress:
         self.deaths = 0
         self.play_time = 0.0         # segundos de partida (para placar e recordes)
         self.talked = set()          # personagens com quem já conversou
-        self.protagonist = "ele"     # "ele" ou "ela"
+        self.protagonist = "ela"     # só a feiticeira é jogável; "ele" ficou no código
         self.difficulty = "normal"
         self.chapter = 1
         self.bench = None            # (sala, x, y) do último banco
@@ -180,7 +180,7 @@ class Progress:
         p.broken = set(d.get("broken", []))
         p.bosses = set(d.get("bosses", []))
         p.shop_bought = set(d.get("shop_bought", []))
-        p.protagonist = d.get("protagonist", "ele") if d.get("protagonist") in ("ele", "ela") else "ele"
+        p.protagonist = "ela"   # saves antigos com "ele" passam a usar a feiticeira
         p.difficulty = d.get("difficulty", "normal") if d.get("difficulty") in ("facil", "normal", "dificil") else "normal"
         p.chapter = int(d.get("chapter", 1))
         p.flags = set(d.get("flags", []))

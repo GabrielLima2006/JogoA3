@@ -19,6 +19,7 @@ def _row(r, a, b):
 class Skin:
     anchor = (0, 0)
     faces_right = True
+    procedural_attacks = False   # True: pose de golpe gerada por código (sem quadros de ataque)
     scale = 1
 
     def anims(self):
@@ -56,6 +57,7 @@ class HeroSkin(Skin):
 class SorceressSkin(Skin):
     anchor = (21, 54)
     faces_right = False
+    procedural_attacks = True
 
     def anims(self):
         idle = sprites.grid("personagens/feiticeira_parada.png", 46, 55)

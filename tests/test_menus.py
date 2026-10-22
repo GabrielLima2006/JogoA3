@@ -45,17 +45,9 @@ def test_main_menu():
 def test_new_game_flow():
     app = _app("novo.json")
     _press(app, "menu_confirm")
-    check("Novo jogo abre a escolha de protagonista", isinstance(app.state, NewGameState)
-          and app.state.step == "protagonist")
-    _press(app, "right")
-    check("A/D troca o protagonista", app.state.protagonists[app.state.pi] == "ela")
-    _press(app, "menu_confirm")
-    check("Enter vai para a dificuldade", app.state.step == "difficulty")
+    check("Novo jogo abre a escolha de dificuldade", isinstance(app.state, NewGameState))
     check("dificuldade padrão é Normal", app.state.difficulties[app.state.di] == "normal")
-    _press(app, "pause")
-    check("ESC volta para o protagonista sem perder a escolha", app.state.step == "protagonist"
-          and app.state.protagonists[app.state.pi] == "ela")
-    _press(app, "menu_confirm")
+    app.state.draw(app.screen)
     _press(app, "right")
     _press(app, "menu_confirm")
     st = app.state
@@ -82,15 +74,15 @@ def test_new_game_flow():
     play.save()
     loaded = Progress.load(app.save_path)
     check("protagonista e dificuldade ficam no save", loaded.protagonist == "ela" and loaded.difficulty == "dificil")
+    old = Progress()
+    old.protagonist = "ele"
+    old.save(app.save_path)
+    check("save antigo com Ele carrega como a feiticeira", Progress.load(app.save_path).protagonist == "ela")
 
 
-def test_intro_skip_and_male_forms():
+def test_intro_skip():
     app = _app("intro.json")
-    pr = Progress()
-    pr.protagonist = "ele"
-    app.push(IntroState(app, pr))
-    st = app.state
-    check("forma masculina na introdução", "feiticeiro" in st.slides[1] and "passageiro" in st.slides[1])
+    app.push(IntroState(app, Progress()))
     _press(app, "pause")
     check("ESC pula a introdução", isinstance(app.state, PlayState))
 
@@ -141,4 +133,4 @@ def test_other_screens():
     check("Sair encerra o jogo", app.running is False)
 
 
-TESTS = [test_main_menu, test_new_game_flow, test_intro_skip_and_male_forms, test_continue, test_other_screens]
+TESTS = [test_main_menu, test_new_game_flow, test_intro_skip, test_continue, test_other_screens]

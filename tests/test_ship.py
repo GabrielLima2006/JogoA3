@@ -11,7 +11,7 @@ from src.progress import Progress
 from src.states import BossIntroState, DialogState, EndingState, ResultsState
 
 
-def game(abilities=(), protagonist="ele", name="jogo.json", flags=()):
+def game(abilities=(), protagonist="ela", name="jogo.json", flags=()):
     pr = Progress()
     pr.chapter = 1
     pr.abilities = set(abilities)
@@ -336,7 +336,7 @@ def test_dialogs_and_npcs():
 
 
 def test_render_all():
-    for prot in ("ele", "ela"):
+    for prot in ("ela",):
         s = game(("dash", "double_jump"), protagonist=prot, name=f"desenho_{prot}.json")
         for rid, room in list(s.play.world.rooms.items()):
             if rid.startswith("L"):
@@ -344,7 +344,7 @@ def test_render_all():
             s.play.load_room(room)
             s.run(0.2)
             s.play.draw(s.app.screen)
-    check("todas as salas desenham com os dois protagonistas", True)
+    check("todas as salas desenham com a protagonista", True)
 
 
 TESTS = [test_structure, test_doors, test_crumble, test_movers, test_items_and_letters, test_dialogs_and_npcs,
