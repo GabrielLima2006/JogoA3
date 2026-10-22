@@ -403,6 +403,17 @@ class Player(Body):
         ctx.effects.burst(self.cx, self.bottom + 10, 8, Colors.QUICK_SLASH, speed=(60, 180),
                           angle=math.pi / 2, spread=math.pi * 0.8, gravity=300)
 
+    def land_on_platform(self, ctx):
+        """Apoia o jogador numa plataforma móvel (mesmas regras de pousar no chão)."""
+        if not self.was_on_ground and not self.on_ground:
+            self._on_land(max(0.0, self.vy), ctx)
+        self.vy = 0.0
+        self.on_ground = True
+        self.coyote = P.COYOTE_TIME
+        self.jumps_used = 0
+        self.air_dashes_used = 0
+        self.jumping = False
+
     # --- energia e cura ---
     def gain_energy(self, amount):
         self.energy = min(float(EN.MAX), self.energy + amount * self.energy_mult)

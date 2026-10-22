@@ -6,16 +6,22 @@ import random
 import pygame
 
 from . import ui
+from . import tiles as tiles_mod
+from .background import Background
+from .bosses import BOSS_CLASSES
+from .creatures import TYPES as CREATURE_TYPES
+from .movers import Mover
+from .physics import move_and_collide, tile_span
 from .camera import Camera
 from .combat import ProjectileSystem, resolve_player_attack
 from .config import Audio as AudioCfg, Boss as BossCfg, Colors, Display, Effects as FX, Enemies as EN, Game, Player as PCfg, World
 from .effects import EffectSystem
 from .enemies import spawn_enemies
-from .objects import Bench, Character, CoinBag, ItemPickup, NPC, draw_character, spawn_coins
+from .objects import Bench, Character, CoinBag, ItemPickup, NPC, Speaker, draw_character, spawn_coins
 from .physics import is_supported, rects_overlap
 from .player import Player
 from .progress import CHARMS, SHOP_STOCK, Progress
-from .world import BOSS_LOCK, BREAKABLE, FIGHT_GATE, LOCKED, WorldMap
+from .world import BOSS_LOCK, BREAKABLE, CRUMBLE, FIGHT_GATE, LOCKED, WorldMap
 
 T = World.TILE
 SIM_DT = 1.0 / Display.SIM_HZ
@@ -61,6 +67,9 @@ class PlayState(State):
         self.debug = False
         self.time = 0.0
         self.room = None
+        self.riding = None              # plataforma móvel em que o jogador está
+        self.mover_ignore = 0.0
+        self.pending_after_boss = None  # (segundos, dados do chefe) para as falas pós-luta
         self.load_room(room)
         self.camera.snap(self.player, self.room)
 
@@ -90,8 +99,15 @@ class PlayState(State):
         self.room = room
         room.fight_active = False
         self.progress.visited.add(room.id)
-        self.enemies = spawn_enemies(room, room.boss_defeated)
+        self.enemies = self._spawn_enemies(room)
         self.boss = next((e for e in self.enemies if e.is_boss), None)
+        if self.boss is not None and hasattr(self.boss, "setup"):
+            self.boss.setup(room)
+        self.spawn_queue = []
+        self.hazards = []
+        self.movers = [Mover(m) for m in room.movers]
+        self.riding = None
+        self.crumble_timers = {}
         self.items = []
         self.interactables = []
         for spawn in room.spawns:
@@ -113,15 +129,63 @@ class PlayState(State):
                 self.interactables.append(NPC(x, y, "shop"))
             elif kind == "R":
                 self.interactables.append(NPC(x, y, "smith"))
+        self._spawn_boss_reward(room)
         bag = self.progress.bag
         self.bag = CoinBag(bag[1], bag[2], bag[3]) if bag and bag[0] == room.id else None
         self.coins = []
         self.projectiles.clear()
         self.effects.clear()
         self.room_surface = self._render_room(room)
+        self.background = Background(room)
+        self.water_tiles = room.tiles_of({"~"})
         self.room_name_timer = 1.8
         self.fade = FX.ROOM_FADE
         self.audio.play_music(AudioCfg.MUSIC.get(room.zone, AudioCfg.MUSIC["default"]))
+
+    def _spawn_enemies(self, room):
+        if self.story is None:
+            return spawn_enemies(room, room.boss_defeated)
+        mult = Game.DIFFICULTIES.get(self.progress.difficulty, {}).get("enemy_hp", 1.0)
+        out = []
+        for spawn in room.spawns:
+            kind, x, y = spawn[0], spawn[1], spawn[2]
+            if kind == "G":
+                if room.boss and not room.boss_defeated:
+                    out.append(BOSS_CLASSES[room.boss](x, y))
+            elif kind in CREATURE_TYPES:
+                out.append(CREATURE_TYPES[kind](x, y))
+        for e in out:
+            if e.max_hp > 1:
+                e.max_hp = e.hp = max(1, round(e.max_hp * mult))
+        return out
+
+    def spawn_enemy(self, enemy):
+        """Inimigos criados durante a luta (ex.: ratos do Rei dos Ratos)."""
+        self.spawn_queue.append(enemy)
+
+    def _boss_info(self, room):
+        if self.story is None or not room.boss:
+            return None
+        return self.story.BOSSES.get(room.boss)
+
+    def _spawn_boss_reward(self, room):
+        info = self._boss_info(room)
+        if not info or not room.boss_defeated or not info.get("reward"):
+            return
+        key = f"{room.id}:boss"
+        if key in self.progress.collected:
+            return
+        kind, arg = info["reward"]
+        floor_y = self._floor_below(room.width / 2, room.height / 2)
+        item = ItemPickup(room.id, "boss", kind, arg, room.width / 2, floor_y)
+        self.items.append(item)
+
+    def _floor_below(self, x, y):
+        tx = int(x // T)
+        for ty in range(int(y // T), self.room.rows_count):
+            if self.room.is_solid(tx, ty):
+                return ty * T
+        return self.room.height - T
 
     def _check_transition(self):
         p = self.player
@@ -166,6 +230,9 @@ class PlayState(State):
         if inp.was_pressed("debug"):
             self.debug = not self.debug
             inp.pressed.discard("debug")
+        if inp.was_pressed("mute"):
+            self.app.audio.toggle_mute()
+            inp.pressed.discard("mute")
         if self.player.alive and self.hazard_timer <= 0:
             if inp.was_pressed("pause"):
                 inp.consume()
@@ -185,7 +252,7 @@ class PlayState(State):
                 return
         if not self.player.alive:
             self.death_timer += dt
-            if self.death_timer > 1.1:
+            if self.death_timer > 1.4:
                 self.app.push(DeathState(self.app, self))
 
     def fixed_update(self, dt, inp):
@@ -206,13 +273,41 @@ class PlayState(State):
             return True   # descarta comandos dados durante a pausa do espinho
 
         p = self.player
+        if p.alive:
+            self.progress.play_time += dt
         if p.alive and inp.was_pressed("interact") and p.on_ground and not p.dashing:
             if self._interact():
                 return True
+        # plataformas móveis: andam primeiro e carregam quem está em cima
+        for m in self.movers:
+            m.update(dt)
+        if self.riding is not None:
+            move_and_collide(p, self.riding.dx, self.riding.dy if self.riding.dy > 0 else 0, self.room)
+            if self.riding.dy < 0:
+                p.y += self.riding.dy
+            if inp.was_pressed("down"):
+                self.riding = None
+                self.mover_ignore = 0.25
+        self.mover_ignore = max(0.0, self.mover_ignore - dt)
+        prev_bottom = p.bottom
         p.update(dt, inp, self.room, self)
+        self._land_on_movers(prev_bottom)
+        self._update_crumble(dt)
         self._update_boss_fight()
         for e in self.enemies:
             e.update(dt, self.room, p, self)
+        if self.spawn_queue:
+            self.enemies.extend(self.spawn_queue)
+            self.spawn_queue = []
+        self.hazards = [h for h in self.hazards if h.update(dt, self.room, p, self)]
+        if self.pending_after_boss is not None:
+            t, info = self.pending_after_boss
+            t -= dt
+            if t <= 0:
+                self.pending_after_boss = None
+                self._after_boss(info)
+            else:
+                self.pending_after_boss = (t, info)
         self.projectiles.update(dt, self.room, p, self)
         for c in self.coins:
             c.update(dt, self.room, p, p.magnet)
@@ -231,8 +326,58 @@ class PlayState(State):
         self.enemies = [e for e in self.enemies if e.alive]
         self.coins = [c for c in self.coins if c.alive]
         fx.update(dt)
+        self.background.update(dt)
         self.camera.update(dt, p, self.room)
         return True
+
+    # --- plataformas móveis e tábuas que desabam ---
+    def _land_on_movers(self, prev_bottom):
+        p = self.player
+        if not p.alive or not self.movers:
+            return
+        if self.riding is not None:
+            m = self.riding
+            on_top = p.right > m.x + 2 and p.left < m.x + m.w - 2 and abs(p.bottom - m.y) <= 6
+            if p.vy < 0 or not on_top:
+                self.riding = None
+            else:
+                p.y = m.y - p.h
+                p.land_on_platform(self)
+                return
+        if p.vy < 0 or self.mover_ignore > 0:
+            return
+        for m in self.movers:
+            if p.right > m.x + 2 and p.left < m.x + m.w - 2 and prev_bottom <= m.y + 4 + max(0.0, -m.dy) \
+                    and p.bottom >= m.y:
+                p.y = m.y - p.h
+                p.land_on_platform(self)
+                self.riding = m
+                return
+
+    def _update_crumble(self, dt):
+        room = self.room
+        p = self.player
+        if p.alive and p.on_ground and self.riding is None:
+            ty = int((p.bottom + 1) // T)
+            x0, x1 = tile_span(p.x, p.w)
+            for tx in range(x0, x1 + 1):
+                if room.tile(tx, ty) == CRUMBLE and (tx, ty) not in room.crumbled \
+                        and (tx, ty) not in self.crumble_timers:
+                    self.crumble_timers[(tx, ty)] = 0.45
+                    self.audio.play("impact")
+        for key in list(self.crumble_timers):
+            self.crumble_timers[key] -= dt
+            if self.crumble_timers[key] <= 0:
+                del self.crumble_timers[key]
+                room.crumbled[key] = 2.8
+                tx, ty = key
+                self.effects.burst(tx * T + 16, ty * T + 6, 10, (150, 104, 60), speed=(40, 160), gravity=700)
+        for key in list(room.crumbled):
+            room.crumbled[key] -= dt
+            if room.crumbled[key] <= 0:
+                tx, ty = key
+                if not rects_overlap((tx * T, ty * T, T, T), p.rect_tuple()):
+                    del room.crumbled[key]
 
     # --- chefe ---
     def _update_boss_fight(self):
@@ -246,6 +391,10 @@ class PlayState(State):
             room.fight_active = True
             self.effects.add_shake(6)
             self.audio.play("boss")
+            self.audio.play_music(AudioCfg.MUSIC["boss"])
+            info = self._boss_info(room)
+            if info is not None:
+                self.app.push(BossIntroState(self.app, self, boss, info))
             # empurra o jogador para fora do portão que fechou
             for tx, ty in room.tiles_of(FIGHT_GATE):
                 gx = tx * T
@@ -262,8 +411,49 @@ class PlayState(State):
             self.progress.bosses.add(room.id)
             self.effects.add_shake(12)
             self.effects.flash(0.3, (255, 240, 200))
+            self.hazards = []
+            self.projectiles.clear()
+            for e in self.enemies:
+                if e is not enemy:
+                    e.hp = 0
+                    e.alive = False
+            info = self._boss_info(room)
+            if info is None:
+                self.save()
+                self.app.push(MessageState(self.app, self, "Guardião derrotado", "O caminho a oeste está aberto."))
+                return
+            self._spawn_boss_reward(room)
+            flag = info.get("flag")
+            if flag:
+                self.progress.flags.add(flag)
+                for r in self.world.rooms.values():
+                    if r.key == flag:
+                        r.door_unlocked = True
             self.save()
-            self.app.push(MessageState(self.app, self, "Guardião derrotado", "O caminho a oeste está aberto."))
+            self.pending_after_boss = (1.3, info)
+
+    def _after_boss(self, info):
+        """Falas do chefe derrotado; no chefe final, vai para o desfecho."""
+        if self.room.boss == "feiticeiro":
+            self.app.push(EndingState(self.app, self))
+            return
+        speaker = Speaker(info["speaker"], self._speaker_name(info["speaker"]))
+        lines = [line.format(**self.forms()) for line in info.get("after", [])]
+        flag = info.get("flag")
+
+        def done():
+            msg = getattr(self.story, "FLAG_MESSAGES", {}).get(flag) if flag else None
+            if msg:
+                self.app.push(MessageState(self.app, self, *msg))
+
+        if lines:
+            self.app.push(DialogState(self.app, self, speaker, lines, done))
+        else:
+            done()
+
+    def _speaker_name(self, style):
+        return {"grumete": "O Grumete", "imediato": "O Imediato", "irma": "A Irmã da Capitã",
+                "amigo": "O Melhor Amigo"}.get(style, style)
 
     def break_tile(self, tx, ty):
         self.room.broken.add((tx, ty))
@@ -298,6 +488,21 @@ class PlayState(State):
     def _give_item(self, item):
         pr = self.progress
         pr.collected.add(item.key)
+        if item.kind == "food":
+            p = self.player
+            p.hp = min(p.max_hp, p.hp + 2)
+            self.effects.sprite("coracoes", p.cx, p.cy - 10, fps=20)
+            self.audio.play("heal")
+            self.save()
+            return
+        if item.kind == "letter":
+            pr.letters.add(item.arg)
+            self.effects.sprite("brilho", item.x, item.y - 20, fps=18, scale=2)
+            self.audio.play("item")
+            self.save()
+            title, body = self.story.LETTERS[item.arg]
+            self.app.push(MessageState(self.app, self, title, body))
+            return
         old_max = self.player.max_hp
         msg = pr.give(item.kind, item.arg)
         self.player.recompute_stats()
@@ -443,6 +648,7 @@ class PlayState(State):
     def on_player_death(self):
         """Chamado pelo jogador ao morrer: moedas ficam numa bolsa no último chão seguro."""
         pr = self.progress
+        pr.deaths += 1
         if pr.coins > 0:
             room_id, x, y = self.last_safe
             pr.bag = (room_id, x, y, pr.coins)
@@ -464,78 +670,65 @@ class PlayState(State):
 
     # --- desenho ---
     def _render_room(self, room):
+        """Pré-desenha os blocos fixos da sala numa imagem (com o tema da zona)."""
         surf = pygame.Surface((room.width, room.height), pygame.SRCALPHA)
-        tile_col, edge_col = room.palette[2], room.palette[3]
+        ts = tiles_mod.tileset(tiles_mod.theme_of(room.zone))
+        shadow = (0, 0, 0, 90)
         for ty in range(room.rows_count):
             for tx in range(room.cols):
                 ch = room.tile(tx, ty)
                 x, y = tx * T, ty * T
+                var = (tx * 7 + ty * 13) % 4
                 if ch == "#":
-                    pygame.draw.rect(surf, tile_col, (x, y, T, T))
-                    if room.tile(tx, ty - 1) not in ("#", None):
-                        pygame.draw.rect(surf, edge_col, (x, y, T, 4))
-                    if room.tile(tx - 1, ty) not in ("#", None):
-                        pygame.draw.rect(surf, edge_col, (x, y, 2, T))
-                    if room.tile(tx + 1, ty) not in ("#", None):
-                        pygame.draw.rect(surf, edge_col, (x + T - 2, y, 2, T))
+                    open_above = room.tile(tx, ty - 1) not in ("#", None, "X")
+                    group = ts["top"] if open_above else ts["fill"]
+                    surf.blit(group[var % len(group)], (x, y))
+                    # sombra nas bordas laterais e de baixo expostas (dá volume)
+                    if room.tile(tx - 1, ty) not in ("#", None, "X"):
+                        pygame.draw.rect(surf, (0, 0, 0, 70), (x, y, 3, T))
+                    if room.tile(tx + 1, ty) not in ("#", None, "X"):
+                        pygame.draw.rect(surf, (0, 0, 0, 70), (x + T - 3, y, 3, T))
+                    if room.tile(tx, ty + 1) not in ("#", None, "X"):
+                        pygame.draw.rect(surf, shadow, (x, y + T - 4, T, 4))
                 elif ch == "-":
-                    pygame.draw.rect(surf, Colors.ONEWAY, (x, y, T, 7))
-                    pygame.draw.rect(surf, (90, 70, 50), (x, y + 7, T, 3))
-                elif ch == "~":
-                    pygame.draw.rect(surf, (30, 70, 110, 220), (x, y + 6, T, T - 6))
-                    pygame.draw.rect(surf, (90, 150, 200), (x, y + 6, T, 3))
+                    surf.blit(ts["oneway"], (x, y))
                 elif ch == "^":
-                    for i in range(3):
-                        bx = x + 2 + i * 10
-                        pygame.draw.polygon(surf, Colors.SPIKE, [(bx, y + T), (bx + 5, y + 10), (bx + 10, y + T)])
+                    surf.blit(ts["spike"], (x, y))
         return surf
 
-    def _draw_background(self, surf, cam_x, cam_y):
-        """Fundo provisório por zona, com parallax para dar noção de velocidade."""
-        zone = self.room.zone
-        bg, bg_far = self.room.palette[0], self.room.palette[1]
-        W, H = Display.WIDTH, Display.HEIGHT
-        surf.fill(bg)
-        if zone == "convés":
-            for i in range(0, H, 8):
-                k = i / H
-                col = tuple(int(a + (b - a) * k) for a, b in zip((6, 8, 18), bg_far))
-                pygame.draw.rect(surf, col, (0, i, W, 8))
-            rnd = random.Random(7)
-            for _ in range(40):
-                sx = (rnd.uniform(0, W * 2) - cam_x * 0.05) % W
-                sy = rnd.uniform(0, H * 0.6)
-                pygame.draw.circle(surf, (150, 160, 190), (int(sx), int(sy)), 1)
-            # mar ao longe
-            sea_y = H - 60 - cam_y * 0.15 + (self.room.height - H) * 0.15
-            pts = [(0, H)]
-            for x in range(0, W + 24, 24):
-                pts.append((x, sea_y + math.sin((x + cam_x * 0.3) * 0.02 + self.time * 1.5) * 6))
-            pts.append((W, H))
-            pygame.draw.polygon(surf, (18, 34, 56), pts)
-        elif zone in ("interior", "porão"):
-            for i in range(16):
-                x = (i * 70 - cam_x * 0.5) % (W + 70) - 35
-                pygame.draw.rect(surf, bg_far, (x, 0, 66, H))
-            for i in range(4):
-                lx = (i * 300 + 120 - cam_x * 0.5) % (W + 300) - 150
-                glow = 40 + 4 * math.sin(self.time * 3 + i)
-                pygame.draw.circle(surf, tuple(min(255, c + 18) for c in bg_far), (int(lx), 120), int(glow))
-                pygame.draw.rect(surf, (230, 180, 90), (lx - 4, 112, 8, 12))
-        else:
-            for i in range(14):
-                x = (i * 131 - cam_x * 0.35) % (W + 160) - 80
-                h = 120 + (i * 53) % 200
-                pygame.draw.rect(surf, bg_far, (x, H - h - (cam_y * 0.2) % 40, 46, h + 60))
+    def _draw_water(self, surf, cam_x, cam_y):
+        """Água animada (tiles ~): superfície com ondas e brilho."""
+        t = self.time
+        for tx, ty in self.water_tiles:
+            x, y = tx * T - cam_x, ty * T - cam_y
+            if x < -T or x > Display.WIDTH or y < -T or y > Display.HEIGHT:
+                continue
+            top_open = self.room.tile(tx, ty - 1) != "~"
+            body = pygame.Surface((T, T), pygame.SRCALPHA)
+            body.fill((28, 76, 120, 200))
+            if top_open:
+                off = int(3 + 2 * math.sin(t * 3 + tx * 0.9))
+                body.fill((0, 0, 0, 0), (0, 0, T, off))
+                pygame.draw.line(body, (150, 210, 240, 255), (0, off), (T, off), 2)
+                if int(t * 4 + tx) % 5 == 0:
+                    body.set_at(((tx * 11 + int(t * 20)) % T, off + 3), (220, 240, 255, 255))
+            surf.blit(body, (x, y))
 
     def _draw_dynamic_tiles(self, surf, cam_x, cam_y):
         room = self.room
         tile_col = room.palette[2]
-        for tx, ty in room.tiles_of({BREAKABLE, FIGHT_GATE, BOSS_LOCK, LOCKED}):
+        ts = tiles_mod.tileset(tiles_mod.theme_of(room.zone))
+        for tx, ty in room.tiles_of({BREAKABLE, FIGHT_GATE, BOSS_LOCK, LOCKED, CRUMBLE}):
             if not room.is_solid(tx, ty):
                 continue
             x, y = tx * T - cam_x, ty * T - cam_y
             ch = room.tile(tx, ty)
+            if ch == CRUMBLE:
+                shake = 0
+                if (tx, ty) in self.crumble_timers:
+                    shake = int(math.sin(self.time * 60 + tx) * 2)
+                surf.blit(ts["crumble"], (x + shake, y))
+                continue
             if ch == BREAKABLE:
                 # quase igual à rocha: só uma rachadura sutil denuncia o segredo
                 pygame.draw.rect(surf, tile_col, (x, y, T, T))
@@ -555,7 +748,7 @@ class PlayState(State):
     def draw(self, surf):
         shake = self.effects.shake_offset()
         cam_x, cam_y = self.camera.render_offset(shake)
-        self._draw_background(surf, cam_x, cam_y)
+        self.background.draw(surf, cam_x, cam_y, self.time)
         surf.blit(self.room_surface, (-cam_x, -cam_y))
         self._draw_dynamic_tiles(surf, cam_x, cam_y)
 
@@ -565,13 +758,20 @@ class PlayState(State):
             item.draw(surf, cam_x, cam_y, self.time)
         if self.bag:
             self.bag.draw(surf, cam_x, cam_y, self.time)
+        island = tiles_mod.theme_of(self.room.zone) in ("island", "ruins", "temple")
+        for m in self.movers:
+            m.draw(surf, cam_x, cam_y, island)
         for e in self.enemies:
             e.draw(surf, cam_x, cam_y)
+        for h in self.hazards:
+            h.draw(surf, cam_x, cam_y, self.time)
         for c in self.coins:
             c.draw(surf, cam_x, cam_y)
         self.projectiles.draw(surf, cam_x, cam_y)
         self.player.draw(surf, cam_x, cam_y)
         self.effects.draw_world(surf, cam_x, cam_y)
+        self._draw_water(surf, cam_x, cam_y)
+        self.background.draw_front(surf, cam_x, cam_y, self.time)
         near = self.nearby_interactable() if self.player.alive else None
         if near is not None:
             near.draw_prompt(surf, cam_x, cam_y)
@@ -585,10 +785,14 @@ class PlayState(State):
             fade = max(fade, 1.0 - self.hazard_timer / PCfg.HAZARD_FREEZE)
         if fade > 0:
             ui.dim(surf, int(255 * min(1.0, fade)))
-        ui.draw_hud(surf, self.player, self.progress, self.room.name, self.room_name_timer,
-                    self.app.clock.get_fps() if self.debug else None)
-        if self.boss is not None and self.boss.alive and self.boss.awake:
-            ui.draw_boss_bar(surf, "Guardião", self.boss.hp, self.boss.max_hp)
+        boss_bar = self.boss is not None and self.boss.alive and self.boss.awake
+        ui.draw_hud(surf, self.player, self.progress, self.room.name, 0.0 if boss_bar else self.room_name_timer,
+                    self.app.clock.get_fps() if self.debug else None, muted=self.app.audio.muted,
+                    story=self.story is not None)
+        if boss_bar:
+            name = getattr(self.boss, "name", "Guardião")
+            title = getattr(self.boss, "title", "")
+            ui.draw_boss_bar(surf, f"{name} - {title}" if title else name, self.boss.hp, self.boss.max_hp)
 
     def _draw_debug(self, surf, cam_x, cam_y):
         p = self.player
@@ -622,9 +826,16 @@ class Overlay(State):
 class PauseState(Overlay):
     def __init__(self, app, play):
         super().__init__(app, play)
-        self.menu = ui.Menu([("Continuar", "resume"), ("Voltar ao último banco", "bench"),
-                             ("Menu inicial", "menu"), ("Sair do jogo", "quit")],
-                            center_y=150, spacing=40, size=34)
+        self.confirm_restart = False
+        self._build_menu(0)
+
+    def _build_menu(self, index):
+        som = "Som: desligado" if self.app.audio.muted else "Som: ligado"
+        restart = "Confirmar? (apaga o save)" if self.confirm_restart else "Reiniciar jogo"
+        self.menu = ui.Menu([("Continuar", "resume"), ("Voltar à bola de cristal", "bench"), (som, "sound"),
+                             (restart, "restart"), ("Menu inicial", "menu"), ("Sair do jogo", "quit")],
+                            center_y=172, spacing=40, size=34)
+        self.menu.index = index
 
     def frame(self, dt, inp):
         if inp.was_pressed("pause"):
@@ -638,6 +849,15 @@ class PauseState(Overlay):
         elif choice == "bench":
             self.play.respawn_at_bench()
             self.close()
+        elif choice == "sound":
+            self.app.audio.toggle_mute()
+            self._build_menu(self.menu.index)
+        elif choice == "restart":
+            if not self.confirm_restart:
+                self.confirm_restart = True
+                self._build_menu(self.menu.index)
+            else:
+                self.app.start_game(self.play.progress.fresh_copy())
         elif choice == "menu":
             self.app.to_menu()
         elif choice == "quit":
@@ -646,10 +866,10 @@ class PauseState(Overlay):
     def draw(self, surf):
         self.play.draw(surf)
         ui.dim(surf, 190)
-        ui.text(surf, "PAUSADO", 48, (Display.WIDTH // 2, 54), Colors.UI_TEXT, "center", title=True)
+        ui.text(surf, "PAUSADO", 48, (Display.WIDTH // 2, 34), Colors.UI_TEXT, "center", title=True)
         self.menu.draw(surf)
-        ui.draw_inventory(surf, self.play.progress, self.play.player, 40, 260)
-        ui.draw_controls(surf, 560, 260)
+        ui.draw_inventory(surf, self.play.progress, self.play.player, 40, 318)
+        ui.draw_controls(surf, 470, 300, title=False, compact=True)
 
 
 class MapState(Overlay):
@@ -880,8 +1100,9 @@ class ShopState(ListState):
 class DeathState(Overlay):
     def __init__(self, app, play):
         super().__init__(app, play)
-        self.menu = ui.Menu([("Voltar ao último banco", "respawn"), ("Menu inicial", "menu")],
-                            center_y=300, size=36)
+        self.t = 0.0
+        label = "Tentar de novo (último ponto salvo)" if play.story is not None else "Voltar ao último banco"
+        self.menu = ui.Menu([(label, "respawn"), ("Menu inicial", "menu")], center_y=320, size=34)
 
     def frame(self, dt, inp):
         self.play.effects.update(dt)
@@ -895,8 +1116,12 @@ class DeathState(Overlay):
 
     def draw(self, surf):
         self.play.draw(surf)
-        ui.dim(surf, 190)
-        ui.text(surf, "VOCÊ MORREU", 64, (Display.WIDTH // 2, 170), Colors.HP_FULL, "center", title=True)
+        ui.dim(surf, 200)
+        title = "VOCÊ CAIU" if self.play.story is not None else "VOCÊ MORREU"
+        ui.text(surf, title, 64, (Display.WIDTH // 2, 150), Colors.HP_FULL, "center", title=True)
+        if self.play.story is not None:
+            ui.text(surf, "A maré quase levou você... mas a história ainda não acabou.", 26,
+                    (Display.WIDTH // 2, 210), Colors.UI_DIM, "center")
         bag = self.play.progress.bag
         if bag:
             ui.text(surf, f"{bag[3]} moedas ficaram para trás. Volte para buscá-las.", 26,
@@ -966,3 +1191,143 @@ class DialogState(Overlay):
             ui.text(surf, "Enter / W / clique", 18, (box.right - 14, box.bottom - 22), Colors.UI_DIM, "topright")
         ui.text(surf, f"{self.index + 1}/{len(self.lines)}", 18, (box.right - 14, box.y + 12), Colors.UI_DIM,
                 "topright")
+
+
+
+class BossIntroState(Overlay):
+    """Cartão de apresentação do chefe (nome, título e uma fala)."""
+
+    def __init__(self, app, play, boss, info):
+        super().__init__(app, play)
+        self.boss = boss
+        self.line = info.get("intro", "").format(**play.forms())
+        self.t = 0.0
+
+    def frame(self, dt, inp):
+        self.t += dt
+        if self.t > 0.8 and (inp.was_pressed("menu_confirm") or inp.was_pressed("attack_quick")
+                             or inp.was_pressed("pause") or self.t > 4.5):
+            inp.consume()
+            self.close()
+            return
+        inp.consume()
+
+    def draw(self, surf):
+        self.play.draw(surf)
+        W, H = Display.WIDTH, Display.HEIGHT
+        k = min(1.0, self.t / 0.35)
+        band = pygame.Surface((W, 150), pygame.SRCALPHA)
+        band.fill((8, 6, 12, int(220 * k)))
+        surf.blit(band, (0, H // 2 - 110))
+        x = int(-400 + 400 * k)
+        ui.text(surf, self.boss.name.upper(), 56, (W // 2 + x, H // 2 - 70), (255, 214, 140), "center", title=True)
+        ui.text(surf, self.boss.title, 34, (W // 2 - x, H // 2 - 22), (230, 120, 140), "center", title=True)
+        if self.t > 0.5:
+            ui.wrap_text(surf, f"\"{self.line}\"", 24, 90, H // 2 + 8, W - 180, Colors.UI_TEXT)
+
+
+class EndingState(Overlay):
+    """Desfecho: textos finais (verdadeiro com as 3 cartas, comum sem elas)."""
+    CHARS_PER_SEC = 40
+
+    def __init__(self, app, play):
+        super().__init__(app, play)
+        story = play.story
+        self.true_ending = len(play.progress.letters) >= 3
+        self.lines = list(story.ENDING_TRUE if self.true_ending else story.ENDING_NORMAL)
+        self.index = 0
+        self.typed = 0.0
+        self.t = 0.0
+        play.progress.flags.add("zerado")
+        play.save()
+        app.audio.play_music(AudioCfg.MUSIC["menu"])
+
+    def frame(self, dt, inp):
+        self.t += dt
+        self.typed += dt * self.CHARS_PER_SEC
+        if inp.was_pressed("menu_confirm") or inp.was_pressed("attack_quick") or inp.mouse_clicked:
+            line = self.lines[self.index]
+            if self.typed < len(line):
+                self.typed = len(line)
+            else:
+                self.index += 1
+                self.typed = 0.0
+                if self.index >= len(self.lines):
+                    inp.consume()
+                    self.app.push(ResultsState(self.app, self.play, self.true_ending))
+                    return
+        inp.consume()
+
+    def draw(self, surf):
+        W, H = Display.WIDTH, Display.HEIGHT
+        surf.fill((6, 8, 16))
+        for i in range(60):
+            x = (i * 97 + self.t * (10 + i % 5)) % W
+            y = (i * 53) % H
+            surf.set_at((int(x), int(y)), (120, 130, 170))
+        line = self.lines[self.index]
+        final = self.index == len(self.lines) - 1
+        if final:
+            ui.text(surf, line, 64, (W // 2, H // 2 - 20), (255, 214, 140), "center", title=True)
+        else:
+            ui.wrap_text(surf, line[:int(self.typed)], 28, 110, H // 2 - 40, W - 220)
+        ui.text(surf, "Enter / clique para continuar", 20, (W // 2, H - 30), Colors.UI_DIM, "center")
+
+
+class ResultsState(State):
+    """Placar final: tempo, mortes, moedas, cartas -> nota e recorde."""
+
+    def __init__(self, app, play, true_ending):
+        super().__init__(app)
+        self.play = play
+        pr = play.progress
+        self.time = pr.play_time
+        self.deaths = pr.deaths
+        self.coins = pr.coins
+        self.letters = len(pr.letters)
+        self.true_ending = true_ending
+        score = 10000 - int(self.time) * 2 - self.deaths * 300 + self.coins * 5 + self.letters * 1000
+        self.score = max(0, score)
+        if self.letters >= 3 and self.deaths <= 3:
+            self.grade = "S"
+        elif self.deaths <= 6:
+            self.grade = "A"
+        elif self.deaths <= 12:
+            self.grade = "B"
+        else:
+            self.grade = "C"
+        from .records import add_record
+        import datetime
+        add_record({"capitulo": 1, "protagonista": pr.protagonist, "dificuldade": pr.difficulty,
+                    "tempo": round(self.time), "quedas": self.deaths, "cartas": self.letters,
+                    "nota": self.grade, "pontos": self.score, "data": datetime.date.today().isoformat()},
+                   getattr(app, "records_path", None))
+        self.menu = ui.Menu([("Jogar de novo", "again"), ("Menu inicial", "menu")], center_y=430, size=34)
+        self.t = 0.0
+
+    def frame(self, dt, inp):
+        self.t += dt
+        choice = self.menu.handle(inp, self.app.audio)
+        inp.consume()
+        if choice == "again":
+            self.app.start_game(self.play.progress.fresh_copy())
+        elif choice == "menu":
+            self.app.to_menu()
+
+    def draw(self, surf):
+        W, H = Display.WIDTH, Display.HEIGHT
+        surf.fill((10, 10, 20))
+        ui.text(surf, "RESULTADO", 56, (W // 2, 60), (255, 214, 140), "center", title=True)
+        ui.text(surf, "Final verdadeiro" if self.true_ending else "Final comum", 30, (W // 2, 112),
+                Colors.UI_ACCENT, "center")
+        m, sec = divmod(int(self.time), 60)
+        rows = [("Tempo", f"{m}:{sec:02d}"), ("Quedas", str(self.deaths)), ("Moedas", str(self.coins)),
+                ("Cartas da capitã", f"{self.letters}/3"), ("Pontuação", str(self.score))]
+        y = 160
+        for label, value in rows:
+            ui.text(surf, label, 28, (W // 2 - 200, y), Colors.UI_DIM)
+            ui.text(surf, value, 28, (W // 2 + 200, y), Colors.UI_TEXT, "topright")
+            y += 40
+        ui.text(surf, self.grade, 120, (W // 2 + 330, 250), (255, 214, 140), "center", title=True)
+        ui.text(surf, "nota", 24, (W // 2 + 330, 320), Colors.UI_DIM, "center")
+        self.menu.draw(surf)

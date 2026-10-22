@@ -22,7 +22,7 @@ CHARMS = {
 
 ABILITIES = {
     "dash": ("Passo ilusório", "Shift esquerdo: um passo de fumaça rápido, no chão ou no ar."),
-    "double_jump": ("Pulo duplo", "Aperte Espaço no ar para pular de novo."),
+    "double_jump": ("Levitação", "Aperte Espaço no ar para pular de novo (pulo duplo)."),
 }
 
 # (id, rótulo, preço) — "charm:x" vende um amuleto
@@ -54,7 +54,10 @@ class Progress:
         self.broken = set()          # "sala:tx:ty" de paredes quebradas
         self.bosses = set()          # salas cujo chefe foi derrotado
         self.shop_bought = set()
-        self.flags = set()           # marcos da história (ex.: "chave_cabine")
+        self.flags = set()           # marcos da história (ex.: "atracado")
+        self.letters = set()         # cartas da capitã encontradas
+        self.deaths = 0
+        self.play_time = 0.0         # segundos de partida (para placar e recordes)
         self.talked = set()          # personagens com quem já conversou
         self.protagonist = "ele"     # "ele" ou "ela"
         self.difficulty = "normal"
@@ -68,7 +71,9 @@ class Progress:
 
     @property
     def max_hp(self):
-        return PR.BASE_HP + self.fragments // PR.FRAGMENTS_PER_HP + (1 if self.equipped("vigor") else 0)
+        from .config import Game
+        bonus = Game.DIFFICULTIES.get(self.difficulty, {}).get("hp_bonus", 0)
+        return PR.BASE_HP + bonus + self.fragments // PR.FRAGMENTS_PER_HP + (1 if self.equipped("vigor") else 0)
 
     @property
     def notches_used(self):
@@ -112,6 +117,11 @@ class Progress:
             if n == 0:
                 return ("Fragmento de vida", "Fragmentos completos: +1 de vida máxima!")
             return ("Fragmento de vida", f"{n}/{PR.FRAGMENTS_PER_HP} — junte {PR.FRAGMENTS_PER_HP} para ganhar +1 de vida.")
+        if kind == "food":
+            return None                  # cura aplicada pela partida (precisa do jogador)
+        if kind == "letter":
+            self.letters.add(arg)
+            return None                  # o texto da carta vem da história (chapter1.LETTERS)
         if kind == "ore":
             self.ore += 1
             return ("Minério", "Leve ao ferreiro para melhorar sua arma.")
@@ -142,6 +152,9 @@ class Progress:
             "bosses": sorted(self.bosses),
             "shop_bought": sorted(self.shop_bought),
             "flags": sorted(self.flags),
+            "letters": sorted(self.letters),
+            "deaths": self.deaths,
+            "play_time": round(self.play_time, 2),
             "talked": sorted(self.talked),
             "protagonist": self.protagonist,
             "difficulty": self.difficulty,
@@ -171,9 +184,20 @@ class Progress:
         p.difficulty = d.get("difficulty", "normal") if d.get("difficulty") in ("facil", "normal", "dificil") else "normal"
         p.chapter = int(d.get("chapter", 1))
         p.flags = set(d.get("flags", []))
+        p.letters = set(d.get("letters", []))
+        p.deaths = int(d.get("deaths", 0))
+        p.play_time = float(d.get("play_time", 0.0))
         p.talked = set(d.get("talked", []))
         p.bench = tuple(d["bench"]) if d.get("bench") else None
         p.bag = tuple(d["bag"]) if d.get("bag") else None
+        return p
+
+    def fresh_copy(self):
+        """Novo jogo com o mesmo protagonista, dificuldade e capítulo."""
+        p = Progress()
+        p.chapter = self.chapter
+        p.protagonist = self.protagonist
+        p.difficulty = self.difficulty
         return p
 
     def save(self, path=None):

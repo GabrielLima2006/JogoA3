@@ -8,7 +8,7 @@ distâncias em pixels, velocidades em px/s, acelerações em px/s², tempos em s
 class Game:
     # nome ainda não definido pelo grupo: troque aqui quando decidirem
     TITLE = "Maré de Mentiras"
-    SUBTITLE = "um mistério a bordo"
+    SUBTITLE = "a maldição do Templo da Maré"
     CHAPTERS = {
         1: "Jantar no molhado em veneno",
         2: "O leme estranhamente destruído",
@@ -24,12 +24,12 @@ class Game:
                 "o": "a", "feiticeiro": "feiticeira", "passageiro": "passageira", "bom": "boa"},
     }
     DIFFICULTIES = {
-        "facil": {"label": "Fácil", "tide_minutes": 20,
-                  "desc": "Maré lenta (20 min). Pistas brilham de longe. Blefar é menos arriscado."},
-        "normal": {"label": "Normal", "tide_minutes": 14,
-                   "desc": "Maré de 14 min. O desafio pensado para o jogo."},
-        "dificil": {"label": "Difícil", "tide_minutes": 10,
-                    "desc": "Maré rápida (10 min). Mais capangas. Blefe errado custa caro."},
+        "facil": {"label": "Fácil", "hp_bonus": 2, "enemy_hp": 0.75,
+                  "desc": "+2 corações. Inimigos e chefes com menos vida. Para curtir a história."},
+        "normal": {"label": "Normal", "hp_bonus": 0, "enemy_hp": 1.0,
+                   "desc": "O desafio pensado para o jogo."},
+        "dificil": {"label": "Difícil", "hp_bonus": -1, "enemy_hp": 1.35,
+                    "desc": "1 coração a menos. Inimigos e chefes bem mais resistentes."},
     }
 
 
@@ -41,6 +41,10 @@ class Audio:
     # música por tela/zona (arquivos em assets/music/)
     MUSIC = {
         "menu": "title_01.ogg",
+        "boss": "dungeon_01.ogg",
+        "ilha": "forest_01.ogg",
+        "ruínas": "forest_01.ogg",
+        "templo": "dungeon_01.ogg",
         "convés": "forest_01.ogg",
         "interior": "dungeon_01.ogg",
         "porão": "dungeon_01.ogg",
@@ -234,7 +238,7 @@ class Enemies:
     KNOCKBACK_FRICTION = 1800.0
 
     # moedas que cada inimigo solta
-    DROPS = {"patroller": 4, "chaser": 8, "turret": 5, "flier": 5, "jumper": 7, "shield": 12, "guardian": 120}
+    DROPS = {"crate": 3, "patroller": 4, "chaser": 8, "turret": 5, "flier": 5, "jumper": 7, "shield": 12, "guardian": 120}
 
 
 class Boss:
@@ -354,4 +358,7 @@ ZONE_PALETTES = {
     "convés": ((10, 14, 30), (20, 28, 50), (96, 66, 44), (156, 114, 72)),
     "interior": ((30, 22, 18), (44, 32, 26), (82, 58, 42), (142, 102, 66)),
     "porão": ((12, 14, 18), (22, 24, 30), (56, 48, 42), (98, 86, 72)),
+    "ilha": ((10, 14, 26), (30, 44, 62), (70, 90, 60), (120, 170, 90)),
+    "ruínas": ((12, 12, 24), (40, 40, 64), (90, 90, 100), (150, 150, 170)),
+    "templo": ((10, 14, 16), (30, 40, 44), (60, 80, 84), (120, 150, 150)),
 }

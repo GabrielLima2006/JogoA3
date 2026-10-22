@@ -142,14 +142,17 @@ def resolve_player_attack(player, enemies, projectiles, ctx):
 
 
 class ProjectileObj:
-    def __init__(self, x, y, vx, vy, damage, hostile=True):
+    def __init__(self, x, y, vx, vy, damage, hostile=True, look="fogo", homing=0.0):
         self.x, self.y = x, y
         self.vx, self.vy = vx, vy
         self.damage = damage
         self.hostile = hostile
         self.life = PCfg.LIFETIME
         self.alive = True
-        self.r = PCfg.RADIUS
+        self.r = PCfg.RADIUS if look != "caveira" else 9
+        self.look = look          # "fogo", "bala" (canhão), "caveira" (feitiço), "espinho" (chão)
+        self.homing = homing      # curva em direção ao jogador (rad/s)
+        self.t = 0.0
 
     def rect_tuple(self):
         return (self.x - self.r, self.y - self.r, self.r * 2, self.r * 2)
@@ -162,11 +165,12 @@ class ProjectileSystem:
     def clear(self):
         self.items.clear()
 
-    def spawn(self, x, y, dir_x, dir_y, speed=PCfg.SPEED, damage=PCfg.DAMAGE, hostile=True):
+    def spawn(self, x, y, dir_x, dir_y, speed=PCfg.SPEED, damage=PCfg.DAMAGE, hostile=True, look="fogo",
+              homing=0.0):
         if len(self.items) >= PCfg.MAX_ACTIVE:
             return None
         n = math.hypot(dir_x, dir_y) or 1.0
-        p = ProjectileObj(x, y, dir_x / n * speed, dir_y / n * speed, damage, hostile)
+        p = ProjectileObj(x, y, dir_x / n * speed, dir_y / n * speed, damage, hostile, look, homing)
         self.items.append(p)
         return p
 
@@ -176,9 +180,18 @@ class ProjectileSystem:
             if not p.alive:
                 continue
             p.life -= dt
+            p.t += dt
             if p.life <= 0:
                 p.alive = False
                 continue
+            if p.homing and player.alive:
+                # vira devagar na direção do jogador
+                ang = math.atan2(p.vy, p.vx)
+                want = math.atan2(player.cy - p.y, player.cx - p.x)
+                diff = (want - ang + math.pi) % math.tau - math.pi
+                ang += max(-p.homing * dt, min(p.homing * dt, diff))
+                speed = math.hypot(p.vx, p.vy)
+                p.vx, p.vy = math.cos(ang) * speed, math.sin(ang) * speed
             # sub-passos para não atravessar paredes finas
             dist = math.hypot(p.vx, p.vy) * dt
             steps = max(1, int(dist / 6) + 1)
@@ -204,7 +217,24 @@ class ProjectileSystem:
         self.items = [p for p in self.items if p.alive]
 
     def draw(self, surf, cam_x, cam_y):
+        from . import sprites
         for p in self.items:
             pos = (int(p.x - cam_x), int(p.y - cam_y))
+            if p.look == "caveira":
+                frames = sprites.grid("efeitos/caveira_roxa.png", 40, 32)[:10]
+                if frames:
+                    img = sprites.variant(frames[int(p.t * 16) % len(frames)], p.vx > 0)
+                    surf.blit(img, img.get_rect(center=pos))
+                    continue
+            if p.look == "bala":
+                pygame.draw.circle(surf, (40, 40, 48), pos, p.r + 1)
+                pygame.draw.circle(surf, (120, 120, 140), (pos[0] - 2, pos[1] - 2), 2)
+                continue
+            if p.look == "espinho":
+                pygame.draw.polygon(surf, (255, 40, 110), [(pos[0] - 10, pos[1] + 10), (pos[0], pos[1] - 16),
+                                                           (pos[0] + 10, pos[1] + 10)])
+                pygame.draw.polygon(surf, (255, 170, 200), [(pos[0] - 4, pos[1] + 8), (pos[0], pos[1] - 6),
+                                                            (pos[0] + 4, pos[1] + 8)])
+                continue
             pygame.draw.circle(surf, (255, 210, 150), pos, p.r)
             pygame.draw.circle(surf, Colors.PROJECTILE, pos, p.r, 2)

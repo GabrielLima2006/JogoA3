@@ -19,7 +19,7 @@ def load_records(path=None):
 
 
 def add_record(record, path=None):
-    """record: {capitulo, protagonista, dificuldade, tempo, credibilidade, pistas, nota, data}"""
+    """record: {capitulo, protagonista, dificuldade, tempo, quedas, cartas, nota, pontos, data}"""
     path = path or RECORDS_PATH
     records = load_records(path)
     records.append(record)

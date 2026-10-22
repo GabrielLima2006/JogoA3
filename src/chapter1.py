@@ -1,227 +1,332 @@
-"""Capítulo 1 — Jantar no molhado em veneno: salas do navio, personagens e diálogos.
+"""O mundo do jogo: navio, porão, cordame, ilha e templo.
 
 Mapa (portas pelos dígitos na borda; ver world.py):
 
-                       [Gávea]
-                          │ mastro
-    [Tombadilho]──────[Convés]──────[Proa + cabine]
-                          │ escotilha
-    [Cabine capitã]═D═[Salão]──[Cozinha]──[Alojamento]
-                                   │ alçapão
-                                [Porão]
+                [Cordame 2]──[Gávea: CHEFE 2]
+                     │
+                [Cordame 1]
+                     │ (precisa do Passo ilusório)
+   [Cabine]──[Convés (hub)]══D══[Praia]──[Floresta]──[Ruínas: CHEFE 3]──[Templo]──[Altar: FINAL]
+                     │                        (D abre quando o navio atraca, depois do chefe 2)
+                [Porão 1]──[Porão 2]──[Toca: CHEFE 1]
 
-D = porta trancada (chave no bolso da capitã).
+Habilidades: Passo ilusório (dash, chefe 1) · Levitação (pulo duplo, chefe 2).
+Cartas da capitã (3) escondidas: com as três, o final verdadeiro.
 """
 
 from .rooms import Grid
 
 
-# ---------------------------------------------------------------------------
-# Convés (zona aberta, céu de tempestade)
-# ---------------------------------------------------------------------------
+def room_cabine():
+    g = Grid(30, 17)
+    g.rect(1, 1, 28, 3)
+    g.rect(1, 14, 28, 15)
+    g.door("E", 10, 13, "1")
+    g.hline(4, 8, 11, "-")                    # cama
+    g.rect(21, 12, 23, 13)                    # escrivaninha
+    g.put(12, 13, "B").put(17, 13, "P")
+    return g.rows()
+
 
 def room_conves():
-    g = Grid(50, 18)
-    g.rect(1, 15, 48, 16)                                   # tábuas do convés
-    g.door("W", 11, 14, "1").door("E", 11, 14, "2")
-    g.door("N", 23, 26, "3")                                # topo do mastro -> gávea
-    g.clear(8, 15, 10, 17).door("S", 8, 10, "4")            # escotilha -> salão
-    # cordame do mastro (subida com pulos simples)
-    g.hline(20, 23, 12, "-").hline(25, 28, 9, "-").hline(20, 23, 6, "-").hline(24, 27, 3, "-")
-    g.rect(36, 13, 37, 14)                                  # caixotes
-    g.rect(41, 14, 41, 14)
+    g = Grid(72, 22)
+    g.rect(1, 18, 70, 20)
+    g.door("W", 14, 17, "1").door("E", 14, 17, "4")
+    g.rect(70, 14, 70, 17, "D")               # prancha: só abre quando o navio atraca
+    g.clear(20, 18, 22, 21).door("S", 20, 22, "2")      # escotilha -> porão
+    # cordame do mastro: o último salto (7 tiles) exige o Passo ilusório
+    g.hline(24, 28, 15, "-").hline(19, 23, 12, "-").hline(24, 28, 9, "-").hline(19, 23, 6, "-")
+    g.hline(31, 36, 4, "-").door("N", 33, 36, "3")
+    g.rect(44, 16, 45, 17).rect(54, 17, 55, 17)         # caixotes
+    g.put(8, 17, "N").put(30, 17, "N")                  # capitã (corpo) e o amigo
+    g.put(13, 17, "$").put(62, 17, "R")
     return g.rows()
 
 
-def room_tombadilho():
-    g = Grid(30, 18)
-    g.rect(1, 15, 28, 16)
-    g.door("E", 11, 14, "1")
-    g.rect(1, 12, 10, 14)                                   # tombadilho elevado (leme)
-    g.put(6, 11, "N")                                       # imediato
+# ---------------------------------------------------------------------------
+# Área 1 — Porão (sem habilidades)
+# ---------------------------------------------------------------------------
+
+def room_porao1():
+    g = Grid(56, 24)
+    g.rect(1, 1, 54, 2)
+    g.clear(20, 0, 22, 2).door("N", 20, 22, "1")
+    g.rect(1, 20, 54, 22)
+    # escada de volta ao convés
+    g.hline(24, 27, 17, "-").hline(17, 20, 14, "-").hline(24, 27, 11, "-").hline(17, 20, 8, "-")
+    g.hline(21, 22, 5, "-").hline(20, 21, 3, "-")
+    # poça e tábuas podres sobre a água
+    g.clear(34, 20, 37, 22).rect(34, 21, 37, 22, "~")
+    g.clear(45, 20, 50, 22).rect(45, 21, 50, 22, "~").hline(45, 50, 20, "C")
+    g.door("E", 16, 19, "2")
+    g.put(9, 19, "*").put(31, 19, "k").put(42, 19, "g").put(53, 19, "g")
     return g.rows()
 
 
-def room_proa():
+def room_porao2():
+    g = Grid(64, 24)
+    g.rect(1, 1, 62, 2)
+    g.door("W", 16, 19, "1").door("E", 16, 19, "2")
+    g.rect(1, 20, 9, 22)
+    g.rect(10, 21, 55, 22, "~")               # canal alagado
+    g.rect(13, 18, 15, 22)                    # ilha A
+    g.hline(30, 35, 16, "C")                  # tábuas que desabam
+    g.rect(38, 17, 40, 22)                    # ilha B
+    g.rect(44, 20, 62, 22)                    # chão leste
+    g.hline(51, 57, 10, "-")                  # prateleira alta (plataforma que sobe)
+    g.put(4, 19, "B")
+    g.put(52, 9, "*").put(55, 9, "*").put(39, 16, "*")
+    g.put(58, 19, "g").put(60, 19, "k").put(25, 15, "f")
+    return g.rows()
+
+
+def room_toca():
     g = Grid(40, 18)
+    g.rect(1, 1, 38, 2)
     g.rect(1, 15, 38, 16)
     g.door("W", 11, 14, "1")
-    g.rect(24, 5, 38, 5)                                    # teto da cabine
-    g.rect(24, 6, 24, 12)                                   # parede (porta nas linhas 13-14)
-    g.put(12, 14, "N")                                      # melhor amigo
-    g.put(28, 14, "P").put(31, 14, "B").put(36, 14, "*")    # início, cama (salvar), baú de truques
+    g.rect(1, 11, 1, 14, "|")
+    g.hline(7, 11, 12, "-").hline(28, 32, 12, "-")
+    g.put(28, 14, "G")
+    return g.rows()
+
+
+# ---------------------------------------------------------------------------
+# Área 2 — Cordame (precisa do Passo ilusório)
+# ---------------------------------------------------------------------------
+
+def room_cordame1():
+    g = Grid(40, 40)
+    g.clear(17, 39, 20, 39).door("S", 17, 20, "1")
+    g.hline(8, 13, 36, "-").hline(21, 25, 33, "-").hline(30, 35, 30, "-").hline(22, 26, 27, "C")
+    g.hline(12, 17, 24, "-").hline(32, 37, 18, "-").hline(22, 26, 15, "-").hline(12, 16, 12, "-")
+    g.hline(4, 8, 9, "-").hline(12, 15, 6, "-").hline(20, 24, 4, "-")
+    g.rect(31, 4, 38, 4)
+    g.door("E", 1, 3, "2")
+    g.put(34, 29, "*")
+    g.put(26, 29, "f").put(10, 17, "f").put(28, 8, "f")
+    return g.rows()
+
+
+def room_cordame2():
+    g = Grid(60, 20)
+    g.door("W", 12, 14, "1").door("E", 11, 14, "2")
+    g.rect(1, 15, 10, 16)
+    g.rect(1, 18, 58, 18, "~")                # o mar lá embaixo
+    g.hline(13, 16, 13, "-")
+    g.rect(24, 14, 26, 18)                    # topo de mastro
+    g.hline(29, 34, 14, "C")
+    g.rect(48, 15, 58, 16)
+    g.hline(29, 32, 8, "-")                   # carta: só com pulo duplo (volte depois!)
+    g.put(30, 7, "*").put(57, 14, "*")
+    g.put(3, 14, "B").put(54, 14, "t")
+    g.put(20, 8, "f").put(41, 7, "f")
     return g.rows()
 
 
 def room_gavea():
-    g = Grid(24, 30)
-    g.clear(10, 29, 13, 29).door("S", 10, 13, "1")
-    for i, y in enumerate(range(26, 7, -3)):
-        if i % 2 == 0:
-            g.hline(5, 9, y, "-")
-        else:
-            g.hline(13, 17, y, "-")
-    g.hline(8, 16, 5, "-")                                  # cesto (mão única: atravessa por baixo)
-    g.put(12, 4, "N")                                       # meia-irmã
-    g.put(19, 15, "f").put(4, 11, "f")                      # gaivotas
+    g = Grid(36, 20)
+    g.rect(1, 17, 34, 18)
+    g.door("W", 13, 16, "1")
+    g.rect(1, 13, 1, 16, "|")
+    g.hline(5, 9, 14, "-").hline(26, 30, 14, "-")
+    g.put(26, 16, "G")
     return g.rows()
 
 
 # ---------------------------------------------------------------------------
-# Interior
+# Área 3 — Ilha (navio atracado; pulo duplo + dash)
 # ---------------------------------------------------------------------------
 
-def room_salao():
-    g = Grid(36, 18)
-    g.rect(1, 1, 34, 2)
-    g.clear(16, 0, 18, 2).door("N", 16, 18, "1")            # escotilha -> convés
-    g.rect(1, 15, 34, 16)
-    g.door("W", 11, 14, "2").door("E", 11, 14, "3")
-    g.rect(1, 11, 1, 14, "D")                               # porta da cabine da capitã
-    # escada até a escotilha
-    g.hline(19, 22, 12, "-").hline(13, 16, 9, "-").hline(19, 22, 6, "-").hline(16, 17, 4, "-")
-    g.rect(7, 14, 12, 14)                                   # mesa do jantar
-    g.put(10, 13, "N")                                      # a capitã
+def room_praia():
+    g = Grid(60, 22)
+    g.door("W", 14, 17, "1").door("E", 8, 11, "2")
+    g.rect(1, 18, 14, 20)
+    g.hline(15, 22, 20, "^")                  # vala de espinhos (8)
+    g.rect(23, 18, 35, 20)
+    g.rect(36, 12, 58, 20)                    # penhasco: 6 acima (pulo duplo)
+    g.put(4, 17, "B").put(25, 17, "*")
+    g.put(28, 17, "j").put(33, 17, "k").put(48, 11, "c")
     return g.rows()
 
 
-def room_cabine_capita():
-    g = Grid(26, 18)
-    g.rect(1, 15, 24, 16)
-    g.door("E", 11, 14, "1")
-    g.rect(5, 13, 9, 14)                                    # escrivaninha
-    g.hline(14, 19, 12, "-")                                # cama
+def room_floresta():
+    g = Grid(48, 40)
+    g.rect(1, 37, 46, 38)
+    g.door("W", 33, 36, "1").door("E", 2, 5, "2")
+    g.hline(20, 46, 36, "^")
+    g.hline(6, 11, 32, "-").hline(16, 20, 28, "-").hline(25, 30, 25, "C").hline(35, 40, 21, "-")
+    g.hline(30, 35, 10, "-").hline(20, 24, 8, "-").hline(8, 13, 5, "-")
+    g.rect(38, 6, 46, 6)
+    g.put(10, 4, "*").put(44, 5, "*").put(38, 20, "*")
+    g.put(18, 27, "j").put(30, 16, "f").put(9, 36, "j")
     return g.rows()
 
 
-def room_cozinha():
-    g = Grid(34, 17)
-    g.rect(1, 15, 32, 15)                                   # assoalho fino
-    g.door("W", 11, 14, "1").door("E", 11, 14, "2")
-    g.clear(24, 15, 26, 16).door("S", 24, 26, "3")          # alçapão -> porão
-    g.rect(3, 13, 6, 14)                                    # fogão
-    g.hline(9, 13, 11, "-")                                 # prateleira
-    g.put(15, 14, "N")                                      # cozinheira
+def room_ruinas():
+    g = Grid(40, 20)
+    g.rect(1, 17, 38, 18)
+    g.door("W", 13, 16, "1").door("E", 13, 16, "2")
+    g.rect(1, 13, 1, 16, "|")
+    g.rect(38, 13, 38, 16, "=")
+    g.hline(6, 11, 12, "-").hline(28, 33, 12, "-").hline(16, 23, 8, "-")
+    g.put(30, 16, "G")
     return g.rows()
 
 
-def room_alojamento():
-    g = Grid(34, 17)
-    g.rect(1, 15, 32, 15)
-    g.door("W", 11, 14, "1")
-    g.hline(5, 9, 12, "-").hline(13, 17, 12, "-").hline(21, 25, 12, "-")    # redes
-    g.hline(9, 13, 9, "-").hline(17, 21, 9, "-")
-    g.rect(30, 13, 31, 14)                                  # baú
-    g.put(27, 14, "N")                                      # grumete
+def room_templo():
+    g = Grid(60, 22)
+    g.rect(1, 18, 58, 20)
+    g.door("W", 14, 17, "1").door("E", 14, 17, "2")
+    g.hline(10, 46, 17, "^")
+    g.hline(11, 14, 15, "-").hline(19, 23, 14, "C").hline(38, 41, 15, "-")
+    g.put(3, 17, "B").put(40, 14, "*")
+    g.put(52, 17, "c").put(56, 17, "s")
     return g.rows()
 
 
-def room_porao():
-    g = Grid(50, 20)
-    g.rect(1, 1, 48, 3)
-    g.clear(6, 0, 8, 3).door("N", 6, 8, "1")                # alçapão -> cozinha
-    g.rect(1, 16, 48, 18)
-    g.clear(20, 16, 28, 18).rect(20, 17, 28, 19, "~")       # trecho alagado de 9: exige Passo ilusório
-    g.hline(9, 12, 13, "-").hline(3, 6, 10, "-").hline(9, 12, 7, "-").hline(6, 7, 4, "-")
-    g.rect(40, 14, 41, 15)                                  # sacos
-    g.put(15, 15, "g").put(36, 15, "g").put(45, 15, "g")    # ratos
+def room_altar():
+    g = Grid(44, 22)
+    g.rect(1, 19, 42, 20)
+    g.door("W", 15, 18, "1")
+    g.rect(1, 15, 1, 18, "|")
+    g.hline(6, 11, 14, "-").hline(32, 37, 14, "-").hline(17, 26, 10, "-")
+    g.put(30, 18, "G")
     return g.rows()
 
 
 ROOM_DEFS = [
-    {"id": "conves", "name": "Convés principal", "zone": "convés", "rows": room_conves()},
-    {"id": "tombadilho", "name": "Tombadilho", "zone": "convés", "rows": room_tombadilho(), "npcs": ["imediato"]},
-    {"id": "proa", "name": "Proa", "zone": "convés", "rows": room_proa(), "npcs": ["amigo"],
-     "items": [("ability", "dash")]},
-    {"id": "gavea", "name": "Cesto da gávea", "zone": "convés", "rows": room_gavea(), "npcs": ["irma"]},
-    {"id": "salao", "name": "Salão de jantar", "zone": "interior", "rows": room_salao(), "npcs": ["capita"],
-     "key": "chave_cabine"},
-    {"id": "cabine", "name": "Cabine da capitã", "zone": "interior", "rows": room_cabine_capita()},
-    {"id": "cozinha", "name": "Cozinha", "zone": "interior", "rows": room_cozinha(), "npcs": ["cozinheira"]},
-    {"id": "alojamento", "name": "Alojamento", "zone": "interior", "rows": room_alojamento(), "npcs": ["grumete"]},
-    {"id": "porao", "name": "Porão", "zone": "porão", "rows": room_porao()},
+    {"id": "cabine", "name": "Cabine", "zone": "interior", "rows": room_cabine()},
+    {"id": "conves", "name": "Convés", "zone": "convés", "rows": room_conves(), "npcs": ["capita", "amigo"],
+     "key": "atracado"},
+    {"id": "porao1", "name": "Porão", "zone": "porão", "rows": room_porao1(), "items": [("charm", "lamina")]},
+    {"id": "porao2", "name": "Porão Alagado", "zone": "porão", "rows": room_porao2(),
+     "items": [("food", "peixe"), ("letter", "carta1"), ("fragment", None)],
+     "movers": [{"x0": 18, "y0": 16, "x1": 26, "y1": 16, "w": 3, "speed": 90},
+                {"x0": 47, "y0": 19, "x1": 47, "y1": 10, "w": 3, "speed": 70}]},
+    {"id": "toca", "name": "Toca dos Ratos", "zone": "porão", "rows": room_toca(), "boss": "rei_rato"},
+    {"id": "cordame1", "name": "Cordame", "zone": "convés", "rows": room_cordame1(), "items": [("charm", "coletor")],
+     "movers": [{"x0": 19, "y0": 21, "x1": 28, "y1": 21, "w": 3, "speed": 100}]},
+    {"id": "cordame2", "name": "Vergas", "zone": "convés", "rows": room_cordame2(),
+     "items": [("letter", "carta2"), ("charm", "vento")],
+     "movers": [{"x0": 36, "y0": 13, "x1": 44, "y1": 13, "w": 3, "speed": 95}]},
+    {"id": "gavea", "name": "Cesto da Gávea", "zone": "convés", "rows": room_gavea(), "boss": "cavaleiro"},
+    {"id": "praia", "name": "Praia da Ilha", "zone": "ilha", "rows": room_praia(), "items": [("food", "torta")]},
+    {"id": "floresta", "name": "Floresta", "zone": "ilha", "rows": room_floresta(),
+     "items": [("letter", "carta3"), ("charm", "vigor"), ("fragment", None)],
+     "movers": [{"x0": 42, "y0": 20, "x1": 42, "y1": 10, "w": 3, "speed": 70}]},
+    {"id": "ruinas", "name": "Ruínas", "zone": "ruínas", "rows": room_ruinas(), "boss": "irma"},
+    {"id": "templo", "name": "Templo da Maré", "zone": "templo", "rows": room_templo(), "items": [("charm", "forca")],
+     "movers": [{"x0": 26, "y0": 13, "x1": 34, "y1": 13, "w": 3, "speed": 110}]},
+    {"id": "altar", "name": "Altar", "zone": "templo", "rows": room_altar(), "boss": "feiticeiro"},
 ]
 
 ROOM_LINKS = [
-    (("conves", "1"), ("tombadilho", "1")),
-    (("conves", "2"), ("proa", "1")),
-    (("conves", "3"), ("gavea", "1")),
-    (("conves", "4"), ("salao", "1")),
-    (("salao", "2"), ("cabine", "1")),
-    (("salao", "3"), ("cozinha", "1")),
-    (("cozinha", "2"), ("alojamento", "1")),
-    (("cozinha", "3"), ("porao", "1")),
+    (("cabine", "1"), ("conves", "1")),
+    (("conves", "2"), ("porao1", "1")),
+    (("porao1", "2"), ("porao2", "1")),
+    (("porao2", "2"), ("toca", "1")),
+    (("conves", "3"), ("cordame1", "1")),
+    (("cordame1", "2"), ("cordame2", "1")),
+    (("cordame2", "2"), ("gavea", "1")),
+    (("conves", "4"), ("praia", "1")),
+    (("praia", "2"), ("floresta", "1")),
+    (("floresta", "2"), ("ruinas", "1")),
+    (("ruinas", "2"), ("templo", "1")),
+    (("templo", "2"), ("altar", "1")),
 ]
 
-START_ROOM = "proa"
+START_ROOM = "cabine"
 
 
 # ---------------------------------------------------------------------------
-# Personagens e diálogos
+# Personagens, chefes e textos
 # ---------------------------------------------------------------------------
-# Os textos aceitam as formas do protagonista: {feiticeiro}, {o}, {bom}, {passageiro}.
 
 CHARACTERS = {
-    "capita": {"name": "A capitã", "color": (170, 120, 110), "height": 40, "style": "corpo",
-               "prompt": "Examinar"},
-    "cozinheira": {"name": "Cozinheira", "color": (235, 190, 150), "height": 44, "style": "chef"},
-    "grumete": {"name": "Grumete", "color": (205, 170, 115), "height": 32, "style": "boné"},
-    "imediato": {"name": "Imediato", "color": (140, 150, 190), "height": 48, "style": "casaco"},
-    "irma": {"name": "Meia-irmã da capitã", "color": (205, 95, 85), "height": 42, "style": "bandana"},
-    "amigo": {"name": "Melhor amigo de infância", "color": (120, 185, 140), "height": 44, "style": "cachecol"},
+    "capita": {"name": "A capitã", "style": "corpo", "prompt": "Examinar", "color": (40, 44, 70), "height": 18},
+    "amigo": {"name": "Melhor amigo de infância", "style": "amigo", "color": (70, 120, 90), "height": 44},
 }
 
 DIALOGS = {
     "capita": {
         "first": [
-            "A capitã está caída sobre a mesa. Os lábios estão arroxeados e a mão ainda segura a colher.",
-            "O prato dela está pela metade. Os outros pratos da mesa estão vazios.",
-            "No bolso do casaco, você encontra uma chave de latão com o brasão do navio.",
+            "A capitã está caída no convés. Os lábios estão arroxeados: veneno.",
+            "Na mão dela, um papel amassado: \"O tônico... o grumete... no porão.\"",
         ],
-        "repeat": ["Ninguém tocou no prato desde o jantar."],
-        "on_first": "chave_cabine",
-    },
-    "cozinheira": {
-        "first": [
-            "Não me olhe assim! Eu cozinho para este navio há onze anos.",
-            "Tudo saiu da mesma panela. Todo mundo comeu o mesmo ensopado e ninguém mais passou mal.",
-            "Eu só cozinho, {feiticeiro}. Quem leva os pratos ao salão é a tripulação.",
-        ],
-        "repeat": ["Ainda aqui? A panela está limpa, pode olhar se quiser."],
-    },
-    "grumete": {
-        "first": [
-            "E-eu? Eu nem entrei no salão! Estava lavando o convés a noite toda.",
-            "A capitã... ela era boa comigo. Às vezes.",
-            "Me deixa em paz, tá? Eu não fiz nada.",
-        ],
-        "repeat": ["Já falei! Eu estava lavando o convés!"],
-    },
-    "imediato": {
-        "first": [
-            "Eu estava no leme a noite toda. Alguém tem que manter este navio inteiro com essa tempestade.",
-            "E vou te dizer uma coisa, {feiticeiro}: quem ganha com isso é a irmã. O navio agora é dela.",
-        ],
-        "repeat": ["Vá investigar. Eu tenho um navio para segurar."],
-    },
-    "irma": {
-        "first": [
-            "Subiu até aqui só para me acusar?",
-            "Não ganho nada com a morte dela. Nada.",
-            "Agora me deixa olhar o mar. O vento está mudando.",
-        ],
-        "repeat": ["O vento está mudando. Isso nunca é bom sinal."],
+        "repeat": ["Você promete a si {o} mesm{o}: vai descobrir quem fez isso."],
     },
     "amigo": {
         "first": [
-            "Quanto tempo! Nunca pensei que fosse te reencontrar num navio, e logo numa noite dessas.",
-            "Se eu fosse você, ficaria de olho na irmã da capitã. Vi as duas discutindo mais cedo.",
-            "Ah, e o seu baú de truques está ali na cabine. Acho que você vai precisar dele.",
+            "Que noite! Quem diria que eu ia te reencontrar justo neste navio.",
+            "Vi o grumete descer correndo pela escotilha. Os ratos lá embaixo estão... estranhos.",
+            "Vai lá, {feiticeiro}. Eu cuido do convés.",
         ],
-        "repeat": ["Cuidado lá embaixo. A água está entrando no porão."],
+        "repeat": ["O porão fica pela escotilha, perto do mastro. Cuidado com a água."],
     },
 }
 
 FLAG_MESSAGES = {
-    "chave_cabine": ("Chave da cabine", "A porta da cabine da capitã, no salão, agora abre."),
+    "atracado": ("O navio atracou", "A prancha do convés agora leva à ilha."),
 }
+
+LETTERS = {
+    "carta1": ("Carta da capitã (1/3)", "\"Alguém está levando gente do porto. Desaparecidos, todos ligados a mim.\""),
+    "carta2": ("Carta da capitã (2/3)", "\"Os sumidos estão vivos, presos no Templo da Maré, na ilha.\""),
+    "carta3": ("Carta da capitã (3/3)",
+               "\"Achei o culpado: meu velho amigo de infância. Ele nunca me perdoou por aquele dia.\""),
+}
+
+# id -> classe em bosses.py, recompensa, falas de apresentação e de derrota
+BOSSES = {
+    "rei_rato": {
+        "reward": ("ability", "dash"),
+        "speaker": "grumete",
+        "intro": "O tônico... ele disse que ia acalmar a capitã! E agora... os ratos me obedecem!",
+        "after": [
+            "Eu só queria não ser expulso do navio...",
+            "Um homem de cachecol roxo me deu o tônico. Disse que era remédio.",
+        ],
+    },
+    "cavaleiro": {
+        "reward": ("ability", "double_jump"),
+        "flag": "atracado",
+        "speaker": "imediato",
+        "intro": "Ele me prometeu este navio! A armadura rubra é o preço, e eu pago!",
+        "after": [
+            "A ambição me cegou. O navio está atracando na ilha...",
+            "O feiticeiro está no templo. Os desaparecidos também.",
+        ],
+    },
+    "irma": {
+        "reward": None,
+        "speaker": "irma",
+        "intro": "Ele tem alguém que eu amo preso no templo. Não posso deixar você passar!",
+        "after": [
+            "Escondi as cartas da minha irmã para proteger quem eu amo...",
+            "Vá. Salve todos. E pare aquele monstro... que um dia foi seu amigo.",
+        ],
+    },
+    "feiticeiro": {
+        "reward": None,
+        "speaker": "amigo",
+        "intro": "Anos atrás eu levei a culpa no seu lugar, e você ficou calado. Agora vou tirar tudo de você!",
+        "after": [],
+    },
+}
+
+ENDING_TRUE = [
+    "O feitiço da maré se desfaz. As correntes do templo caem.",
+    "Os desaparecidos voltam para o navio, vivos.",
+    "Com as cartas da capitã, a verdade é contada no porto: os cúmplices foram enganados,",
+    "e o verdadeiro culpado é levado a julgamento.",
+    "Você confessa o erro de anos atrás. Pela primeira vez, a mentira não é o seu truque.",
+    "FINAL VERDADEIRO",
+]
+ENDING_NORMAL = [
+    "O feitiço da maré se desfaz. As correntes do templo caem.",
+    "Os desaparecidos voltam para o navio, vivos.",
+    "Mas sem as cartas da capitã, ninguém no porto acredita na história inteira...",
+    "(Encontre as 3 cartas escondidas para ver o final verdadeiro.)",
+    "FIM",
+]

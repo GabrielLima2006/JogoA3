@@ -74,7 +74,7 @@ def test_new_game_flow():
         st.typed = 9999
         _press(app, "menu_confirm")
     check("fim da introdução começa a partida no navio", isinstance(app.state, PlayState)
-          and app.state.room.id == "proa")
+          and app.state.room.id == "cabine")
     play = app.state
     check("partida começa com protagonista e dificuldade escolhidos",
           play.progress.protagonist == "ela" and play.progress.difficulty == "dificil")
@@ -123,9 +123,9 @@ def test_other_screens():
     _press(app, "menu_confirm")
     check("Recordes abre (vazio)", isinstance(app.state, RecordsState) and not app.state.records)
     _press(app, "pause")
-    add_record({"capitulo": 1, "dificuldade": "normal", "tempo": 543, "credibilidade": 4, "pistas": 4,
+    add_record({"capitulo": 1, "dificuldade": "normal", "tempo": 543, "quedas": 4, "cartas": 4,
                 "nota": "A"}, app.records_path)
-    add_record({"capitulo": 1, "dificuldade": "facil", "tempo": 400, "credibilidade": 5, "pistas": 4,
+    add_record({"capitulo": 1, "dificuldade": "facil", "tempo": 400, "quedas": 5, "cartas": 4,
                 "nota": "S"}, app.records_path)
     app.push(RecordsState(app, back=menu))
     check("Recordes ordena pela nota", [r["nota"] for r in app.state.records] == ["S", "A"])

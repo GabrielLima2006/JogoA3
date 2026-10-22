@@ -91,12 +91,12 @@ class MenuState(Screen):
         app.audio.play_music(AudioCfg.MUSIC["menu"])
         self.menu = ui.Menu([
             ("Novo jogo", "new"),
-            ("Continuar capítulo", "continue", has_save),
+            ("Continuar", "continue", has_save),
             ("Como jogar", "howto"),
             ("Recordes", "records"),
             ("Créditos", "credits"),
             ("Sair", "quit"),
-        ], center_y=318, spacing=38, size=34)
+        ], center_y=330, spacing=44, size=34)
         if has_save:
             self.menu.index = 1
         self.has_save = has_save
@@ -123,12 +123,11 @@ class MenuState(Screen):
         ui.dim(surf, 70)
         title(surf, Game.TITLE.upper(), 96, 68)
         ui.text(surf, Game.SUBTITLE, 28, (W // 2, 146), Colors.UI_DIM, "center")
-        ui.text(surf, "Prontos para o jogo?", 22, (W // 2, 178), (170, 180, 200), "center")
         self.menu.draw(surf)
         if self.has_save:
             pr = Progress.load(self.app.save_path)
             if pr is not None:
-                ui.text(surf, f"Save: capítulo {pr.chapter} · {Game.DIFFICULTIES[pr.difficulty]['label']}", 18,
+                ui.text(surf, f"Jogo salvo: {Game.DIFFICULTIES[pr.difficulty]['label']}", 18,
                         (W // 2, H - 22), Colors.UI_DIM, "center")
 
 
@@ -189,14 +188,14 @@ class NewGameState(Screen):
         self.cards = []
         if self.step == "protagonist":
             title(surf, "Escolha o protagonista", 70, 50)
-            ui.text(surf, "Um enganador que se diz feiticeiro. Sabe blefar e ler reações.", 24,
+            ui.text(surf, "Diz ser feiticeiro, mas luta com espada e lábia. Só muda a aparência.", 20,
                     (W // 2, 112), Colors.UI_DIM, "center")
             for i, key in enumerate(self.protagonists):
                 p = Game.PROTAGONISTS[key]
                 r = pygame.Rect(0, 0, 240, 270)
                 r.center = (W // 2 + (i - 0.5) * 290, 300)
                 self._card(surf, r, i == self.pi)
-                draw_protagonist(surf, key, r.centerx, r.y + 190, scale=3.0, t=self.t)
+                draw_protagonist(surf, key, r.centerx, r.y + 200, scale=3, t=self.t)
                 ui.text(surf, p["label"], 40, (r.centerx, r.bottom - 38), Colors.UI_TEXT, "center")
                 self.cards.append(r)
             footer(surf, "A/D ou setas para escolher · Enter ou clique para confirmar · ESC volta")
@@ -208,7 +207,8 @@ class NewGameState(Screen):
                 r.center = (W // 2 + (i - 1) * 280, 270)
                 self._card(surf, r, i == self.di)
                 ui.text(surf, d["label"], 40, (r.centerx, r.y + 40), Colors.UI_TEXT, "center")
-                ui.text(surf, f"maré: {d['tide_minutes']} min", 24, (r.centerx, r.y + 80), Colors.UI_ACCENT, "center")
+                hearts = 5 + d["hp_bonus"]
+                ui.text(surf, f"{hearts} corações", 24, (r.centerx, r.y + 80), Colors.UI_ACCENT, "center")
                 self._wrap(surf, d["desc"], r.x + 18, r.y + 110, r.w - 36)
                 self.cards.append(r)
             if Progress.exists(self.app.save_path):
@@ -237,41 +237,27 @@ class NewGameState(Screen):
             ui.text(surf, line, size, (x, y), Colors.UI_TEXT)
 
 
-def draw_protagonist(surf, key, x, foot_y, scale=1.0, t=0.0, facing=1):
-    """Retrato provisório: corpo, capa e chapéu de 'feiticeiro'."""
-    p = Game.PROTAGONISTS[key]
-    w, h = 22 * scale, 40 * scale
-    body = pygame.Rect(0, 0, round(w), round(h))
-    body.midbottom = (round(x), round(foot_y))
-    sway = math.sin(t * 2) * 2 * scale
-    cloak = [(body.left - 3 * scale, body.top + 12 * scale), (body.right + 3 * scale, body.top + 12 * scale),
-             (body.right + 6 * scale + sway, body.bottom), (body.left - 6 * scale + sway, body.bottom)]
-    pygame.draw.polygon(surf, p["cloak"], cloak)
-    pygame.draw.rect(surf, p["body"], body.inflate(-6 * scale, 0).move(0, 0), border_radius=round(4 * scale))
-    if p["hair"]:
-        # franja curta + mecha longa atrás (do lado oposto ao olhar)
-        pygame.draw.rect(surf, p["hair"], (body.left + 2 * scale, body.top + 4 * scale, w - 4 * scale, 5 * scale))
-        back_x = body.left + 2 * scale if facing > 0 else body.right - 8 * scale
-        pygame.draw.rect(surf, p["hair"], (back_x, body.top + 4 * scale, 6 * scale, 22 * scale),
-                         border_radius=round(2 * scale))
-    # chapéu pontudo
-    hat = [(body.left - 4 * scale, body.top + 6 * scale), (body.right + 4 * scale, body.top + 6 * scale),
-           (body.centerx + 6 * scale * facing, body.top - 22 * scale)]
-    pygame.draw.polygon(surf, p["cloak"], hat)
-    pygame.draw.rect(surf, (230, 200, 90), (body.left - 2 * scale, body.top + 3 * scale, w + 4 * scale, 3 * scale))
-    eye_x = body.centerx + facing * w * 0.2
-    pygame.draw.rect(surf, (20, 24, 36), (round(eye_x - 2 * scale), round(body.top + 12 * scale),
-                                          round(4 * scale), round(4 * scale)))
+def draw_protagonist(surf, key, x, foot_y, scale=2, t=0.0, facing=1):
+    """Retrato animado com o mesmo sprite usado no jogo."""
+    from . import skins, sprites
+    skin = skins.SKINS[key]
+    frame = skins.frame_for(skin, "idle", t)
+    if frame is None:
+        return
+    flip = (facing < 0) == skin.faces_right
+    ax = skin.anchor[0]
+    sprites.blit_anchor(surf, frame, x, foot_y, (ax, frame.get_height() - 1), flip=flip, scale=scale)
 
 
 # ---------------------------------------------------------------------------
 INTRO_SLIDES = [
-    "Noite de tempestade. O navio da capitã corta o mar escuro rumo ao porto.",
-    "Você viaja como {passageiro}. Diz ser {feiticeiro}... mas a verdade é que você é só "
-    "muito {bom} em enganar. E em ler pessoas.",
-    "No jantar, a capitã ergue a taça, leva a colher à boca... e desaba sobre a mesa.",
-    "Veneno. Quatro pessoas estiveram perto daquele prato. Lá fora, a maré não para de subir.",
-    "A tripulação inteira se vira para você. \"{Feiticeiro}... descubra quem fez isso. Antes que seja tarde.\"",
+    "Noite de tempestade. O navio da capitã corta o mar escuro rumo a uma ilha esquecida.",
+    "Você viaja como {passageiro}. Diz ser {feiticeiro}... mas seu único truque é enganar "
+    "muito bem. E saber lutar.",
+    "No porto, gente vem sumindo há semanas. A capitã desconfia de alguém a bordo.",
+    "Um grito no convés. A capitã caiu, envenenada. Os ratos do porão uivam e a tripulação "
+    "parece enfeitiçada.",
+    "Alguém está usando magia de verdade neste navio. Descubra quem antes que a maré leve todos.",
 ]
 
 
@@ -337,23 +323,21 @@ class IntroState(Screen):
 # ---------------------------------------------------------------------------
 HOWTO_PAGES = [
     ("Controles", None),
-    ("Investigação", [
-        "Explore o navio atrás das pistas físicas de cada capítulo.",
-        "Converse com os suspeitos (W) para ouvir os depoimentos.",
-        "Pistas e depoimentos vão para o caderno (Tab). Procure contradições.",
-        "A maré sobe com o tempo: demore e pistas são destruídas,",
-        "testemunhas somem e o criminoso ganha força.",
-        "Sua credibilidade é sua vida. Se zerar, você perde o capítulo.",
-        "Na cabine do protagonista você salva o jogo e se recompõe.",
+    ("Objetivo", [
+        "Explore o navio e a ilha, vença os 4 chefes e liberte os desaparecidos.",
+        "Habilidades novas (dash, pulo duplo) abrem caminhos que antes eram impossíveis.",
+        "Ache as 3 cartas da capitã para ver o final verdadeiro.",
+        "Moedas compram melhorias na loja; amuletos dão bônus permanentes.",
+        "Bola de cristal (W): salva o jogo e recupera os corações.",
+        "Golpes acertados enchem o orbe de foco. Segure F para se curar.",
     ]),
-    ("Interrogatório", [
-        "Quando estiver pronto, acuse um suspeito no salão. O duelo começa.",
-        "Leia a reação dele a cada fala (desviar o olhar, apertar as mãos...).",
-        "OUVIR — aceita a fala e segue. Sem risco.",
-        "PRESSIONAR — pede detalhes. Suspeito irritado pode se calar.",
-        "APRESENTAR PISTA — mostra a contradição. Pista errada custa credibilidade.",
-        "BLEFAR — finge ter uma prova. Se ele estiver calmo, você perde credibilidade.",
-        "Quebre a compostura do culpado antes de perder a sua credibilidade.",
+    ("Regras", [
+        "Corações chegam a zero: você volta à última bola de cristal com menos moedas.",
+        "Espinhos e água ferem e te levam ao último chão firme.",
+        "Tábuas rachadas desabam pouco depois de pisadas. Não pare em cima!",
+        "Ataque para baixo no ar (S + clique) quica em inimigos e espinhos.",
+        "Chefes têm 2 fases: na metade da vida ficam mais rápidos e perigosos.",
+        "A nota final (S, A, B, C) depende de tempo, quedas e cartas encontradas.",
     ]),
 ]
 
@@ -404,19 +388,19 @@ class RecordsState(Screen):
         ui.dim(surf, 200)
         title(surf, "Recordes", 60, 52)
         if not self.records:
-            ui.text(surf, "Nenhum capítulo concluído ainda.", 30, (W // 2, H // 2 - 10), Colors.UI_TEXT, "center")
-            ui.text(surf, "Termine um capítulo para registrar sua nota.", 24, (W // 2, H // 2 + 26),
+            ui.text(surf, "Nenhuma partida concluída ainda.", 30, (W // 2, H // 2 - 10), Colors.UI_TEXT, "center")
+            ui.text(surf, "Vença o chefe final para registrar sua nota.", 24, (W // 2, H // 2 + 26),
                     Colors.UI_DIM, "center")
         else:
-            cols = [("Nota", 120), ("Capítulo", 200), ("Tempo", 420), ("Credib.", 530), ("Pistas", 640),
-                    ("Dificuldade", 740)]
+            cols = [("Nota", 110), ("Pontos", 200), ("Tempo", 340), ("Quedas", 460), ("Cartas", 580),
+                    ("Dificuldade", 700)]
             for label, x in cols:
                 ui.text(surf, label, 22, (x, 120), Colors.UI_ACCENT)
             y = 156
             for r in self.records:
                 tempo = int(r.get("tempo", 0))
-                vals = [r.get("nota", "-"), f"{r.get('capitulo', 1)}", f"{tempo // 60}:{tempo % 60:02d}",
-                        str(r.get("credibilidade", "-")), str(r.get("pistas", "-")),
+                vals = [r.get("nota", "-"), str(r.get("pontos", "-")), f"{tempo // 60}:{tempo % 60:02d}",
+                        str(r.get("quedas", "-")), f"{r.get('cartas', '-')}/3",
                         Game.DIFFICULTIES.get(r.get("dificuldade"), {}).get("label", "-")]
                 for (label, x), v in zip(cols, vals):
                     ui.text(surf, v, 24, (x, y), Colors.UI_TEXT)
@@ -424,22 +408,61 @@ class RecordsState(Screen):
         footer(surf, "ESC ou Enter volta")
 
 
+# (texto, tamanho, cor). Autor, link e licença de cada asset também estão em assets/CREDITOS.md.
 CREDITS = [
-    ("Universidade São Judas Tadeu — USJT", 30, Colors.UI_TEXT),
-    ("Usabilidade Web e Jogos · Desenvolvimento de Jogo · 2026", 24, Colors.UI_DIM),
-    ("", 20, None),
-    ("Equipe", 28, Colors.UI_ACCENT),
-    ("(nomes do grupo — editar em src/menus.py, lista CREDITS)", 22, Colors.UI_DIM),
-    ("", 20, None),
-    ("Feito em Python com pygame-ce", 22, Colors.UI_DIM),
-    ("Gráficos e sons provisórios", 22, Colors.UI_DIM),
+    ("Universidade São Judas Tadeu - USJT", 30, Colors.UI_TEXT),
+    ("Usabilidade, desenvolvimento web, mobile e jogos", 24, Colors.UI_DIM),
+    ("Prof. Elzo Brito dos Santos Filho", 22, Colors.UI_DIM),
+    ("", 10, None),
+    ("Equipe", 30, Colors.UI_ACCENT),
+    ("[Nome do integrante - RA]", 24, Colors.UI_TEXT),
+    ("(editar em src/menus.py, lista CREDITS)", 20, Colors.UI_DIM),
+    ("", 10, None),
+    ("Programação, design de fases e roteiro", 30, Colors.UI_ACCENT),
+    ("Equipe Maré de Mentiras", 24, Colors.UI_TEXT),
+    ("", 10, None),
+    ("Arte e animação", 30, Colors.UI_ACCENT),
+    ("Super Pixel Effects Gigapack - Will Tice / unTied Games (efeitos)", 22, Colors.UI_TEXT),
+    ("Metroidvania Forge - herói, cavaleiro, slime, tiles, objetos", 22, Colors.UI_TEXT),
+    ("Feiticeira (idle & walk) - protagonista Ela", 22, Colors.UI_TEXT),
+    ("Dark VFX 01-02 e Smear VFX 01 - magias e cortes", 22, Colors.UI_TEXT),
+    ("UIBundleFree (Mediavel) - interface", 22, Colors.UI_TEXT),
+    ("Ghostpixxells - pixelfood (comidas)", 22, Colors.UI_TEXT),
+    ("Screaming Brain Studios - Tiny Texture Pack (CC0)", 22, Colors.UI_TEXT),
+    ("Personagens do navio e itens desenhados pela equipe", 22, Colors.UI_TEXT),
+    ("", 10, None),
+    ("Música e sons", 30, Colors.UI_ACCENT),
+    ("Metroidvania Forge - músicas e efeitos sonoros", 22, Colors.UI_TEXT),
+    ("", 10, None),
+    ("Fonte", 30, Colors.UI_ACCENT),
+    ("Alagard - Hewett Tsoi (acentos compostos pelo jogo)", 22, Colors.UI_TEXT),
+    ("", 10, None),
+    ("Tecnologia", 30, Colors.UI_ACCENT),
+    ("Python 3.12 e pygame-ce", 22, Colors.UI_TEXT),
+    ("", 10, None),
+    ("Links e licenças completas: assets/CREDITOS.md", 22, Colors.UI_DIM),
+    ("Obrigado por jogar!", 34, Colors.UI_ACCENT),
 ]
 
 
 class CreditsState(Screen):
+    """Créditos que sobem sozinhos; W/S ou setas aceleram e voltam."""
+    SPEED = 34
+
     def __init__(self, app, back):
         super().__init__(app)
         self.back = back
+        self.scroll = 0.0
+        self.total = sum(size + 12 for _, size, _ in CREDITS)
+
+    def frame(self, dt, inp):
+        speed = self.SPEED
+        if inp.is_held("down"):
+            speed = self.SPEED * 6
+        elif inp.is_held("up"):
+            speed = -self.SPEED * 6
+        self.scroll = max(0.0, min(self.total, self.scroll + speed * dt))
+        super().frame(dt, inp)
 
     def update(self, inp):
         if go_back(inp) or inp.was_pressed("menu_confirm") or inp.mouse_clicked:
@@ -447,11 +470,15 @@ class CreditsState(Screen):
 
     def draw(self, surf):
         draw_sea_background(surf, self.t)
-        ui.dim(surf, 190)
-        title(surf, "Créditos", 70, 52)
-        y = 150
+        ui.dim(surf, 200)
+        top, bottom = 118, H - 50
+        y = bottom - 40 - self.scroll
+        clip = surf.get_clip()
+        surf.set_clip(pygame.Rect(0, top, W, bottom - top))
         for msg, size, col in CREDITS:
-            if msg:
+            if msg and top - 40 < y < bottom:
                 ui.text(surf, msg, size, (W // 2, y), col, "center")
             y += size + 12
-        footer(surf, "ESC ou Enter volta")
+        surf.set_clip(clip)
+        title(surf, "Créditos", 60, 52)
+        footer(surf, "W/S rolam · ESC ou Enter volta")

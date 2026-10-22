@@ -20,7 +20,7 @@ def font(size, title=False):
     key = (size, title)
     if key not in _fonts:
         if os.path.isfile(TITLE_FONT):
-            k = scale_for(size) + (1 if title and size > 30 else 0)
+            k = scale_for(size) + (1 if title and size > 40 else 0)
             _fonts[key] = PixelFont(TITLE_FONT, k)
         else:
             _fonts[key] = pygame.font.Font(None, size)
@@ -108,8 +108,7 @@ class Menu:
             sel = i == self.index
             col = Colors.UI_ACCENT if sel else (Colors.UI_DIM if enabled else (60, 63, 78))
             msg = f"> {label} <" if sel else label
-            r = text(surf, msg, self.size, (Display.WIDTH // 2, int(top + i * self.spacing)), col, "center",
-                     title=True)
+            r = text(surf, msg, self.size, (Display.WIDTH // 2, int(top + i * self.spacing)), col, "center")
             self.rects.append(r.inflate(40, 10))
 
 
@@ -130,71 +129,111 @@ def draw_controls(surf, x, y, title=True, compact=False):
 # HUD
 # ---------------------------------------------------------------------------
 
-def draw_hud(surf, player, progress, room_name, room_name_timer, fps=None):
-    # orbe de energia
+def draw_hud(surf, player, progress, room_name, room_name_timer, fps=None, muted=False, story=False):
+    """HUD: orbe de foco (cura), corações, moedas, tempo, cartas e habilidades.
+
+    Fica nos cantos superiores para não cobrir a ação.
+    """
+    from . import sprites
+    t = pygame.time.get_ticks() / 1000.0
+    # orbe de foco
     cx, cy, r = 38, 40, 24
-    pygame.draw.circle(surf, (24, 26, 40), (cx, cy), r)
+    pygame.draw.circle(surf, (20, 18, 34), (cx, cy), r + 3)
+    pygame.draw.circle(surf, (36, 30, 58), (cx, cy), r)
     k = player.energy / Energy.MAX
     if k > 0:
         fill = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
-        pygame.draw.circle(fill, (*Colors.ENERGY, 255), (r, r), r - 3)
+        pygame.draw.circle(fill, (150, 210, 255, 255), (r, r), r - 3)
+        pygame.draw.circle(fill, (220, 245, 255, 255), (r - 7, r - 7), 5)
         cut = int((r * 2) * (1 - k))
         fill.fill((0, 0, 0, 0), (0, 0, r * 2, cut))
         surf.blit(fill, (cx - r, cy - r))
     ready = player.energy >= Energy.HEAL_COST
-    pygame.draw.circle(surf, Colors.UI_ACCENT if ready else Colors.UI_DIM, (cx, cy), r, 2)
+    pygame.draw.circle(surf, (200, 170, 100) if ready else (90, 80, 70), (cx, cy), r + 1, 3)
     if ready:
-        text(surf, "F", 20, (cx, cy), (20, 24, 40), "center")
+        text(surf, "F", 20, (cx, cy + 1), (30, 26, 50), "center", shadow=False)
 
-    # vida
-    x, y = 72, 18
+    # corações (sprite que pulsa; vazios ficam escuros)
+    hearts = sprites.grid("objetos/coracao.png", 32, 32)
+    x, y = 70, 10
     for i in range(player.max_hp):
-        col = Colors.HP_FULL if i < player.hp else Colors.HP_EMPTY
-        pygame.draw.rect(surf, col, (x + i * 24, y, 18, 18), border_radius=4)
-        pygame.draw.rect(surf, (20, 14, 22), (x + i * 24, y, 18, 18), 2, border_radius=4)
-    # moedas
-    pygame.draw.rect(surf, Colors.COIN, (x + 1, 46, 10, 10), border_radius=2)
-    text(surf, str(progress.coins), 24, (x + 18, 43), Colors.COIN)
+        if hearts:
+            img = hearts[int(t * 8) % len(hearts)] if i == player.hp - 1 and player.hp <= 2 else hearts[0]
+            if i >= player.hp:
+                img = sprites.variant(hearts[0], tint=(60, 50, 70, 255))
+            surf.blit(img, (x + i * 26 - 4, y - 2))
+        else:
+            col = Colors.HP_FULL if i < player.hp else Colors.HP_EMPTY
+            pygame.draw.rect(surf, col, (x + i * 24, y + 6, 18, 18), border_radius=4)
+    # moedas e cartas
+    coin_y = 46
+    pygame.draw.circle(surf, (120, 80, 20), (x + 7, coin_y + 8), 7)
+    pygame.draw.circle(surf, Colors.COIN, (x + 7, coin_y + 8), 6)
+    pygame.draw.circle(surf, (255, 240, 170), (x + 5, coin_y + 6), 2)
+    text(surf, str(progress.coins), 20, (x + 19, coin_y - 1), Colors.COIN)
+    if story:
+        lx = x + 76
+        pygame.draw.rect(surf, (238, 226, 190), (lx, coin_y + 1, 14, 14), border_radius=2)
+        pygame.draw.circle(surf, (180, 40, 50), (lx + 11, coin_y + 12), 3)
+        text(surf, f"{len(progress.letters)}/3", 20, (lx + 19, coin_y - 1), (238, 226, 190))
 
     # habilidades
-    y2 = 70
+    y2 = 72
     ax = 14
     if "dash" in player.abilities:
         _ability_dash(surf, ax, y2, player)
-        ax += 58
+        ax += 62
     if "double_jump" in player.abilities:
         _ability_icon(surf, ax, y2, "2x", "PULO", player.can_air_jump)
 
-    text(surf, "ESC: pausa · M: mapa", 20, (Display.WIDTH - 14, Display.HEIGHT - 22), Colors.UI_DIM, "topright")
+    # tempo de jogo e dicas (canto direito)
+    m, sec = divmod(int(progress.play_time), 60)
+    text(surf, f"{m:02d}:{sec:02d}", 30, (Display.WIDTH - 16, 10), Colors.UI_TEXT, "topright")
+    hint = "ESC pausa - Tab mapa - M som"
+    text(surf, hint, 20, (Display.WIDTH - 14, Display.HEIGHT - 22), Colors.UI_DIM, "topright")
+    if muted:
+        mx, my = Display.WIDTH - 40, 50
+        pygame.draw.polygon(surf, (200, 200, 210), [(mx, my + 5), (mx + 6, my + 5), (mx + 12, my), (mx + 12, my + 16),
+                                                    (mx + 6, my + 11), (mx, my + 11)])
+        pygame.draw.line(surf, (240, 80, 90), (mx + 15, my + 3), (mx + 24, my + 13), 3)
+        pygame.draw.line(surf, (240, 80, 90), (mx + 24, my + 3), (mx + 15, my + 13), 3)
 
     if room_name_timer > 0:
         alpha = min(1.0, room_name_timer / 0.4)
         col = tuple(int(c * alpha) for c in Colors.UI_TEXT)
-        text(surf, room_name, 30, (Display.WIDTH // 2, 22), col, "midtop", title=True)
+        text(surf, room_name, 34, (Display.WIDTH // 2, 16), col, "midtop", title=True)
     if fps is not None:
-        text(surf, f"FPS {fps:.0f}", 20, (Display.WIDTH - 14, 14), Colors.UI_DIM, "topright")
+        text(surf, f"FPS {fps:.0f}", 20, (Display.WIDTH - 14, 44), Colors.UI_DIM, "topright")
 
 
 def draw_boss_bar(surf, name, hp, max_hp):
-    w = 520
+    """Barra do chefe no topo central (não cobre o chão da arena)."""
+    w = 420
     x = (Display.WIDTH - w) // 2
-    y = Display.HEIGHT - 46
-    text(surf, name, 24, (Display.WIDTH // 2, y - 6), Colors.UI_TEXT, "midbottom")
-    pygame.draw.rect(surf, (40, 20, 24), (x, y, w, 12), border_radius=4)
-    pygame.draw.rect(surf, Colors.GUARDIAN, (x, y, int(w * max(0, hp) / max_hp), 12), border_radius=4)
-    pygame.draw.rect(surf, (20, 10, 12), (x, y, w, 12), 2, border_radius=4)
+    y = 46
+    text(surf, name, 24, (Display.WIDTH // 2, y - 4), Colors.UI_TEXT, "midbottom")
+    k = max(0.0, hp) / max_hp
+    pygame.draw.rect(surf, (12, 8, 14), (x - 3, y - 3, w + 6, 18), border_radius=5)
+    pygame.draw.rect(surf, (52, 22, 30), (x, y, w, 12), border_radius=3)
+    if k > 0:
+        fill = int(w * k)
+        pygame.draw.rect(surf, Colors.GUARDIAN, (x, y, fill, 12), border_radius=3)
+        pygame.draw.rect(surf, tuple(min(255, c + 70) for c in Colors.GUARDIAN), (x + 2, y + 2, max(0, fill - 4), 3))
+    # marca da metade (fase 2)
+    pygame.draw.line(surf, (230, 210, 170), (x + w // 2, y - 2), (x + w // 2, y + 13), 2)
+    pygame.draw.rect(surf, (200, 170, 100), (x - 3, y - 3, w + 6, 18), 2, border_radius=5)
 
 
 def _ability_icon(surf, x, y, big, small, ready):
-    rect = pygame.Rect(x, y, 52, 38)
+    rect = pygame.Rect(x, y, 56, 44)
     pygame.draw.rect(surf, (30, 34, 50), rect, border_radius=6)
     pygame.draw.rect(surf, Colors.UI_ACCENT if ready else Colors.UI_DIM, rect, 2, border_radius=6)
-    text(surf, big, 21, (rect.centerx, rect.y + 5), Colors.UI_TEXT if ready else Colors.UI_DIM, "midtop")
-    text(surf, small, 15, (rect.centerx, rect.bottom - 13), Colors.UI_DIM, "midtop")
+    text(surf, big, 20, (rect.centerx, rect.y + 3), Colors.UI_TEXT if ready else Colors.UI_DIM, "midtop")
+    text(surf, small, 15, (rect.centerx, rect.y + 22), Colors.UI_DIM, "midtop")
 
 
 def _ability_dash(surf, x, y, player):
-    rect = pygame.Rect(x, y, 52, 38)
+    rect = pygame.Rect(x, y, 56, 44)
     pygame.draw.rect(surf, (30, 34, 50), rect, border_radius=6)
     total = Dash.DURATION + player.dash_cooldown_time
     k = player.dash_cooldown / total if total else 0
@@ -203,8 +242,8 @@ def _ability_dash(surf, x, y, player):
         pygame.draw.rect(surf, (45, 60, 80), (rect.x, rect.bottom - h, rect.w, h), border_radius=6)
     ready = player.dash_ready
     pygame.draw.rect(surf, Colors.UI_ACCENT if ready else Colors.UI_DIM, rect, 2, border_radius=6)
-    text(surf, "SHIFT", 18, (rect.centerx, rect.y + 6), Colors.UI_TEXT if ready else Colors.UI_DIM, "midtop")
-    text(surf, "DASH", 15, (rect.centerx, rect.bottom - 13), Colors.UI_DIM, "midtop")
+    text(surf, "SHIFT", 18, (rect.centerx, rect.y + 3), Colors.UI_TEXT if ready else Colors.UI_DIM, "midtop")
+    text(surf, "DASH", 15, (rect.centerx, rect.y + 22), Colors.UI_DIM, "midtop")
 
 
 # ---------------------------------------------------------------------------

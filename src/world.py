@@ -12,6 +12,8 @@ Legenda:
     =  portão trancado até o chefe da sala ser derrotado
     D  porta trancada (abre com a chave da sala)   ~  água funda (perigo)
     N  personagem (lista `npcs` da sala, em ordem de leitura)
+    C  tábua que desaba pouco depois de pisada (volta depois)
+    k  caixa quebrável (solta moedas)
     0-9  porta (borda aberta)    *  item (lista `items` da sala, em ordem de leitura)
     P  início do jogo            B  banco      $  loja      R  ferreiro
     g c t f j s  inimigos        G  chefe
@@ -32,7 +34,8 @@ BOSS_LOCK = "="
 LOCKED = "D"
 WATER = "~"
 DOOR_CHARS = set("0123456789")
-ENTITY_CHARS = set("PB$RgctfjsG*N")
+ENTITY_CHARS = set("PB$RgctfjsG*Nk")
+CRUMBLE = "C"
 
 
 class Door:
@@ -49,7 +52,7 @@ class Door:
 
 
 class Room:
-    def __init__(self, room_id, name, zone, rows, items=(), npcs=(), key=None):
+    def __init__(self, room_id, name, zone, rows, items=(), npcs=(), key=None, movers=(), boss=None):
         widths = {len(row) for row in rows}
         if len(widths) != 1:
             raise ValueError(f"Sala {room_id}: linhas com larguras diferentes {sorted(widths)}")
@@ -92,6 +95,9 @@ class Room:
             raise ValueError(f"Sala {room_id}: {npc_index} 'N' no mapa, {len(self.npcs)} personagens definidos")
         self.key = key                 # flag do progresso que abre as portas 'D' desta sala
         self.door_unlocked = False
+        self.movers = list(movers)     # plataformas móveis: dicts com x0, y0, x1, y1 (tiles), w, speed
+        self.boss = boss               # id do chefe desta sala (ver chapter1.BOSSES)
+        self.crumbled = {}             # (tx, ty) -> segundos até voltar
         if len(self.items) != item_index:
             raise ValueError(f"Sala {room_id}: {item_index} '*' no mapa, {len(self.items)} itens definidos")
         for digit, cells in door_cells.items():
@@ -133,6 +139,8 @@ class Room:
             return self.fight_active
         if ch == BOSS_LOCK:
             return not self.boss_defeated
+        if ch == CRUMBLE:
+            return (tx, ty) not in self.crumbled
         if ch == LOCKED:
             return not self.door_unlocked
         return False
@@ -187,7 +195,7 @@ class WorldMap:
         self.rooms = {}
         for d in room_defs:
             self.add_room(Room(d["id"], d["name"], d["zone"], d["rows"], d.get("items", ()), d.get("npcs", ()),
-                               d.get("key")))
+                               d.get("key"), d.get("movers", ()), d.get("boss")))
         self.links = {}
         for a, b in links:
             self._link(a, b)

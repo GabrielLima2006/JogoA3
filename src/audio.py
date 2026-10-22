@@ -29,6 +29,9 @@ class Audio:
         self.volume = volume
         self.sounds = {}
         self.current_music = None
+        self.muted = False
+        self.music_volume = AC.MUSIC_VOLUME
+        self.sfx_volume = volume
         try:
             if not pygame.mixer.get_init():
                 pygame.mixer.init()
@@ -49,8 +52,30 @@ class Audio:
 
     def play(self, name):
         snd = self.sounds.get(name)
-        if snd is not None:
+        if snd is not None and not self.muted:
+            snd.set_volume(self.sfx_volume * AC.SFX_GAIN.get(name, 1.0))
             snd.play()
+
+    def toggle_mute(self):
+        self.muted = not self.muted
+        self._apply_music_volume()
+        return self.muted
+
+    def change_volume(self, which, delta):
+        """Ajusta 'music' ou 'sfx' em passos (0.0 a 1.0)."""
+        if which == "music":
+            self.music_volume = min(1.0, max(0.0, self.music_volume + delta))
+            self._apply_music_volume()
+        else:
+            self.sfx_volume = min(1.0, max(0.0, self.sfx_volume + delta))
+            self.play("ui_move")
+
+    def _apply_music_volume(self):
+        if self.enabled:
+            try:
+                pygame.mixer.music.set_volume(0.0 if self.muted else self.music_volume)
+            except pygame.error:
+                pass
 
     def play_music(self, filename, loops=-1):
         """Troca a música; não reinicia se a mesma já estiver tocando. None = silêncio."""
@@ -65,7 +90,7 @@ class Audio:
             if not os.path.isfile(path):
                 return
             pygame.mixer.music.load(path)
-            pygame.mixer.music.set_volume(AC.MUSIC_VOLUME)
+            pygame.mixer.music.set_volume(0.0 if self.muted else self.music_volume)
             pygame.mixer.music.play(loops, fade_ms=800)
         except pygame.error:
             pass

@@ -16,12 +16,13 @@ DEFAULT_BINDINGS = {
     "dash": [("key", pygame.K_LSHIFT)],
     "attack_quick": [("mouse", 1)],
     "attack_heavy": [("mouse", 3)],
-    "pause": [("key", pygame.K_ESCAPE)],
+    "pause": [("key", pygame.K_ESCAPE), ("key", pygame.K_p)],
+    "mute": [("key", pygame.K_m)],
     "up": [("key", pygame.K_w), ("key", pygame.K_UP)],
     "down": [("key", pygame.K_s), ("key", pygame.K_DOWN)],
     "heal": [("key", pygame.K_f)],
     "interact": [("key", pygame.K_w), ("key", pygame.K_UP)],
-    "map": [("key", pygame.K_m), ("key", pygame.K_TAB)],
+    "map": [("key", pygame.K_TAB)],
     # navegação de menus
     "menu_up": [("key", pygame.K_w), ("key", pygame.K_UP)],
     "menu_down": [("key", pygame.K_s), ("key", pygame.K_DOWN)],
@@ -42,8 +43,9 @@ CONTROLS_TEXT = [
     ("S", "descer da plataforma"),
     ("F (segurar)", "curar (gasta energia)"),
     ("W ou seta cima", "interagir (banco, loja)"),
-    ("M ou Tab", "mapa"),
-    ("ESC", "pausar / inventário"),
+    ("Tab", "mapa"),
+    ("M", "silenciar / ligar o som"),
+    ("ESC ou P", "pausar / inventário"),
 ]
 
 

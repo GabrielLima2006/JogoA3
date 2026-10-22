@@ -24,7 +24,7 @@ MARKS = {
     "̈": [(-1, 0), (1, 0)],                             # trema
 }
 CEDILLA = "̧"
-REPLACE = {"—": "-", "–": "-", "…": "...", "“": '"', "”": '"', "‘": "'", "’": "'"}
+REPLACE = {"·": "-", "•": "-", "—": "-", "–": "-", "…": "...", "“": '"', "”": '"', "‘": "'", "’": "'"}
 
 
 class PixelFont:
@@ -94,8 +94,8 @@ class PixelFont:
 
 def scale_for(size):
     """Converte o "tamanho em pontos" usado no código para um fator inteiro."""
-    if size <= 20:
+    if size <= 30:
         return 1
-    if size <= 46:
+    if size <= 56:
         return 2
     return 3

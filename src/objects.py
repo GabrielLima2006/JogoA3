@@ -7,6 +7,7 @@ import pygame
 
 from .config import Colors, Economy as EC, Physics as PH, World
 from .physics import Body, move_and_collide, rects_overlap
+from . import pixelart, sprites
 from .ui import text
 
 T = World.TILE
@@ -85,6 +86,20 @@ class ItemPickup:
 
     def draw(self, surf, cam_x, cam_y, time):
         x, y = self.x - cam_x, self.y - cam_y
+        bob = math.sin(time * 3 + self.t) * 3
+        if self.kind in ("food", "letter", "ability", "charm", "fragment"):
+            cy = int(y - 18 + bob)
+            glow_col = {"food": (255, 200, 120), "letter": (255, 240, 180), "ability": (120, 240, 255),
+                        "charm": (230, 150, 255), "fragment": (255, 90, 120)}[self.kind]
+            r = int(15 + 3 * math.sin(time * 5 + self.t))
+            halo = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
+            pygame.draw.circle(halo, glow_col + (60,), (r, r), r)
+            pygame.draw.circle(halo, glow_col + (90,), (r, r), r // 2)
+            surf.blit(halo, (int(x) - r, cy - r))
+            img = item_icon(self.kind, self.arg, time + self.t)
+            if img is not None:
+                surf.blit(img, img.get_rect(center=(int(x), cy)))
+                return
         if self.kind == "coins":
             pygame.draw.rect(surf, Colors.CHEST, (x - 14, y - 20, 28, 20), border_radius=3)
             pygame.draw.rect(surf, Colors.COIN, (x - 14, y - 14, 28, 3))
@@ -136,6 +151,15 @@ class Bench(Interactable):
 
     def draw(self, surf, cam_x, cam_y, time):
         x, y = self.x - cam_x, self.y - cam_y
+        ball = sprites.crop("objetos/bola_de_cristal.png", (14, 14, 68, 56))
+        if ball is not None:
+            # bola de cristal do "feiticeiro": pulsa com luz própria
+            r = int(30 + 4 * math.sin(time * 2.5))
+            halo = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
+            pygame.draw.circle(halo, (220, 140, 255, 50), (r, r), r)
+            surf.blit(halo, (int(x) - r, int(y) - 44 - r))
+            surf.blit(ball, ball.get_rect(midbottom=(int(x), int(y))))
+            return
         pygame.draw.rect(surf, Colors.BENCH, (x - 28, y - 16, 56, 6), border_radius=2)
         pygame.draw.rect(surf, Colors.BENCH, (x - 24, y - 10, 5, 10))
         pygame.draw.rect(surf, Colors.BENCH, (x + 19, y - 10, 5, 10))
@@ -154,6 +178,20 @@ class NPC(Interactable):
 
     def draw(self, surf, cam_x, cam_y, time):
         x, y = self.x - cam_x, self.y - cam_y
+        style = "cozinheira" if self.kind == "shop" else "mercador"
+        img = pixelart.human(style, "idle", (time * 0.5) % 1.0, -1)
+        if self.kind == "smith":
+            pygame.draw.rect(surf, (70, 70, 82), (x - 40, y - 14, 22, 14))     # bigorna
+            pygame.draw.rect(surf, (96, 96, 110), (x - 44, y - 19, 30, 6))
+        else:
+            crate = pixelart.crate()
+            surf.blit(crate, crate.get_rect(midbottom=(int(x + 26), int(y))))
+            for i, name in enumerate(("pao", "peixe")):
+                food = sprites.image("itens", name + ".png")
+                if food is not None:
+                    surf.blit(food, food.get_rect(midbottom=(int(x + 20 + i * 14), int(y - 24))))
+        surf.blit(img, img.get_rect(midbottom=(int(x), int(y) + 2)))
+        return
         breath = math.sin(time * 2) * 1.5
         body = pygame.Rect(0, 0, 28, int(40 + breath))
         body.midbottom = (int(x), int(y))
@@ -200,15 +238,30 @@ class Character(Interactable):
         self.w = 28
         self.prompt = data.get("prompt", "Conversar")
         if self.style == "corpo":
-            # deitada sobre a mesa: área de interação larga para examinar do chão
-            self.w, self.h = 170, 18
+            # caída no chão: área de interação um pouco maior para examinar
+            self.w, self.h = 90, 18
 
     def draw(self, surf, cam_x, cam_y, time):
         draw_character(surf, self.style, self.color, self.h, self.x - cam_x, self.y - cam_y, time)
 
 
 def draw_character(surf, style, color, height, x, foot_y, time=0.0, scale=1.0):
-    """Desenho provisório dos personagens (também usado no retrato do diálogo)."""
+    """Personagens em pixel art (também usados no retrato do diálogo)."""
+    img = None
+    if style == "corpo":
+        img = pixelart.corpse()
+    elif style in pixelart.STYLES:
+        img = pixelart.human(style, "idle", (time * 0.5) % 1.0, -1)
+    elif style == "rato":
+        img = pixelart.rat((time * 0.8) % 1.0, -1, 2, True, True)
+    elif style == "feiticeiro":
+        img = pixelart.sorcerer("idle", (time * 0.7) % 1.0, -1)
+    if img is not None:
+        k = max(1, int(round(scale)))
+        if k != 1:
+            img = pygame.transform.scale(img, (img.get_width() * k, img.get_height() * k))
+        surf.blit(img, img.get_rect(midbottom=(int(x), int(foot_y))))
+        return
     s = scale
     if style == "corpo":
         # caída sobre a mesa: corpo deitado + chapéu de capitã
@@ -246,3 +299,56 @@ def draw_character(surf, style, color, height, x, foot_y, time=0.0, scale=1.0):
     elif style == "cachecol":
         pygame.draw.rect(surf, (90, 60, 110), (body.x - 2 * s, body.y + 15 * s, w + 4 * s, 6 * s))
         pygame.draw.rect(surf, (90, 60, 110), (body.x + 3 * s, body.y + 18 * s, 6 * s, 14 * s))
+
+
+class Speaker:
+    """Quem fala num diálogo sem estar no cenário (ex.: chefe derrotado)."""
+    kind = "speaker"
+
+    def __init__(self, style, name):
+        self.style = style
+        self.data = {"name": name}
+        self.color = (200, 200, 200)
+        self.h = 44
+        self.char_id = style
+
+
+ICON_CACHE = {}
+
+
+def item_icon(kind, arg, time):
+    """Ícone de um item coletável (comida, carta, habilidade, amuleto, fragmento)."""
+    if kind == "food":
+        return sprites.image("itens", f"{arg}.png")
+    if kind == "ability":
+        frames = sprites.grid("objetos/habilidades.png", 32, 32)
+        if frames:
+            orb = frames[20 + int(time * 8) % 5]
+            icon = frames[4] if arg == "dash" else frames[13]
+            out = pygame.Surface((32, 32), pygame.SRCALPHA)
+            out.blit(orb, (0, 0))
+            out.blit(icon, (0, 0))
+            return pygame.transform.scale(out, (40, 40))
+    if kind == "fragment":
+        frames = sprites.grid("objetos/coracao.png", 32, 32)
+        if frames:
+            return frames[int(time * 10) % len(frames)]
+    key = (kind,)
+    if key in ICON_CACHE:
+        return ICON_CACHE[key]
+    s = pygame.Surface((26, 26), pygame.SRCALPHA)
+    if kind == "letter":
+        pygame.draw.rect(s, (238, 226, 190), (3, 4, 20, 18), border_radius=2)
+        pygame.draw.rect(s, (200, 180, 140), (3, 4, 20, 18), 1, border_radius=2)
+        for y in (9, 13, 17):
+            pygame.draw.line(s, (130, 110, 90), (7, y), (19, y))
+        pygame.draw.circle(s, (180, 40, 50), (19, 19), 4)              # selo
+    elif kind == "charm":
+        pygame.draw.line(s, (220, 200, 120), (13, 1), (13, 6), 1)
+        pygame.draw.polygon(s, (210, 120, 255), [(13, 6), (22, 13), (13, 24), (4, 13)])
+        pygame.draw.polygon(s, (250, 220, 255), [(13, 9), (17, 13), (13, 18), (9, 13)])
+    else:
+        return None
+    s = pixelart.outline(s)
+    ICON_CACHE[key] = s
+    return s

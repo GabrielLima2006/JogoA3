@@ -130,6 +130,10 @@ class Sim:
             self.play.items = []
         self.play.projectiles.clear()
         self.play.coins = []
+        room.crumbled.clear()
+        self.play.crumble_timers.clear()
+        self.play.riding = None
+        self.play.mover_ignore = 0.0
         p = self.p
         hp = p.hp
         energy = p.energy

@@ -1,227 +1,165 @@
-# Maré de Mentiras (título provisório)
+# Maré de Mentiras
 
-Trabalho A3 de Usabilidade Web e Jogos (USJT, 2026). É um híbrido de **metroidvania com
-investigação** a bordo de um navio, baseado no roteiro do grupo: pistas, maré subindo,
-credibilidade como vida e interrogatório como duelo.
+Metroidvania 2D de ação em pixel art, feito em Python com pygame-ce.
 
-**Andamento** (o plano completo está no cofre do Obsidian, em `Planos/Capítulo 1`; o guia para IAs
-colaboradoras está em `Projeto/Guia para IAs colaboradoras`, e o resumo em `AGENTS.md`):
-- [x] Etapa 1: menu principal, escolha de protagonista (ele ou ela), dificuldade, introdução, como jogar,
-  recordes e créditos.
-- [x] Etapa 2: o navio com 9 salas, personagens com diálogo, chave da cabine e porão alagado.
-- [ ] Etapas 3 a 8: pistas e caderno, maré, interrogatório, credibilidade e fechamento do capítulo.
+![Convés do navio](docs/screenshots/conves.png)
 
-## O navio (capítulo 1)
+## 1. Identificação
 
-```
-                       [Gávea]          <- meia-irmã, gaivotas
-                          | mastro (cordame)
-    [Tombadilho]------[Convés]------[Proa + cabine]   <- amigo; cama (salvar); baú = Passo ilusório
-     imediato             | escotilha
-    [Cabine capitã]=D=[Salão]--[Cozinha]--[Alojamento]
-     (trancada)        capitã    cozinheira   grumete
-                                   | alçapão
-                                [Porão]          <- ratos; trecho alagado exige Passo ilusório
-```
+| | |
+|---|---|
+| **Jogo** | Maré de Mentiras |
+| **Grupo** | [nome do grupo] |
+| **Disciplina** | Usabilidade, desenvolvimento web, mobile e jogos |
+| **Professor** | Elzo Brito dos Santos Filho |
+| **Instituição** | Universidade São Judas Tadeu (USJT), 2026 |
 
-- **W** perto de um personagem conversa com ele. Na primeira vez você ouve o depoimento completo;
-  depois, só uma fala curta.
-- **Examinar** a capitã no salão dá a **chave** da cabine dela.
-- **Cama na cabine do protagonista:** restaura a vida e salva o jogo.
-- **Personagens e falas:** ficam em `src/chapter1.py` (`CHARACTERS`, `DIALOGS`). As falas usam
-  `{feiticeiro}` e outros marcadores para o protagonista ele/ela.
-- **Mundo de cavernas:** o antigo continua só para os testes do motor (`progress.chapter = 0`).
+| Integrante | RA |
+|---|---|
+| [nome] | [RA] |
+| [nome] | [RA] |
+| [nome] | [RA] |
 
-## Fluxo de telas
+## 2. Descrição
 
-- **Menu:** Novo jogo, Continuar capítulo, Como jogar, Recordes, Créditos, Sair.
-  Continuar fica desabilitado sem save.
-- **Novo jogo:**
-  1. Escolha o protagonista (Ele ou Ela). Muda o visual e as palavras da história
-     (feiticeiro/feiticeira, passageiro/passageira).
-  2. Escolha a dificuldade. Ela define a duração da maré: Fácil 20 min, Normal 14 min,
-     Difícil 10 min.
-  3. Veja a introdução: 5 telas com texto digitado e o cartão do capítulo. Enter avança e
-     ESC pula.
-- **Recordes:** ficam em `saves/records.json`, com nota, tempo, credibilidade, pistas e
-  dificuldade.
-- **Créditos:** a lista `CREDITS` em `src/menus.py` tem um espaço para os nomes do grupo.
-- **Nome do jogo:** troque em `src/config.py`, na classe `Game`.
+Noite de tempestade. Você viaja no navio da capitã fingindo ser feiticeiro (ou feiticeira), mas seu
+único truque de verdade é enganar bem e saber lutar. Gente do porto vem desaparecendo, a capitã
+cai envenenada e a tripulação começa a agir como se estivesse enfeitiçada.
 
-## Instalação e execução
+Explore o navio e a ilha onde ele atraca, enfrente quatro chefes com estilos de luta diferentes e
+descubra quem está por trás da maldição da maré. Três cartas escondidas da capitã revelam a história
+inteira e liberam o final verdadeiro.
 
-```
+- **3 áreas:** navio (cabine, convés, porão, cordame), ilha (praia, floresta, ruínas) e Templo da Maré.
+- **4 chefes:** O Grumete (Rei dos Ratos), O Imediato (Cavaleiro Rubro), A Irmã da Capitã (Lâmina
+  da Tempestade) e o chefe final, O Melhor Amigo (Feiticeiro da Maré). Todos têm duas fases.
+- **Habilidades** que abrem caminho: dash (Passo ilusório) e pulo duplo (Levitação).
+- **Parkour:** plataformas móveis, tábuas que desabam, espinhos, água e saltos que exigem as habilidades.
+- **Itens:** moedas, comida que cura, amuletos, fragmentos de vida, loja e ferreiro.
+- **Dois protagonistas** (ele ou ela) e **três dificuldades**.
+- **Dois finais:** comum e verdadeiro (com as 3 cartas).
+
+## 3. Como rodar
+
+Requisitos: Python 3.10 ou mais novo.
+
+```bash
 pip install -r requirements.txt
+```
+
+```bash
 python main.py
 ```
 
-No Windows, também dá para abrir com dois cliques em `Jogar.bat`.
+No Windows também dá para usar o executável da pasta `dist/MareDeMentiras/` (ver
+[Gerar o executável](#gerar-o-executável)) ou dar dois cliques em `Jogar.bat`.
 
-Testes automatizados (sem abrir janela, cerca de 2 minutos):
-
-```
-python tests/run_tests.py
-```
-
-## Controles
+## 4. Controles
 
 | Tecla | Ação |
 |---|---|
-| A / D ou setas ← → | mover |
-| Espaço | pular (segure para ir mais alto) |
-| Espaço no ar | pulo duplo, depois de encontrá-lo |
-| Shift esquerdo | dash, depois de encontrá-lo |
-| Botão esquerdo do mouse | ataque rápido |
-| Botão direito do mouse | ataque pesado |
-| W + ataque | golpe para cima (W + A/D = diagonal para cima) |
-| S + ataque no ar | golpe para baixo (S + A/D = diagonal para baixo); ao acertar inimigo, projétil ou espinho, **quica** e recupera pulo duplo e dash |
-| S (tocar) | descer de plataforma de mão única (as de madeira) |
-| F (segurar) | curar 1 de vida gastando energia (parado no chão) |
-| W ou seta ↑ | interagir: sentar no banco, falar com a loja ou o ferreiro |
-| M ou Tab | mapa |
-| ESC | pausa e inventário |
-| F3 | (desenvolvimento) hitboxes, FPS e estado do jogador |
+| A / D ou setas | Mover |
+| Espaço | Pular (segurar = pulo mais alto) |
+| Espaço no ar | Pulo duplo (depois de encontrar) |
+| Shift esquerdo | Dash (depois de encontrar) |
+| Botão esquerdo do mouse | Ataque rápido |
+| Botão direito do mouse | Ataque pesado |
+| W / S + ataque | Golpe para cima, na diagonal ou para baixo (no ar, quica em inimigos e espinhos) |
+| S | Descer de plataformas finas |
+| F (segurar) | Curar (gasta o orbe de foco) |
+| W ou seta para cima | Interagir (bola de cristal, loja, personagens) |
+| Tab | Mapa |
+| M | Ligar/desligar o som |
+| ESC ou P | Pausar (continuar, som, reiniciar, menu) |
 
-Nos menus: W/S ou setas para navegar, Enter/Espaço ou clique para escolher, ESC para sair.
-Sem W/S o golpe sai para a frente, como antes. No chão, S + ataque também sai para a frente.
-O mapeamento fica em `src/input.py` (`DEFAULT_BINDINGS`) e pode ser trocado.
+Os controles também aparecem no jogo, em **Como jogar** e na tela de pausa.
 
-## Como o jogo funciona
+## 5. Regras
 
-**Progressão.** O jogo começa só com pulo e ataques.
-- O **Guardião** (chefe da Arena) protege o **Dash**.
-- Com o dash você atravessa o fosso de 9 tiles da Vila e chega aos Jardins. No fim deles
-  está o **Pulo duplo**.
-- Com o pulo duplo você alcança a plataforma alta da Vila, que leva às Alturas. Lá estão
-  segredos, minérios e amuletos.
+- **Objetivo:** vencer o chefe final no Templo da Maré. Vencer os chefes anteriores libera habilidades
+  e caminhos novos.
+- **Vida:** cada golpe recebido tira um coração. Com zero corações você **perde**: volta à última
+  bola de cristal e deixa parte das moedas para trás.
+- **Cura:** golpes acertados enchem o orbe de foco; segure **F** para trocar foco por um coração.
+  Comida recupera 2 corações.
+- **Salvar:** a bola de cristal (W) salva o jogo e recupera a vida.
+- **Perigos:** espinhos e água ferem e devolvem você ao último chão firme. Tábuas rachadas desabam
+  pouco depois de pisadas.
+- **Vitória:** derrotar o chefe final. Com as 3 cartas da capitã você vê o **final verdadeiro**.
+- **Pontuação:** na tela final aparecem tempo, quedas, cartas, pontos e uma nota (S, A, B ou C).
+  O HUD mostra corações, moedas, cartas e o tempo de jogo o tempo todo.
 
-Os testes automáticos confirmam que cada trecho é alcançável com as habilidades certas e
-impossível sem elas.
+## 6. Divisão de tarefas
 
-**Energia e cura.** Cada golpe que acerta enche o orbe de energia (rápido +11, pesado +16).
-Segurar F parado no chão por 0,9 s gasta 33 de energia e cura 1 de vida. Durante a cura o
-personagem fica parado, e levar dano interrompe.
+| Integrante | Tarefas |
+|---|---|
+| [nome] | [ex.: programação da movimentação e combate] |
+| [nome] | [ex.: level design e roteiro] |
+| [nome] | [ex.: arte, sons e créditos] |
 
-**Bancos.** Aperte W perto de um banco para sentar.
-- A vida é restaurada, o banco vira o ponto de reaparecimento e o jogo é salvo.
-- Os inimigos da sala voltam.
-- No banco você equipa e desequipa amuletos.
+## 7. Créditos
 
-**Moedas.** Os inimigos soltam moedas. Ao morrer, todas as moedas ficam numa bolsa no último
-lugar seguro. Encoste nela para recuperar. Se morrer de novo antes disso, perde a bolsa.
+Todos os assets de terceiros são gratuitos. Autor, link e licença de cada um estão em
+[`assets/CREDITOS.md`](assets/CREDITOS.md) e também aparecem na tela **Créditos** do jogo.
 
-**Loja (Vila).** Vende mapa, amuletos (Bússola, Ímã, Foco Rápido), um fragmento de vida e um
-entalhe (+1 espaço de amuleto).
-
-**Ferreiro (Vila).** Melhora a arma em 3 níveis. Cada nível dá +1 de dano no ataque rápido e
-+2 no pesado. Os níveis 2 e 3 também exigem minério.
-
-**Amuletos** (equipados no banco, cada um custa espaços; você começa com 3):
-
-| Amuleto | Custo | Efeito | Onde |
-|---|---|---|---|
-| Lâmina Longa | 2 | golpes alcançam 30% mais longe | segredo nos Túneis |
-| Força Bruta | 3 | +50% de dano | Câmara (Alturas) |
-| Ímã | 1 | atrai moedas de longe | loja |
-| Foco Rápido | 2 | cura 40% mais rápida | loja |
-| Vigor | 2 | +1 de vida máxima | segredo no Ninho |
-| Passo de Vento | 2 | dash mais longo e recarga menor | Mirante |
-| Coletor | 1 | +50% de energia por acerto | Galeria |
-| Bússola | 1 | mostra sua posição no mapa | loja |
-
-**Fragmentos de vida.** Quatro fragmentos dão +1 de vida máxima. Há três no mapa e um na loja.
-
-**Segredos.** Algumas paredes têm uma rachadura sutil. Ataque para quebrá-las.
-
-**Mapa.** Com o mapa comprado, M ou Tab mostra as salas já visitadas, com bancos, loja e
-ferreiro. A Bússola equipada mostra onde você está.
-
-**Save.** O jogo salva em `saves/save.json` ao sentar no banco, pegar itens, comprar,
-quebrar paredes, vencer o chefe e morrer. No menu, "Continuar" volta ao último banco.
-
-## Inimigos
-
-| Inimigo | Comportamento | Dica |
+| Asset | Autor | Uso |
 |---|---|---|
-| Patrulheiro (laranja) | anda e vira em paredes e bordas | — |
-| Perseguidor (roxo) | dá um pulinho com "!" e corre atrás de você no mesmo andar | — |
-| Torreta (verde-oliva) | pisca e atira | golpes destroem os projéteis |
-| Voador (verde) | flutua; ao ver você, avisa e persegue pelo ar | — |
-| Saltador (amarelo) | agacha (aviso) e salta na sua direção | — |
-| Escudeiro (azul) | o escudo frontal bloqueia o ataque rápido e empurra você | o **pesado** quebra a guarda; pelas costas o rápido funciona |
-| **Guardião** (chefe) | investida, salto com ondas de choque e cuspe em leque | — |
+| Super Pixel Effects Gigapack (Free) | Will Tice / unTied Games | Efeitos de golpe, explosões, fumaça, fogo, raios |
+| Metroidvania Forge | [CONFIRMAR autor] | Herói, Cavaleiro Rubro, slime, tiles da ilha, objetos, sons e músicas |
+| Feiticeira (idle & walk) | [CONFIRMAR autor] | Protagonista "Ela" |
+| Dark VFX 01–02 / Smear VFX 01 | [CONFIRMAR autor] | Magias do vilão e rastro dos golpes |
+| UIBundleFree (Mediavel) | [CONFIRMAR autor] | Interface |
+| pixelfood | Ghostpixxells | Comidas (itens de cura) |
+| Tiny Texture Pack 1 e 2 | Screaming Brain Studios (CC0) | Paredes de madeira do navio |
+| Fonte Alagard | Hewett Tsoi | Todos os textos (os acentos são desenhados pelo jogo) |
 
-O Guardião acorda quando você se aproxima, e o portão fecha atrás de você.
-- Na **investida**, ele corre até bater na parede e fica tonto: é a hora de punir.
-- No **salto**, cai soltando ondas de choque no chão.
-- No **cuspe**, solta projéteis em leque.
+Os personagens do navio (capitã, grumete, imediato, irmã, amigo, mercador), o Rei dos Ratos, o
+Feiticeiro da Maré, os ratos, as gaivotas, os canhões e os ícones de itens foram desenhados no código
+(`src/pixelart.py`).
 
-Abaixo de 50% de vida ele fica mais rápido e agressivo.
+## 8. Tecnologia
 
-## Mapa (13 salas)
+- **Linguagem:** Python 3.12
+- **Biblioteca:** pygame-ce 2.5
+- **Executável:** PyInstaller
+- **Testes:** suíte própria sem dependências (`python tests/run_tests.py`), que simula o jogo sem
+  janela e confere física, salas, portas, chefes, menus e se todos os saltos obrigatórios são possíveis
+  com as habilidades de cada trecho.
 
-```
-                [Câmara]──[Picos]──[Mirante]               [Santuário 2]
-                             │ (pulo duplo)                  (Pulo duplo)
-[Santuário]─[Arena]─[Galeria]─[Túneis]   │                       │
-  (Dash)   (Guardião) (banco)     │       │                       │
-                      [Entrada]──[  Vila  ]──(dash)──[Descida]─[Jardim]─[Ninho]
-                                 banco/loja/ferreiro            (banco)
-```
-Túneis e Picos ficam acima da Vila (poços à esquerda e à direita); o Santuário 2 fica acima do Ninho.
-
-As salas ficam em `src/rooms.py`, desenhadas com um pequeno construtor (`Grid`). As portas
-são dígitos na borda da sala, e `ROOM_LINKS` liga as portas entre si. A posição de cada sala
-no mapa-múndi é calculada automaticamente a partir das ligações.
-
-## Estrutura do código
+Estrutura:
 
 ```
-main.py            janela, loop principal, troca de estados
-src/config.py     TODOS os parâmetros de balanceamento
-src/input.py      ações remapeáveis
-src/physics.py    colisão por eixos com sub-passos (anti-túnel)
-src/player.py     movimento, pulo, dash, golpes, energia, cura, atributos por amuleto
-src/combat.py     golpes, acertos, defesa do escudo, paredes quebráveis, projéteis
-src/enemies.py    patrulheiro, perseguidor, torreta, voador, saltador, escudeiro, Guardião
-src/world.py      salas, tiles, portas, layout do mapa-múndi
-src/rooms.py      dados das 13 salas e ligações
-src/objects.py    moedas, itens, banco, loja/ferreiro, bolsa perdida
-src/progress.py   inventário, amuletos, loja, save/load em JSON
-src/camera.py     câmera suave
-src/effects.py    partículas, tremor, hitstop
-src/ui.py         HUD, inventário, mapa
-src/menus.py      menu, novo jogo, introdução, como jogar, recordes, créditos
-src/records.py    recordes em JSON
-src/states.py     partida, pausa, mapa, banco, loja, mensagem, morte
-tests/             testes automatizados
+main.py              ponto de entrada (estados: menu, jogo, pausa, finais)
+src/                 código do jogo (física, jogador, inimigos, chefes, salas, interface)
+assets/img/          imagens (personagens, chefes, efeitos, tiles, objetos, interface)
+assets/sons/         efeitos sonoros e músicas
+assets/fonts/        fonte
+tests/               testes automáticos
+docs/screenshots/    capturas de tela do README
 ```
 
-## Movimento e combate (inalterados — aprovados)
+## 9. Uso de IA
 
-- Física em passo fixo de 120 Hz, igual em qualquer FPS.
-- Pulo variável (cerca de 4 tiles), coyote time de 100 ms, jump buffer de 130 ms e pulo duplo
-  de cerca de 3 tiles.
-- Dash: cerca de 175 px, recarga de 0,45 s, um por pulo no ar, invulnerável durante o dash.
-- Ataque rápido: 40/90/130 ms. Ataque pesado: 240/120/300 ms, com mais alcance, empurrão e
-  atordoamento.
-- Regras: um golpe por vez, cliques ficam guardados por 160 ms e o dash cancela a preparação
-  ou a recuperação de um golpe.
+[O grupo vai preencher esta seção: quais partes foram feitas com ajuda de IA, quais ferramentas
+foram usadas e como o grupo revisou o resultado.]
 
-O dano base foi dobrado (rápido 2, pesado 5) para abrir espaço para os upgrades do ferreiro.
-A vida dos inimigos subiu na mesma proporção, então o número de golpes para derrotar cada um
-continua o mesmo.
+## 10. Screenshots
 
-## O que os testes cobrem
+| | |
+|---|---|
+| ![Menu](docs/screenshots/menu.png) | ![Porão](docs/screenshots/porao.png) |
+| ![Chefe: Cavaleiro Rubro](docs/screenshots/chefe_cavaleiro.png) | ![Templo da Maré](docs/screenshots/templo.png) |
 
-`tests/run_tests.py` roda mais de 200 verificações:
-- **Mecânica**: movimento, pulo, coyote, buffer, colisões, dash, pulo duplo, combate, dano,
-  inimigos e FPS. Roda em salas-laboratório fixas.
-- **Mundo**: cada porta leva à sala certa e o jogador se firma do outro lado. Uma busca
-  automática prova que todo salto obrigatório é alcançável com as habilidades daquele ponto
-  do jogo e que os bloqueios funcionam sem elas.
-- **Progressão**: itens, habilidades, moedas, bolsa na morte, energia e cura, banco, amuletos,
-  loja, ferreiro, parede secreta, escudeiro, voador, saltador e cada ataque do chefe. Também
-  vitória sobre o chefe, save corrompido, Continuar, mapa, pausa e desenho de todas as telas.
+## Gerar o executável
 
-A sensação de controle e a dificuldade do chefe precisam de teste com as mãos.
+```bash
+pip install pyinstaller
+```
+
+```bash
+python -m PyInstaller --noconfirm --windowed --name MareDeMentiras --add-data "assets;assets" main.py
+```
+
+O jogo fica em `dist/MareDeMentiras/MareDeMentiras.exe`. Para enviar ao grupo, compacte a pasta
+`dist/MareDeMentiras` inteira em um .zip. O save e os recordes ficam na pasta `saves/` ao lado do
+executável.
