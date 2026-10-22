@@ -4,6 +4,12 @@ Metroidvania 2D de ação em pixel art, feito em Python com pygame-ce.
 
 ![Convés do navio](docs/screenshots/conves.png)
 
+## ▶ Baixar e jogar (Windows)
+
+Baixe **MareDeMentiras.exe** em [Releases](https://github.com/GabrielLima2006/JogoA3/releases/latest)
+e dê dois cliques. Não precisa instalar nada. Se o Windows avisar "O Windows protegeu o computador",
+clique em **Mais informações** e depois em **Executar assim mesmo** (o executável não é assinado).
+
 ## 1. Identificação
 
 | | |
