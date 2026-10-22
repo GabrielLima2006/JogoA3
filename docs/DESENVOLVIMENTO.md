@@ -62,6 +62,31 @@ habilidades daquele trecho, e impossível antes delas.
 - **Entrega A3:** README completo, créditos, capturas de tela, executável e release no GitHub.
 - **Protagonista única, dash inicial, animações novas e elenco no estilo dela.**
 
+## Próximos passos
+
+Direção geral: o jogo é **inspirado** em Hollow Knight (exploração, bancos, amuletos, golpe para baixo com
+quique), mas **não pode ser uma cópia**. Cada sistema e cada chefe precisa ter identidade própria ligada ao
+navio, à maré e à história da feiticeira que finge ser maga.
+
+1. **Corrigir modelos no jogo:** revisar personagens que ficaram estranhos em cena (chapéus, cabelo curto,
+   cores de pele, tamanhos, restos de pixels da espada original), o chefe final (ainda no estilo antigo) e a
+   escala dos chefes em relação à protagonista.
+2. **Fluidez da movimentação:** mais quadros de transição (virar, começar e parar de correr, subir/descer no
+   ar, aterrissar), sem mudar os valores de física aprovados.
+3. **Melhorar animações:** golpes com mais quadros e rastro, cura, dano e morte mais expressivos, idle com
+   variações; inimigos e NPCs com reações próprias.
+4. **Golpe na diagonal:** a mira diagonal (W + A/D + ataque) continua na lógica, mas usa a pose de golpe para
+   cima. Criar quadros próprios da diagonal e conferir o alcance do golpe.
+5. **Level design mais vivo:** NPCs andando e reagindo, animais, objetos que balançam com o navio, água com
+   ondas, luz das lanternas, partículas (respingos, folhas, poeira), mais caminhos secretos e salas com
+   identidade visual própria.
+6. **Chefes com identidade própria:** rever os padrões de ataque para não lembrarem chefes de Hollow Knight.
+   Ideias: o Rei dos Ratos usar o porão alagado (sobe e desce a água), o Cavaleiro Rubro lutar nas vergas
+   balançando com o vento, a Irmã da Capitã usar canhões e cordas do navio, o Feiticeiro da Maré controlar
+   a maré da arena e criar ilusões (tema da mentira).
+7. **Menu de amuletos:** tela própria, com ícones desenhados, descrição, custo e espaços livres, equipar e
+   desequipar com mouse e teclado, e prévia do efeito.
+
 ## Pendências
 
 - Nomes e RA dos integrantes, divisão de tarefas e seção "Uso de IA" no README.

@@ -60,6 +60,17 @@ Leia isto antes de mexer no jogo. Histórico em [[Registro de alterações]]; de
    Altura confortável de pulo simples: 3 tiles. 4+ exige pulo duplo.
 5. Ao terminar: atualizar este guia e o [[Registro de alterações]].
 
+## Próximos passos (pedidos do Gabriel, 2026-10-22)
+Detalhes em `jogo/docs/DESENVOLVIMENTO.md` → "Próximos passos". Regra geral: inspirado em Hollow Knight, **sem copiar**.
+1. Corrigir modelos no jogo (chapéus, cabelo, peles, tamanhos, restos da espada, chefe final no estilo antigo).
+2. Fluidez da movimentação: mais quadros de transição (virar, parar, subir/descer no ar), sem mexer na física aprovada.
+3. Melhorar animações (golpes, cura, dano, morte, idle; inimigos e NPCs).
+4. Golpe na diagonal: lógica existe, falta animação própria (hoje usa a pose "para cima").
+5. Level design mais vivo: NPCs andando, animais, objetos balançando, água com ondas, partículas, segredos.
+6. Chefes com identidade própria (não parecer cópia de chefes do Hollow): água no Rei dos Ratos, vergas e vento
+   no Cavaleiro, canhões e cordas na Irmã, maré e ilusões no Feiticeiro.
+7. Menu de amuletos novo: tela própria, ícones, custo, espaços, mouse e teclado, prévia do efeito.
+
 ## Pendências
 - Grupo: nomes/RA, divisão de tarefas, seção de IA, links e licenças `[CONFIRMAR]` (README e `assets/CREDITOS.md`, lista `CREDITS` em `src/menus.py`).
 - Testes com jogadores reais: dificuldade dos chefes, preços da loja, textos.

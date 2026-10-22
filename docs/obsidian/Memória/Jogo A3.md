@@ -62,4 +62,8 @@ verdadeiro/comum, resultado). Arte: mistura de assets do itch.io + pixel art por
 GabrielLima2006/JogoA3, commits só em nome do Gabriel. Seção "Uso de IA" do README: o grupo decide depois.
 Detalhes e pendências em [[Guia para IAs colaboradoras]].
 
+### Próximos passos pedidos (2026-10-22)
+Modelos no jogo, fluidez, animações, golpe diagonal com animação, level design vivo, chefes sem cópia do
+Hollow, menu de amuletos. Lista completa em [[Guia para IAs colaboradoras]].
+
 Ver também: [[Gabriel]] · Voltar: [[Cérebro]]
