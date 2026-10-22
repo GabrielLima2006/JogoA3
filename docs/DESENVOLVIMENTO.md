@@ -62,6 +62,14 @@ habilidades daquele trecho, e impossível antes delas.
 - **Entrega A3:** README completo, créditos, capturas de tela, executável e release no GitHub.
 - **Protagonista única, dash inicial, animações novas e elenco no estilo dela.**
 
+## Correções pendentes (prioridade)
+
+- **Loop de morte na água:** quando a jogadora está numa plataforma móvel ou numa tábua que desaba e cai na
+  água/espinhos, o jogo devolve ao "último chão firme", que era a própria plataforma/tábua. Ela já não está
+  lá, então a jogadora cai de novo e entra em loop. **Decisão do Gabriel:** ao cair em água ou espinhos,
+  voltar sempre ao **último checkpoint** (bola de cristal). Conferir também a perda de vida nessa volta e
+  cobrir com teste (cair do porão alagado e das tábuas do porão).
+
 ## Próximos passos
 
 Direção geral: o jogo é **inspirado** em Hollow Knight (exploração, bancos, amuletos, golpe para baixo com

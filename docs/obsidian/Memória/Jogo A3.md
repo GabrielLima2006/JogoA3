@@ -62,6 +62,9 @@ verdadeiro/comum, resultado). Arte: mistura de assets do itch.io + pixel art por
 GabrielLima2006/JogoA3, commits só em nome do Gabriel. Seção "Uso de IA" do README: o grupo decide depois.
 Detalhes e pendências em [[Guia para IAs colaboradoras]].
 
+### Correção pendente (2026-10-22)
+Cair em água/espinhos deve voltar ao último checkpoint (hoje volta ao último chão firme e pode entrar em loop).
+
 ### Próximos passos pedidos (2026-10-22)
 Modelos no jogo, fluidez, animações, golpe diagonal com animação, level design vivo, chefes sem cópia do
 Hollow, menu de amuletos, nomes dos personagens, arma de fogo com mira no cursor. Lista completa em [[Guia para IAs colaboradoras]].

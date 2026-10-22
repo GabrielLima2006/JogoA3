@@ -60,6 +60,11 @@ Leia isto antes de mexer no jogo. Histórico em [[Registro de alterações]]; de
    Altura confortável de pulo simples: 3 tiles. 4+ exige pulo duplo.
 5. Ao terminar: atualizar este guia e o [[Registro de alterações]].
 
+## Correção pendente (prioridade)
+- **Loop de morte na água/espinhos:** o retorno vai para o "último chão firme", que pode ser plataforma móvel
+  ou tábua que desabou; a jogadora cai de novo sem parar. Gabriel decidiu: cair em água/espinhos leva sempre
+  ao **último checkpoint** (bola de cristal). Fazer com teste.
+
 ## Próximos passos (pedidos do Gabriel, 2026-10-22)
 Detalhes em `jogo/docs/DESENVOLVIMENTO.md` → "Próximos passos". Regra geral: inspirado em Hollow Knight, **sem copiar**.
 1. Corrigir modelos no jogo (chapéus, cabelo, peles, tamanhos, restos da espada, chefe final no estilo antigo).
