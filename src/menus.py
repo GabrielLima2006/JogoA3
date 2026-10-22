@@ -216,7 +216,7 @@ def draw_protagonist(surf, key, x, foot_y, scale=2, t=0.0, facing=1):
     if frame is None:
         return
     flip = (facing < 0) == skin.faces_right
-    ax = skin.anchor[0]
+    ax = skin.anchor_x("idle")
     sprites.blit_anchor(surf, frame, x, foot_y, (ax, frame.get_height() - 1), flip=flip, scale=scale)
 
 

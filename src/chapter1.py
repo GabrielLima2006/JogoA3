@@ -5,12 +5,12 @@ Mapa (portas pelos dígitos na borda; ver world.py):
                 [Cordame 2]──[Gávea: CHEFE 2]
                      │
                 [Cordame 1]
-                     │ (precisa do Passo ilusório)
+                     │ (precisa da Levitação)
    [Cabine]──[Convés (hub)]══D══[Praia]──[Floresta]──[Ruínas: CHEFE 3]──[Templo]──[Altar: FINAL]
                      │                        (D abre quando o navio atraca, depois do chefe 2)
                 [Porão 1]──[Porão 2]──[Toca: CHEFE 1]
 
-Habilidades: Passo ilusório (dash, chefe 1) · Levitação (pulo duplo, chefe 2).
+Habilidades: Passo ilusório (dash) desde o início · Levitação (pulo duplo, chefe 1).
 Cartas da capitã (3) escondidas: com as três, o final verdadeiro.
 """
 
@@ -34,9 +34,9 @@ def room_conves():
     g.door("W", 14, 17, "1").door("E", 14, 17, "4")
     g.rect(70, 14, 70, 17, "D")               # prancha: só abre quando o navio atraca
     g.clear(20, 18, 22, 21).door("S", 20, 22, "2")      # escotilha -> porão
-    # cordame do mastro: o último salto (7 tiles) exige o Passo ilusório
-    g.hline(24, 28, 15, "-").hline(19, 23, 12, "-").hline(24, 28, 9, "-").hline(19, 23, 6, "-")
-    g.hline(31, 36, 4, "-").door("N", 33, 36, "3")
+    # cordame do mastro: o último degrau (5 tiles acima) exige a Levitação (pulo duplo)
+    g.hline(24, 28, 15, "-").hline(19, 23, 12, "-").hline(24, 28, 9, "-")
+    g.hline(28, 36, 4, "-").door("N", 33, 36, "3")
     g.rect(44, 16, 45, 17).rect(54, 17, 55, 17)         # caixotes
     g.put(8, 17, "N").put(30, 17, "N")                  # capitã (corpo) e o amigo
     g.put(13, 17, "$").put(62, 17, "R")
@@ -92,7 +92,7 @@ def room_toca():
 
 
 # ---------------------------------------------------------------------------
-# Área 2 — Cordame (precisa do Passo ilusório)
+# Área 2 — Cordame (precisa da Levitação)
 # ---------------------------------------------------------------------------
 
 def room_cordame1():
@@ -237,6 +237,7 @@ ROOM_LINKS = [
 ]
 
 START_ROOM = "cabine"
+START_ABILITIES = ("dash",)   # o Passo ilusório é o truque da protagonista desde o início
 
 
 # ---------------------------------------------------------------------------
@@ -280,7 +281,7 @@ LETTERS = {
 # id -> classe em bosses.py, recompensa, falas de apresentação e de derrota
 BOSSES = {
     "rei_rato": {
-        "reward": ("ability", "dash"),
+        "reward": ("ability", "double_jump"),
         "speaker": "grumete",
         "intro": "O tônico... ele disse que ia acalmar a capitã! E agora... os ratos me obedecem!",
         "after": [
@@ -289,7 +290,7 @@ BOSSES = {
         ],
     },
     "cavaleiro": {
-        "reward": ("ability", "double_jump"),
+        "reward": ("fragment", None),
         "flag": "atracado",
         "speaker": "imediato",
         "intro": "Ele me prometeu este navio! A armadura rubra é o preço, e eu pago!",

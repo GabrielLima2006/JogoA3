@@ -534,11 +534,16 @@ class Player(Body):
             tint = (255, int(255 - 70 * k), int(255 - 150 * k), 255)
         elif self.dashing:
             tint = (190, 230, 255, 255)
-        ax = skin.anchor[0]
+        ax = skin.anchor_x(name)
         ay = frame.get_height() - 1
         fx = self.cx - cam_x
         fy = self.bottom - cam_y
-        pose = self._attack_pose(atk) if (atk is not None and self.alive and skin.procedural_attacks) else None
+        pose = None
+        if self.alive:
+            if skin.procedural_attacks:
+                pose = self._attack_pose(atk) if atk is not None else self._motion_pose()
+            elif skin.motion_lean and atk is None and name == "run":
+                pose = self._motion_pose()
         if pose is not None:
             lean, shift, sx, sy = pose
             img = sprites.variant(frame, flip, white, 1, tint)
@@ -546,8 +551,10 @@ class Player(Body):
             h = max(1, round(frame.get_height() * sy * self.scale_y))
             img = pygame.transform.scale(img, (w, h))
             pivot_x = (frame.get_width() - 1 - ax if flip else ax) * w / frame.get_width()
-            _blit_rotated(surf, img, (fx + shift * atk.facing, fy), (pivot_x, h - 1), -lean * atk.facing)
-            self._draw_cast_glow(surf, fx + shift * atk.facing, fy, atk)
+            face = atk.facing if atk is not None else self.facing
+            _blit_rotated(surf, img, (fx + shift * face, fy), (pivot_x, h - 1), -lean * face)
+            if atk is not None:
+                self._draw_cast_glow(surf, fx + shift * face, fy, atk)
         elif abs(self.scale_x - 1) > 0.03 or abs(self.scale_y - 1) > 0.03:
             # achatar/esticar (pulo e aterrissagem) mantendo os pés no chão
             w = max(1, int(frame.get_width() * self.scale_x))
@@ -587,6 +594,21 @@ class Player(Body):
         e = (1 - k) ** 2                # recuperação: volta ao normal
         return tuple(p * e if i < 2 else 1 + (p - 1) * e for i, p in enumerate(peak))
 
+    def _motion_pose(self):
+        """Corpo reage ao movimento (para quem tem poucos quadros): inclina na corrida,
+        estica no dash, joga para trás ao levar dano e acompanha a velocidade no ar."""
+        speed = P.RUN_SPEED
+        k = max(-1.0, min(1.0, self.vx / speed)) * self.facing   # >0: indo para onde olha
+        if self.dashing:
+            return (12, 2, 1.14, 0.9)
+        if self.hurt_lock > 0:
+            return (-12, -2, 1.0, 1.0)
+        if not self.on_ground:
+            return (7 * k + (3 if self.vy > 0 else -2), 0, 1.0, 1.0)
+        if abs(self.vx) > 20:
+            return (5 * k, 0, 1.0, 1.0)
+        return None
+
     def _draw_cast_glow(self, surf, x, foot_y, atk):
         """Brilho de magia na mão durante o golpe."""
         if atk.phase != "active":
@@ -611,7 +633,7 @@ class Player(Body):
             return
         flip = (self.facing < 0) if skin.faces_right else (self.facing > 0)
         img = sprites.variant(frame, flip, False, 1, (120, 200, 255, 255))
-        ax = skin.anchor[0]
+        ax = skin.anchor_x("dash")
         if flip:
             ax = frame.get_width() - 1 - ax
         rect = (self.cx - ax, self.bottom - frame.get_height() + 1, frame.get_width(), frame.get_height())

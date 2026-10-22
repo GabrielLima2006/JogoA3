@@ -52,6 +52,7 @@ class PlayState(State):
         if self.progress.chapter == 1:
             from . import chapter1
             self.story = chapter1
+            self.progress.abilities |= set(chapter1.START_ABILITIES)   # o dash já vem desde o começo
         self._apply_progress_to_world()
         self.effects = EffectSystem()
         self.projectiles = ProjectileSystem()

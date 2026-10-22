@@ -20,6 +20,10 @@ class Skin:
     anchor = (0, 0)
     faces_right = True
     procedural_attacks = False   # True: pose de golpe gerada por código (sem quadros de ataque)
+    motion_lean = False
+
+    def anchor_x(self, name):
+        return self.anchor[0]
     scale = 1
 
     def anims(self):
@@ -29,6 +33,10 @@ class Skin:
         if not hasattr(self, "_anims"):
             self._anims = self.anims()
         return self._anims.get(name) or self._anims["idle"]
+
+    def has(self, name):
+        self.get("idle")
+        return name in self._anims
 
 
 class HeroSkin(Skin):
@@ -55,29 +63,33 @@ class HeroSkin(Skin):
 
 
 class SorceressSkin(Skin):
+    """Feiticeira: parada/andando do pacote + ações geradas por tools/gerar_feiticeira.py."""
     anchor = (21, 54)
     faces_right = False
-    procedural_attacks = True
+    procedural_attacks = False
+    motion_lean = True           # inclina um pouco na corrida
+    ACTION_ANCHOR_X = 40         # quadros de feiticeira_acoes.png (80x64, pé em x=40)
+    ACTIONS = {"quick": (0, 4), "heavy": (1, 5), "up": (2, 3), "down": (3, 2), "jump": (4, 2),
+               "fall": (5, 2), "dash": (6, 2), "hurt": (7, 1), "death": (8, 5), "land": (9, 1)}
 
     def anims(self):
         idle = sprites.grid("personagens/feiticeira_parada.png", 46, 55)
         walk = sprites.grid("personagens/feiticeira_andando.png", 45, 58)
-        walk_anchor_fix = walk  # quadros de 58 px: o pé fica 3 px mais baixo (ajuste no draw)
-        return {
+        acts = sprites.grid("personagens/feiticeira_acoes.png", 80, 64)
+        anims = {
             "idle": Anim(idle, 10),
-            "run": Anim(walk_anchor_fix, 26),
-            "jump": Anim(pick(walk, [5]), 1),
-            "fall": Anim(pick(walk, [13]), 1),
-            "land": Anim(pick(idle, [2]), 1),
-            "quick": Anim(pick(idle, [7, 8, 9]), 1, loop=False),
-            "heavy": Anim(pick(idle, [0, 7, 8, 9]), 1, loop=False),
-            "down": Anim(pick(walk, [13]), 1),
-            "up": Anim(pick(idle, [8]), 1),
-            "dash": Anim(pick(walk, [2, 3]), 20),
-            "hurt": Anim(pick(walk, [21]), 1),
+            "run_start": Anim(sprites.grid("personagens/feiticeira_partida.png", 45, 58), 24, loop=False),
+            "run": Anim(walk, 26),
             "heal": Anim(idle, 4),
-            "death": Anim(pick(idle, [0]), 1),
         }
+        fps = {"jump": 8, "fall": 8, "dash": 20, "death": 7, "down": 10}
+        for name, (row, n) in self.ACTIONS.items():
+            frames = acts[row * 5:row * 5 + n] if acts else []
+            anims[name] = Anim(frames, fps.get(name, 1), loop=name in ("jump", "fall", "dash", "down"))
+        return anims
+
+    def anchor_x(self, name):
+        return self.ACTION_ANCHOR_X if name in self.ACTIONS else self.anchor[0]
 
 
 SKINS = {"ele": HeroSkin(), "ela": SorceressSkin()}
@@ -112,6 +124,13 @@ def state_of(player):
 
 
 def frame_for(skin, name, t):
+    if name == "run":
+        start = skin.get("run_start") if skin.has("run_start") else None
+        if start is not None and start.frames:
+            dur = len(start.frames) / start.fps
+            if t < dur:
+                return start.frame(t)        # transição parado -> correndo
+            t -= dur
     anim = skin.get(name)
     if name in ("quick", "heavy", "up") and anim.frames:
         # golpes: o tempo vem normalizado (0..1) pela duração do ataque

@@ -20,6 +20,12 @@ def game(abilities=(), protagonist="ela", name="jogo.json", flags=()):
     return Sim(progress=pr, save_name=name)
 
 
+def test_start_abilities():
+    s = game(name="inicio.json")
+    check("o dash já vem desde o começo", "dash" in s.p.abilities and "double_jump" not in s.p.abilities)
+    check("o primeiro chefe dá o pulo duplo", chapter1.BOSSES["rei_rato"]["reward"] == ("ability", "double_jump"))
+
+
 def test_structure():
     s = game()
     w = s.play.world
@@ -90,7 +96,6 @@ PATHS_NONE = [
     ("Convés: cordame 1", "conves", 26, 18, stands_on("conves", 15, 24, 28)),
     ("Convés: cordame 2", "conves", 26, 15, stands_on("conves", 12, 19, 23)),
     ("Convés: cordame 3", "conves", 21, 12, stands_on("conves", 9, 24, 28)),
-    ("Convés: cordame 4", "conves", 26, 9, stands_on("conves", 6, 19, 23)),
     ("Porão 1: volta 1", "porao1", 28, 20, stands_on("porao1", 17, 24, 27)),
     ("Porão 1: volta 2", "porao1", 25, 17, stands_on("porao1", 14, 17, 20)),
     ("Porão 1: volta 3", "porao1", 18, 14, stands_on("porao1", 11, 24, 27)),
@@ -107,7 +112,6 @@ PATHS_NONE = [
 ]
 
 PATHS_DASH = [
-    ("Convés: salto do mastro (dash)", "conves", 22, 6, stands_on("conves", 4, 31, 36)),
     ("Convés: sobe ao cordame", "conves", 34, 4, in_room("cordame1")),
     ("Cordame: 1", "cordame1", 15, 39, stands_on("cordame1", 36, 8, 13)),
     ("Cordame: 2 (dash)", "cordame1", 10, 36, stands_on("cordame1", 33, 21, 25)),
@@ -127,6 +131,7 @@ PATHS_DASH = [
 ]
 
 PATHS_DJ = [
+    ("Convés: mastro (pulo duplo)", "conves", 26, 9, stands_on("conves", 4, 28, 36)),
     ("Vergas: carta 2 (pulo duplo)", "cordame2", 25, 14, stands_on("cordame2", 8, 29, 32)),
     ("Praia: vala de espinhos", "praia", 12, 18, stands_on("praia", 18, 23, 35)),
     ("Praia: penhasco (pulo duplo)", "praia", 33, 18, stands_on("praia", 12, 36, 58)),
@@ -147,8 +152,7 @@ PATHS_DJ = [
 ]
 
 GATES = [
-    ("sem dash não chega ao cordame", (), "conves", 21, 6, stands_on("conves", 4, 31, 36)),
-    ("sem dash não sobe do degrau 3 ao topo", (), "conves", 26, 9, stands_on("conves", 4, 31, 36)),
+    ("sem pulo duplo não chega ao cordame", ("dash",), "conves", 26, 9, stands_on("conves", 4, 28, 36)),
     ("sem pulo duplo não sobe o penhasco da praia", ("dash",), "praia", 33, 18, stands_on("praia", 12, 36, 58)),
     ("sem pulo duplo não pega a carta das vergas", ("dash",), "cordame2", 25, 14, stands_on("cordame2", 8, 29, 32)),
 ]
@@ -347,5 +351,5 @@ def test_render_all():
     check("todas as salas desenham com a protagonista", True)
 
 
-TESTS = [test_structure, test_doors, test_crumble, test_movers, test_items_and_letters, test_dialogs_and_npcs,
+TESTS = [test_start_abilities, test_structure, test_doors, test_crumble, test_movers, test_items_and_letters, test_dialogs_and_npcs,
          test_endings, test_bosses, test_render_all, test_gates, test_reach_none, test_reach_dash, test_reach_double]

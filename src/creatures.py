@@ -8,10 +8,12 @@ import pygame
 
 from . import pixelart, sprites
 from .enemies import Chaser, Enemy, Flier, Jumper, Patroller, Shield, Turret
-from .skins import SKINS, frame_for
 
-HENCH_TINT = (120, 80, 150, 255)     # capangas: roupa roxa do feiticeiro
-PIRATE_TINT = (200, 110, 100, 255)
+
+def _blit_human(surf, img, enemy, cam_x, cam_y, white=False):
+    """Humanos do pixelart têm 3 px vazios abaixo das botas."""
+    v = sprites.variant(img, False, white, 1)
+    surf.blit(v, v.get_rect(midbottom=(round(enemy.cx - cam_x), round(enemy.bottom - cam_y + 3))))
 
 
 def _blit_bottom(surf, img, enemy, cam_x, cam_y, white=False, flip=False, scale=1):
@@ -49,15 +51,11 @@ class Hench(Chaser):
     color = (150, 100, 180)
 
     def draw(self, surf, cam_x, cam_y):
-        skin = SKINS["ele"]
         moving = abs(self.vx) > 20
-        t = pygame.time.get_ticks() / 1000.0
-        frame = frame_for(skin, "run" if moving else "idle", t)
-        if frame is None:
-            return super().draw(surf, cam_x, cam_y)
-        flip = self.direction < 0
-        sprites.blit_anchor(surf, frame, self.cx - cam_x, self.bottom - cam_y, (skin.anchor[0], 79),
-                            flip=flip, white=self.flash > 0, tint=None if self.flash > 0 else HENCH_TINT)
+        pose = "walk" if moving else "idle"
+        phase = (self.x * 0.03) % 1.0 if moving else (pygame.time.get_ticks() / 1600.0) % 1.0
+        img = pixelart.human("capanga", pose, phase, self.direction)
+        _blit_human(surf, img, self, cam_x, cam_y, self.flash > 0)
         if self.state == "alert":
             fr = sprites.effect("alerta")
             if fr:
@@ -99,14 +97,16 @@ class ShieldPirate(Shield):
     color = (200, 110, 100)
 
     def draw(self, surf, cam_x, cam_y):
-        skin = SKINS["ele"]
-        t = pygame.time.get_ticks() / 1000.0
-        name = "quick" if self.state == "bash" else ("run" if abs(self.vx) > 20 else "idle")
-        frame = frame_for(skin, name, 0.5 if name == "quick" else t)
-        flip = self.direction < 0
-        sprites.blit_anchor(surf, frame, self.cx - cam_x, self.bottom - cam_y, (skin.anchor[0], 79),
-                            flip=flip, white=self.flash > 0,
-                            tint=None if self.flash > 0 else (PIRATE_TINT if self.state != "windup" else (255, 230, 200, 255)))
+        if self.state == "bash":
+            pose, phase = "attack", 0.6
+        elif self.state == "windup":
+            pose, phase = "attack", 0.0
+        elif abs(self.vx) > 20:
+            pose, phase = "walk", (self.x * 0.03) % 1.0
+        else:
+            pose, phase = "idle", (pygame.time.get_ticks() / 1600.0) % 1.0
+        img = pixelart.human("escudeiro", pose, phase, self.direction)
+        _blit_human(surf, img, self, cam_x, cam_y, self.flash > 0)
         if not self.guard_broken and self.stun <= 0:
             sx = self.cx + self.direction * (self.w / 2 + 3) - cam_x
             r = pygame.Rect(0, 0, 10, self.h - 4)

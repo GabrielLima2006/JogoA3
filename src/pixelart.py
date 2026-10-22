@@ -54,99 +54,161 @@ def shade(c, d):
 # ---------------------------------------------------------------------------
 
 STYLES = {
-    #               casaco          calça          cabelo          extra
-    "cozinheira": ((236, 236, 228), (120, 90, 70), (130, 70, 40), "chef"),
-    "grumete": ((70, 110, 170), (90, 70, 50), (200, 150, 70), "bone"),
-    "imediato": ((60, 66, 110), (40, 40, 52), (40, 34, 30), "tricornio"),
-    "irma": ((150, 40, 50), (50, 40, 50), (30, 24, 28), "bandana"),
-    "amigo": ((70, 120, 90), (60, 52, 46), (110, 80, 50), "cachecol"),
-    "capita": ((40, 44, 70), (36, 34, 44), (90, 50, 30), "capita"),
-    "mercador": ((150, 110, 60), (80, 60, 40), (60, 40, 30), "chapeu"),
+    # mesmo padrão da protagonista: cabeça grande, cabelo volumoso com franja, olhos grandes
+    # com brilho, roupa com três tons e botas destacadas.
+    # casaco, detalhe, calça, botas, cabelo, olhos, cabelo comprido (0-3), extra
+    "cozinheira": ((236, 232, 222), (200, 60, 60), (110, 84, 70), (120, 70, 50), (150, 80, 50), (90, 60, 40), 1, "chef"),
+    "grumete": ((60, 110, 190), (230, 200, 90), (100, 80, 60), (150, 90, 50), (230, 150, 60), (60, 120, 200), 0, "bone"),
+    "imediato": ((44, 52, 104), (220, 180, 80), (40, 40, 56), (60, 40, 40), (40, 34, 44), (160, 40, 60), 2, "tricornio"),
+    "irma": ((170, 36, 56), (240, 200, 90), (50, 40, 60), (40, 30, 40), (34, 28, 44), (200, 50, 70), 3, "bandana"),
+    "amigo": ((56, 120, 90), (130, 80, 170), (70, 60, 56), (90, 60, 40), (130, 90, 60), (70, 160, 110), 1, "cachecol"),
+    "capita": ((36, 40, 80), (220, 180, 80), (36, 34, 50), (110, 40, 40), (200, 210, 230), (90, 120, 220), 3, "capita"),
+    "mercador": ((160, 110, 60), (90, 150, 80), (80, 60, 44), (90, 60, 40), (100, 70, 50), (100, 80, 50), 0, "chapeu"),
+    "capanga": ((70, 70, 96), (200, 60, 60), (60, 50, 60), (60, 44, 40), (60, 50, 60), (200, 70, 70), 0, "lenco"),
+    "escudeiro": ((120, 60, 50), (210, 180, 110), (60, 50, 56), (70, 50, 40), (170, 60, 40), (200, 120, 60), 1, "lenco"),
 }
+OUTLINE_SOFT = (34, 20, 44)
 
 
 def human(style, pose="idle", phase=0.0, facing=1):
-    """Humano de ~48 px de altura. pose: idle, walk, attack, shoot, hurt."""
+    """Humano no estilo da protagonista (~50 px). pose: idle, walk, attack, shoot, hurt."""
     q = round(phase * 8) / 8
     key = ("human", style, pose, q, facing)
     return cached(key, lambda: _human(style, pose, q, facing))
 
 
+def _tones(c):
+    return shade(c, 34), c, shade(c, -42)
+
+
 def _human(style, pose, phase, facing):
-    coat, pants, hair, extra = STYLES[style]
-    s = _canvas(40, 56)
-    cx = 20
-    bob = round(math.sin(phase * math.tau) * 1) if pose == "idle" else 0
-    leg = math.sin(phase * math.tau) * 4 if pose == "walk" else 0
-    top = 14 + bob
-    # pernas e botas
-    for side, off in ((-1, leg), (1, -leg)):
-        lx = cx + side * 4 + off * 0.5
-        pygame.draw.rect(s, pants, (lx - 2, top + 22, 5, 14))
-        pygame.draw.rect(s, (40, 30, 28), (lx - 3 + (1 if facing > 0 else -1), top + 34, 7, 4))
-    # corpo/casaco
-    pygame.draw.rect(s, coat, (cx - 8, top + 6, 16, 19), border_radius=3)
-    pygame.draw.rect(s, shade(coat, -30), (cx - 8, top + 20, 16, 5))
-    pygame.draw.line(s, shade(coat, 30), (cx - 7, top + 7), (cx - 7, top + 18))
-    pygame.draw.rect(s, (60, 40, 30), (cx - 8, top + 18, 16, 2))            # cinto
-    # braços
-    arm = coat
+    coat, trim, pants, boots, hair, eyes, hair_len, extra = STYLES[style]
+    s = _canvas(48, 62)
+    cx = 22
+    feet = 58
+    wave = math.sin(phase * math.tau)
+    bob = round(wave) if pose == "idle" else (abs(round(wave)) if pose == "walk" else 0)
+    leg = wave * 6 if pose == "walk" else 0
+    hl, base, dk = _tones(coat)
+    phl, pbase, pdk = _tones(pants)
+    bhl, bbase, bdk = _tones(boots)
+    hhl, hbase, hdk = _tones(hair)
+    top = 10 + bob                                    # topo do cabelo
+
+    # cabelo de trás (antes do corpo)
+    if hair_len:
+        ln = (8, 14, 20)[hair_len - 1]
+        pygame.draw.rect(s, hdk, (cx - 10, top + 8, 9, ln + 8), border_radius=3)
+        pygame.draw.rect(s, hbase, (cx - 9, top + 8, 6, ln + 6), border_radius=3)
+
+    # pernas e botas (a de trás mais escura)
+    for side, off, back in ((-1, leg, True), (1, -leg, False)):
+        lx = round(cx + side * 3 + off * 0.6)
+        pygame.draw.rect(s, pdk if back else pbase, (lx - 2, feet - 15, 5, 9))
+        bc = bdk if back else bbase
+        pygame.draw.rect(s, bc, (lx - 3, feet - 7, 7, 7), border_radius=2)
+        pygame.draw.rect(s, bc, (lx - 2, feet - 3, 8, 3))                     # bico da bota
+        if not back:
+            pygame.draw.line(s, bhl, (lx - 2, feet - 6), (lx + 2, feet - 6))
+        pygame.draw.line(s, OUTLINE_SOFT, (lx - 2, feet - 1), (lx + 5, feet - 1))   # sola
+
+    body_top = top + 20
+    # braço de trás
+    back_swing = -wave * 3 if pose == "walk" else 0
+    pygame.draw.line(s, dk, (cx - 4, body_top + 3), (cx - 6 + back_swing, body_top + 12), 4)
+    # casaco que abre embaixo (como o manto da protagonista)
+    flare = wave * 1.5 if pose == "walk" else 0
+    pts = [(cx - 6, body_top), (cx + 6, body_top), (cx + 9 + flare, feet - 12), (cx - 10 - flare, feet - 12)]
+    pygame.draw.polygon(s, base, pts)
+    pygame.draw.polygon(s, dk, [(cx - 6, body_top), (cx - 2, body_top), (cx - 4, feet - 12),
+                                (cx - 10 - flare, feet - 12)])
+    pygame.draw.line(s, hl, (cx + 4, body_top + 1), (cx + 7 + flare, feet - 13))
+    pygame.draw.line(s, trim, (cx + 1, body_top + 1), (cx + 2, feet - 13))     # abotoamento/faixa
+    pygame.draw.rect(s, shade(trim, -30), (cx - 6, body_top + 9, 13, 2))         # cinto
+    pygame.draw.rect(s, (230, 210, 120), (cx + 1, body_top + 9, 2, 2))           # fivela
+
+    # braço da frente + mão
     if pose == "attack":
-        ang = -0.9 + phase * 2.2
-        hx, hy = cx + facing * (6 + math.cos(ang) * 11), top + 11 + math.sin(ang) * 11
-        pygame.draw.line(s, arm, (cx + facing * 6, top + 9), (hx, hy), 4)
-        # alfanje
-        bx, by = hx + facing * math.cos(ang - 0.5) * 14, hy + math.sin(ang - 0.5) * 14
-        pygame.draw.line(s, (220, 226, 236), (hx, hy), (bx, by), 2)
-        pygame.draw.circle(s, (210, 170, 70), (int(hx), int(hy)), 2)
+        ang = -1.2 + phase * 2.4
+        hx, hy = cx + 3 + math.cos(ang) * 11, body_top + 4 + math.sin(ang) * 11
+        pygame.draw.line(s, base, (cx + 3, body_top + 3), (hx, hy), 4)
+        bx, by = hx + math.cos(ang - 0.4) * 15, hy + math.sin(ang - 0.4) * 15
+        pygame.draw.line(s, (226, 232, 244), (hx, hy), (bx, by), 2)               # alfanje
+        pygame.draw.line(s, (255, 255, 255), (hx, hy), ((hx + bx) / 2, (hy + by) / 2), 1)
+        pygame.draw.circle(s, SKIN, (round(hx), round(hy)), 2)
+        pygame.draw.circle(s, (220, 180, 70), (round(hx), round(hy)), 1)
     elif pose == "shoot":
-        pygame.draw.line(s, arm, (cx + facing * 6, top + 9), (cx + facing * 17, top + 10), 4)
-        pygame.draw.rect(s, (60, 50, 50), (cx + facing * 15 - (0 if facing > 0 else 8), top + 7, 9, 4))
+        pygame.draw.line(s, base, (cx + 3, body_top + 3), (cx + 13, body_top + 4), 4)
+        pygame.draw.rect(s, (70, 60, 64), (cx + 12, body_top + 1, 9, 4))
+        pygame.draw.rect(s, (130, 90, 50), (cx + 12, body_top + 4, 3, 4))
+        pygame.draw.circle(s, SKIN, (cx + 13, body_top + 4), 2)
     else:
-        swing = math.sin(phase * math.tau) * 2 if pose == "walk" else 0
-        pygame.draw.line(s, arm, (cx - 8, top + 9), (cx - 9 - swing, top + 20), 4)
-        pygame.draw.line(s, arm, (cx + 8, top + 9), (cx + 9 + swing, top + 20), 4)
-    pygame.draw.circle(s, SKIN, (cx - 9, top + 21), 2)
-    pygame.draw.circle(s, SKIN, (cx + 9, top + 21), 2)
-    # cabeça
-    pygame.draw.rect(s, SKIN, (cx - 6, top - 6, 12, 12), border_radius=4)
-    pygame.draw.rect(s, SKIN_DARK, (cx - 6, top + 3, 12, 3))
-    ex = cx + facing * 2
-    pygame.draw.rect(s, (30, 24, 34), (ex - 1 + facing, top - 2, 2, 3))
-    pygame.draw.rect(s, (30, 24, 34), (ex - 5 + facing * 3, top - 2, 2, 3))
-    pygame.draw.rect(s, hair, (cx - 7, top - 8, 14, 5))
-    pygame.draw.rect(s, hair, (cx - 7 - (2 if facing > 0 else -10), top - 6, 4, 9))
-    if extra == "chef":
-        pygame.draw.rect(s, (250, 250, 250), (cx - 6, top - 16, 12, 9), border_radius=4)
-        pygame.draw.rect(s, (250, 250, 250), (cx - 7, top - 9, 14, 3))
-        pygame.draw.rect(s, (250, 250, 250), (cx - 8, top + 8, 16, 14))       # avental
-    elif extra == "bone":
-        pygame.draw.rect(s, (60, 80, 140), (cx - 7, top - 10, 14, 5), border_radius=2)
-        pygame.draw.rect(s, (60, 80, 140), (cx + facing * 4, top - 7, 7 * facing or 7, 2))
-    elif extra == "tricornio":
-        pygame.draw.polygon(s, (30, 30, 40), [(cx - 11, top - 6), (cx + 11, top - 6), (cx, top - 16)])
-        pygame.draw.line(s, (210, 180, 90), (cx - 10, top - 6), (cx + 10, top - 6), 1)
-        pygame.draw.rect(s, (220, 190, 90), (cx - 1, top + 9, 2, 10))           # botões
-    elif extra == "bandana":
-        pygame.draw.rect(s, (180, 30, 40), (cx - 7, top - 9, 14, 4))
-        pygame.draw.polygon(s, (180, 30, 40), [(cx - facing * 7, top - 8), (cx - facing * 14, top - 3),
-                                               (cx - facing * 8, top - 2)])
-        pygame.draw.circle(s, (230, 200, 80), (cx + facing * 6, top + 1), 1)
-        # chapéu de pirata
-        pygame.draw.polygon(s, (24, 20, 26), [(cx - 12, top - 8), (cx + 12, top - 8), (cx + 6, top - 15), (cx - 6, top - 15)])
-        pygame.draw.circle(s, (240, 240, 240), (cx, top - 12), 2)
-    elif extra == "cachecol":
-        pygame.draw.rect(s, (110, 70, 140), (cx - 9, top + 5, 18, 4))
-        pygame.draw.rect(s, (110, 70, 140), (cx - facing * 7, top + 7, 4, 11))
-    elif extra == "capita":
-        pygame.draw.polygon(s, (24, 22, 32), [(cx - 12, top - 6), (cx + 12, top - 6), (cx, top - 15)])
-        pygame.draw.rect(s, (220, 190, 90), (cx - 8, top + 7, 3, 3))
-    elif extra == "chapeu":
-        pygame.draw.ellipse(s, (90, 60, 30), (cx - 12, top - 10, 24, 6))
-        pygame.draw.rect(s, (90, 60, 30), (cx - 6, top - 15, 12, 7))
+        swing = wave * 3 if pose == "walk" else 0
+        pygame.draw.line(s, base, (cx + 3, body_top + 3), (cx + 4 + swing, body_top + 12), 4)
+        pygame.draw.circle(s, SKIN, (round(cx + 4 + swing), body_top + 13), 2)
+
+    # cabeça grande: rosto, olhos com brilho, boca e bochecha
+    face = pygame.Rect(cx - 7, top + 6, 15, 15)
+    pygame.draw.rect(s, SKIN, face, border_radius=5)
+    pygame.draw.rect(s, SKIN_DARK, (face.x, face.bottom - 4, 4, 3))
+    for ex in (cx + 4, cx - 2):
+        pygame.draw.rect(s, (30, 22, 40), (ex, top + 12, 3, 5))
+        pygame.draw.rect(s, eyes, (ex, top + 14, 3, 3))
+        s.set_at((ex, top + 12), (255, 255, 255))
+    s.set_at((cx + 4, top + 19), (170, 80, 80))                                 # boca
+    s.set_at((cx + 7, top + 18), (240, 150, 150))                               # bochecha
+
+    # cabelo volumoso com franja em pontas
+    pygame.draw.ellipse(s, hbase, (cx - 10, top, 21, 13))
+    pygame.draw.rect(s, hbase, (cx - 10, top + 5, 6, 10))                       # lado (atrás da orelha)
+    for i, x in enumerate(range(cx - 7, cx + 9, 4)):
+        pygame.draw.polygon(s, hbase, [(x, top + 7), (x + 4, top + 7), (x + 2, top + 11 + (i % 2) * 2)])
+    pygame.draw.arc(s, hhl, (cx - 6, top + 1, 14, 9), 0.6, 2.6, 2)               # brilho do cabelo
+    pygame.draw.line(s, hdk, (cx - 10, top + 6), (cx - 8, top + 14))
+
+    _accessory(s, extra, cx, top, body_top, trim)
     if pose == "hurt":
         s.fill((255, 120, 120, 0), special_flags=pygame.BLEND_RGBA_MAX)
-    return outline(s)
+    s = outline(s, OUTLINE_SOFT)
+    return pygame.transform.flip(s, True, False) if facing < 0 else s
+
+
+def _accessory(s, extra, cx, top, body_top, trim):
+    if extra == "chef":
+        pygame.draw.rect(s, (252, 252, 252), (cx - 7, top - 9, 15, 11), border_radius=5)
+        pygame.draw.rect(s, (220, 220, 226), (cx - 8, top + 1, 17, 3))
+        pygame.draw.rect(s, (250, 250, 250), (cx - 5, body_top + 2, 11, 15))      # avental
+        pygame.draw.rect(s, trim, (cx - 7, body_top - 1, 15, 3))                   # lenço vermelho
+    elif extra == "bone":
+        pygame.draw.ellipse(s, (50, 90, 170), (cx - 9, top - 2, 19, 9))
+        pygame.draw.rect(s, (40, 70, 140), (cx + 4, top + 4, 9, 3))                # aba
+    elif extra in ("tricornio", "capita"):
+        hat = (30, 28, 44) if extra == "tricornio" else (24, 22, 36)
+        pygame.draw.polygon(s, hat, [(cx - 13, top + 4), (cx + 14, top + 4), (cx + 8, top - 6), (cx - 7, top - 6)])
+        pygame.draw.line(s, trim, (cx - 12, top + 4), (cx + 13, top + 4), 1)
+        if extra == "capita":
+            pygame.draw.circle(s, (240, 240, 240), (cx, top - 1), 2)               # caveira do chapéu
+            pygame.draw.polygon(s, (200, 60, 70), [(cx + 8, top - 5), (cx + 14, top - 12), (cx + 10, top - 4)])
+    elif extra == "bandana":
+        pygame.draw.rect(s, (190, 30, 50), (cx - 9, top + 2, 19, 4))
+        pygame.draw.polygon(s, (190, 30, 50), [(cx - 9, top + 3), (cx - 16, top + 9), (cx - 10, top + 9)])
+        pygame.draw.polygon(s, (24, 20, 30), [(cx - 13, top + 2), (cx + 14, top + 2), (cx + 7, top - 7),
+                                              (cx - 6, top - 7)])
+        pygame.draw.circle(s, (240, 240, 240), (cx + 1, top - 2), 2)
+        pygame.draw.circle(s, (240, 210, 90), (cx - 6, top + 15), 1)              # brinco
+    elif extra == "cachecol":
+        pygame.draw.rect(s, trim, (cx - 7, body_top - 2, 15, 4), border_radius=1)
+        pygame.draw.rect(s, trim, (cx - 7, body_top, 4, 9))
+        pygame.draw.line(s, shade(trim, 40), (cx - 6, body_top - 1), (cx + 6, body_top - 1))
+    elif extra == "chapeu":
+        pygame.draw.ellipse(s, (100, 66, 34), (cx - 14, top + 1, 29, 7))
+        pygame.draw.rect(s, (100, 66, 34), (cx - 7, top - 6, 15, 9), border_radius=2)
+        pygame.draw.rect(s, (160, 50, 50), (cx - 7, top, 15, 2))
+    elif extra == "lenco":
+        pygame.draw.rect(s, trim, (cx - 9, top + 1, 19, 5), border_radius=2)
+        pygame.draw.polygon(s, trim, [(cx - 9, top + 3), (cx - 15, top + 1), (cx - 14, top + 7)])
+        for x in range(cx - 7, cx + 9, 4):
+            s.set_at((x, top + 3), (250, 240, 230))
 
 
 def corpse():
