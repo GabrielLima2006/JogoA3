@@ -102,6 +102,9 @@ def resolve_player_attack(player, enemies, projectiles, ctx):
                 enemy.vy = ady * spec.knockback * 0.8 * enemy.knockback_resist
             player.gain_energy(Energy.PER_HIT_HEAVY if spec.name == "heavy" else Energy.PER_HIT_QUICK)
             landed = True
+            fx_angle = 0 if not ady else (-90 * ady if not adx else -45 * ady)
+            ctx.effects.sprite("golpe_forte" if spec.name == "heavy" else "golpe", hx, hy, fps=28,
+                               flip=(adx or atk.facing) < 0, angle=fx_angle)
             if spec.name == "heavy":
                 ctx.effects.burst(hx, hy, 22, Colors.HEAVY_SLASH, speed=(120, 420), gravity=500,
                                   angle=math.atan2(ady, adx), spread=math.pi * 1.1)

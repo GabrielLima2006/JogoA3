@@ -52,6 +52,8 @@ class Enemy(Body):
         self.squash = 0.7
         if self.hp <= 0:
             self.alive = False
+            ctx.effects.sprite("explosao_grande" if self.is_boss else "explosao", self.cx, self.cy, fps=18,
+                               scale=2 if self.is_boss else 1)
             ctx.effects.burst(self.cx, self.cy, 26, self.color, speed=(80, 340), life=(0.3, 0.7),
                               size=(3, 6), gravity=600)
             ctx.effects.ring(self.cx, self.cy, 40, 0.3, self.color, 3)

@@ -5,6 +5,7 @@ import os
 import pygame
 
 from .config import Colors, Dash, Display, Energy, Progression, World
+from .fonte import PixelFont, scale_for
 from .input import CONTROLS_TEXT
 from .paths import asset
 
@@ -15,19 +16,26 @@ TITLE_FONT = asset("fonts", "alagard.ttf")
 
 
 def font(size, title=False):
-    """Fonte padrão; `title=True` usa a fonte de títulos (alagard), se existir."""
+    """Fonte em pixel art (alagard + acentos desenhados). `title` usa um fator maior."""
     key = (size, title)
     if key not in _fonts:
-        if title and os.path.isfile(TITLE_FONT):
-            _fonts[key] = pygame.font.Font(TITLE_FONT, int(size * 0.62))
+        if os.path.isfile(TITLE_FONT):
+            k = scale_for(size) + (1 if title and size > 30 else 0)
+            _fonts[key] = PixelFont(TITLE_FONT, k)
         else:
             _fonts[key] = pygame.font.Font(None, size)
     return _fonts[key]
 
 
-def text(surf, msg, size, pos, color=Colors.UI_TEXT, anchor="topleft", title=False):
-    img = font(size, title).render(msg, True, color)
+def text(surf, msg, size, pos, color=Colors.UI_TEXT, anchor="topleft", title=False, shadow=True):
+    """Escreve texto; por padrão com sombra de 1 pixel para contraste em qualquer fundo."""
+    f = font(size, title)
+    img = f.render(msg, False, color)
     rect = img.get_rect(**{anchor: pos})
+    if shadow:
+        dark = f.render(msg, False, (12, 10, 16))
+        k = getattr(f, "scale", 1)
+        surf.blit(dark, rect.move(k, k))
     surf.blit(img, rect)
     return rect
 

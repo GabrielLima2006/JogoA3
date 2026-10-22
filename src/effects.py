@@ -5,6 +5,7 @@ import random
 
 import pygame
 
+from . import sprites
 from .config import Effects as FX
 
 
@@ -23,13 +24,14 @@ class Particle:
 
 
 class Ghost:
-    """Silhueta que fica para trás durante o dash."""
-    __slots__ = ("rect", "life", "max_life", "color")
+    """Silhueta que fica para trás durante o dash (imagem do quadro atual ou retângulo)."""
+    __slots__ = ("rect", "life", "max_life", "color", "image")
 
-    def __init__(self, rect, life, color):
+    def __init__(self, rect, life, color, image=None):
         self.rect = rect
         self.life = self.max_life = life
         self.color = color
+        self.image = image
 
 
 class Ring:
@@ -44,8 +46,22 @@ class Ring:
         self.width = width
 
 
+class SpriteFx:
+    """Efeito animado de spritesheet (Super Pixel Effects), tocado uma vez."""
+    __slots__ = ("frames", "x", "y", "t", "fps", "flip", "scale", "angle")
+
+    def __init__(self, frames, x, y, fps, flip, scale, angle):
+        self.frames, self.x, self.y = frames, x, y
+        self.t, self.fps, self.flip, self.scale, self.angle = 0.0, fps, flip, scale, angle
+
+    @property
+    def done(self):
+        return self.t * self.fps >= len(self.frames)
+
+
 class EffectSystem:
     def __init__(self):
+        self.sprite_fx = []
         self.particles = []
         self.ghosts = []
         self.rings = []
@@ -55,6 +71,7 @@ class EffectSystem:
         self.screen_flash_color = (255, 255, 255)
 
     def clear(self):
+        self.sprite_fx.clear()
         self.particles.clear()
         self.ghosts.clear()
         self.rings.clear()
@@ -94,8 +111,14 @@ class EffectSystem:
             self._add(Particle(x + random.uniform(-6, 6), y, vx, vy, random.uniform(0.18, 0.35),
                                random.uniform(2, 4), color, 200.0, 4.0))
 
-    def ghost(self, rect, color):
-        self.ghosts.append(Ghost(pygame.Rect(rect), 0.16, color))
+    def sprite(self, name, x, y, fps=20, flip=False, scale=1, angle=0):
+        """Toca o efeito `name` (assets/img/efeitos) centralizado em (x, y)."""
+        frames = sprites.effect(name)
+        if frames and len(self.sprite_fx) < 60:
+            self.sprite_fx.append(SpriteFx(frames, x, y, fps, flip, scale, angle))
+
+    def ghost(self, rect, color, image=None):
+        self.ghosts.append(Ghost(pygame.Rect(rect), 0.16, color, image))
 
     def ring(self, x, y, radius, life, color, width=3):
         self.rings.append(Ring(x, y, radius, life, color, width))
@@ -107,6 +130,9 @@ class EffectSystem:
         self.screen_flash = max(0.0, self.screen_flash - dt)
 
     def update(self, dt):
+        for s in self.sprite_fx:
+            s.t += dt
+        self.sprite_fx = [s for s in self.sprite_fx if not s.done]
         alive = []
         for p in self.particles:
             p.life -= dt
@@ -138,6 +164,11 @@ class EffectSystem:
     def draw_world(self, surf, cam_x, cam_y):
         for g in self.ghosts:
             k = g.life / g.max_life
+            if g.image is not None:
+                img = g.image.copy()
+                img.set_alpha(int(150 * k))
+                surf.blit(img, (g.rect.x - cam_x, g.rect.y - cam_y))
+                continue
             s = pygame.Surface((g.rect.w, g.rect.h), pygame.SRCALPHA)
             s.fill((*g.color, int(120 * k)))
             surf.blit(s, (g.rect.x - cam_x, g.rect.y - cam_y))
@@ -146,6 +177,12 @@ class EffectSystem:
             col = tuple(int(c * (0.4 + 0.6 * k)) for c in r.color)
             pygame.draw.circle(surf, col, (int(r.x - cam_x), int(r.y - cam_y)), int(r.radius),
                                max(1, int(r.width * k + 0.5)))
+        for s in self.sprite_fx:
+            img = s.frames[min(len(s.frames) - 1, int(s.t * s.fps))]
+            img = sprites.variant(img, s.flip, False, s.scale)
+            if s.angle:
+                img = pygame.transform.rotate(img, s.angle)
+            surf.blit(img, img.get_rect(center=(round(s.x - cam_x), round(s.y - cam_y))))
         for p in self.particles:
             k = p.life / p.max_life
             size = max(1, int(p.size * (0.4 + 0.6 * k) + 0.5))

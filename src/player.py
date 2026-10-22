@@ -18,7 +18,9 @@ import pygame
 from .combat import Attack
 from .config import (Colors, Combat, Game, Dash as D, Economy as EC, Effects as FX, Energy as EN,
                      Physics as PH, Player as P, Progression as PR)
+from . import sprites
 from .physics import Body, is_supported, move_and_collide, standing_only_on_oneway
+from .skins import SKINS, frame_for, state_of
 from .progress import Progress
 
 
@@ -98,6 +100,9 @@ class Player(Body):
         self.charge_fx_timer = 0.0
         self.landing_impact = 0.0
         self.drop_timer = 0.0
+        self.anim_state = "idle"
+        self.anim_time = 0.0
+        self.land_timer = 0.0
 
     def place(self, foot_x, foot_y):
         self.x = foot_x - self.w / 2
@@ -125,6 +130,7 @@ class Player(Body):
     # ------------------------------------------------------------------
     def update(self, dt, inp, room, ctx):
         if not self.alive:
+            self.anim_time += dt
             return
         self._tick_timers(dt)
         self._read_buffers(inp)
@@ -174,7 +180,7 @@ class Player(Body):
             self.ghost_timer -= dt
             if self.ghost_timer <= 0:
                 self.ghost_timer = D.GHOST_INTERVAL
-                ctx.effects.ghost(self.rect_tuple(), Colors.PLAYER_DASH)
+                self._dash_ghost(ctx)
         else:
             self._horizontal(dt, move_x)
             self._gravity(dt, inp)
@@ -326,6 +332,8 @@ class Player(Body):
             ctx.effects.dust(self.cx, self.bottom, int(4 + 8 * k), 0)
             ctx.audio.play("land")
         self.landing_impact = k
+        if impact_vy > 500:
+            self.land_timer = 0.12
 
     # --- dash ---
     def _can_start_dash(self):
@@ -348,6 +356,7 @@ class Player(Body):
         self.ghost_timer = 0.0
         self.scale_x, self.scale_y = 1.3, 0.8
         ctx.effects.dust(self.cx, self.bottom, 6, -self.dash_dir)
+        ctx.effects.sprite("fumaca_dash", self.cx - self.dash_dir * 16, self.cy, fps=24, flip=self.dash_dir < 0)
         ctx.effects.burst(self.cx - self.dash_dir * 10, self.cy, 6, Colors.PLAYER_DASH,
                           speed=(80, 200), angle=math.pi if self.dash_dir > 0 else 0,
                           spread=0.8, gravity=0)
@@ -459,6 +468,9 @@ class Player(Body):
     def die(self, ctx):
         self.hp = 0
         self.alive = False
+        self.anim_state = "death"
+        self.anim_time = 0.0
+        ctx.effects.sprite("fumaca_caveira", self.cx, self.cy - 10, fps=14, scale=2)
         self.attack = None
         self.dash_time = 0.0
         self.vx = self.vy = 0.0
@@ -471,6 +483,12 @@ class Player(Body):
 
     # --- visual ---
     def _update_visuals(self, dt, ctx):
+        name = state_of(self)[0]
+        if name != self.anim_state:
+            self.anim_state = name
+            self.anim_time = 0.0
+        self.anim_time += dt
+        self.land_timer = max(0.0, self.land_timer - dt)
         k = 1 - math.exp(-14 * dt)
         self.scale_x += (1.0 - self.scale_x) * k
         self.scale_y += (1.0 - self.scale_y) * k
@@ -486,105 +504,95 @@ class Player(Body):
                                   gravity=0)
 
     def draw(self, surf, cam_x, cam_y):
-        if not self.alive:
-            return
+        skin = SKINS.get(self.progress.protagonist, SKINS["ele"])
         # piscar durante invulnerabilidade
-        if self.invuln > 0 and int(self.invuln * 20) % 2 == 0 and self.hurt_flash <= 0:
+        if self.alive and self.invuln > 0 and int(self.invuln * 20) % 2 == 0 and self.hurt_flash <= 0:
             return
-        look = Game.PROTAGONISTS.get(self.progress.protagonist, Game.PROTAGONISTS["ele"])
-        base = look["body"]
-        color = base
+        if not self.alive and self.anim_time > 1.2:
+            return
+        name, t = state_of(self)
+        frame = frame_for(skin, name, t)
+        if frame is None:
+            return
+        flip = (self.facing < 0) if skin.faces_right else (self.facing > 0)
+        white = self.hurt_flash > 0 or (self.healing and int(self.heal_timer * 12) % 2 == 0)
         atk = self.attack
-        if self.dashing:
-            color = Colors.PLAYER_DASH
-        elif atk is not None and atk.spec.name == "heavy" and atk.phase == "windup":
+        tint = None
+        if atk is not None and atk.spec.name == "heavy" and atk.phase == "windup":
             k = atk.phase_progress
-            color = tuple(int(a + (b - a) * k) for a, b in zip(base, Colors.PLAYER_HEAVY_CHARGE))
-        if self.healing:
-            k = self.heal_timer / self.heal_time
-            color = tuple(int(a + (b - a) * k) for a, b in zip(base, (255, 255, 255)))
-        if self.hurt_flash > 0:
-            color = Colors.PLAYER_HURT
-
-        w = self.w * self.scale_x
-        h = self.h * self.scale_y
-        # inclinação visual de antecipação/recuperação do golpe
-        lean = 0
-        if atk is not None:
-            if atk.phase == "windup":
-                lean = -atk.facing * (5 if atk.spec.name == "heavy" else 2)
-            elif atk.phase == "active":
-                lean = atk.facing * (6 if atk.spec.name == "heavy" else 3)
-        x = self.cx - w / 2 - cam_x + lean
-        y = self.bottom - h - cam_y
-        body = pygame.Rect(round(x), round(y), round(w), round(h))
-        pygame.draw.rect(surf, color, body, border_radius=4)
-        # cabelo (ela) e chapéu pontudo de "feiticeiro"
-        if look["hair"] and self.hurt_flash <= 0:
-            pygame.draw.rect(surf, look["hair"], (body.x + 2, body.y + 4, body.w - 4, 5))
-            back_x = body.x + 1 if self.facing > 0 else body.right - 7
-            pygame.draw.rect(surf, look["hair"], (back_x, body.y + 4, 6, round(h * 0.5)), border_radius=2)
-        hat_col = color if self.hurt_flash > 0 or self.dashing else look["cloak"]
-        pygame.draw.polygon(surf, hat_col, [(body.left - 4, body.top + 5), (body.right + 4, body.top + 5),
-                                            (body.centerx + 5 * self.facing, body.top - 18)])
-        pygame.draw.rect(surf, (230, 200, 90), (body.left - 2, body.top + 2, body.w + 4, 3))
-        # olho indica direção
-        eye_x = body.centerx + self.facing * body.w * 0.22
-        pygame.draw.rect(surf, (20, 24, 36), (round(eye_x - 3), body.y + round(h * 0.22), 6, 6))
-
+            tint = (255, int(255 - 70 * k), int(255 - 150 * k), 255)
+        elif self.dashing:
+            tint = (190, 230, 255, 255)
+        ax = skin.anchor[0]
+        ay = frame.get_height() - 1
+        fx = self.cx - cam_x
+        fy = self.bottom - cam_y
+        if abs(self.scale_x - 1) > 0.03 or abs(self.scale_y - 1) > 0.03:
+            # achatar/esticar (pulo e aterrissagem) mantendo os pés no chão
+            w = max(1, int(frame.get_width() * self.scale_x))
+            h = max(1, int(frame.get_height() * self.scale_y))
+            img = sprites.variant(frame, flip, white, 1, tint)
+            img = pygame.transform.scale(img, (w, h))
+            ax2 = (frame.get_width() - 1 - ax if flip else ax) * self.scale_x
+            surf.blit(img, (round(fx - ax2), round(fy - h + 1)))
+        else:
+            sprites.blit_anchor(surf, frame, fx, fy, (ax, ay), flip=flip, white=white, tint=tint)
         if atk is not None:
             self._draw_attack(surf, cam_x, cam_y, atk)
+
+    def _dash_ghost(self, ctx):
+        """Rastro do dash: silhueta azulada do quadro atual, na posição de agora."""
+        skin = SKINS.get(self.progress.protagonist, SKINS["ele"])
+        frame = frame_for(skin, "dash", self.anim_time)
+        if frame is None:
+            ctx.effects.ghost(self.rect_tuple(), Colors.PLAYER_DASH)
+            return
+        flip = (self.facing < 0) if skin.faces_right else (self.facing > 0)
+        img = sprites.variant(frame, flip, False, 1, (120, 200, 255, 255))
+        ax = skin.anchor[0]
+        if flip:
+            ax = frame.get_width() - 1 - ax
+        rect = (self.cx - ax, self.bottom - frame.get_height() + 1, frame.get_width(), frame.get_height())
+        ctx.effects.ghost(rect, Colors.PLAYER_DASH, img)
 
     def _draw_attack(self, surf, cam_x, cam_y, atk):
         spec = atk.spec
         heavy = spec.name == "heavy"
         bx, by, bw, bh = atk.hitbox(self)
-        cx = (self.cx - cam_x)
-        cy = (self.cy - cam_y) + spec.hit_offset_y
         if atk.phase == "windup":
             if heavy:
-                # arma "puxada" para trás, brilhando conforme carrega
                 k = atk.phase_progress
-                dx, dy = atk.aim
-                px = cx - dx * (14 + 8 * k)
-                py = cy - 10 - dy * (14 + 8 * k)
-                pygame.draw.circle(surf, Colors.PLAYER_HEAVY_CHARGE, (int(px), int(py)), int(3 + 5 * k))
+                fr = sprites.effect("brilho")
+                if fr:
+                    img = fr[min(len(fr) - 1, int(k * len(fr)))]
+                    sprites.blit_anchor(surf, img, self.cx - cam_x - atk.facing * 10, self.cy - cam_y - 6,
+                                        (img.get_width() // 2, img.get_height() // 2))
             return
-        if atk.phase == "active":
-            k = atk.phase_progress
-            color = Colors.HEAVY_SLASH if heavy else Colors.QUICK_SLASH
-            dx, dy = atk.aim
-            if dy == 0:
-                # meia-lua elíptica para a frente, varrendo de cima para baixo
-                base, ry_scale = (0.0 if atk.facing > 0 else math.pi), bh * 0.62
-                far = abs(((bx + bw) if atk.facing > 0 else bx) - self.cx)
-                rx = far
-            else:
-                # golpe para cima/baixo/diagonal: meia-lua na direção da mira
-                base = math.atan2(dy, dx)
-                hx, hy = bx + bw / 2 - self.cx, by + bh / 2 - self.cy
-                rx = math.hypot(hx, hy) + max(bw, bh) * 0.35
-                ry_scale = rx
-                cy = self.cy - cam_y
-            thick = 0.42 if heavy else 0.3
-            start, end = -1.35, 1.35
-            a0 = start + (end - start) * max(0.0, k * 1.2 - 0.45)
-            a1 = start + (end - start) * min(1.0, 0.45 + k * 1.2)
-            outer, inner = [], []
-            for i in range(11):
-                a = a0 + (a1 - a0) * i / 10
-                if dy == 0:
-                    c, s = math.cos(a) * atk.facing, math.sin(a)
-                    outer.append((cx + c * rx, cy + s * ry_scale))
-                    inner.append((cx + c * rx * (1 - thick), cy + s * ry_scale * (1 - thick * 0.8)))
-                else:
-                    ang = base + a * 0.75
-                    c, s = math.cos(ang), math.sin(ang)
-                    outer.append((cx + c * rx, cy + s * ry_scale))
-                    inner.append((cx + c * rx * (1 - thick), cy + s * ry_scale * (1 - thick)))
-            pygame.draw.polygon(surf, color, outer + inner[::-1])
-        elif atk.phase == "recovery" and atk.phase_progress < 0.35:
-            color = Colors.HEAVY_SLASH if heavy else Colors.QUICK_SLASH
-            fade = tuple(int(c * 0.45) for c in color)
-            pygame.draw.line(surf, fade, (bx - cam_x, by + bh * 0.85 - cam_y),
-                             (bx + bw - cam_x, by + bh * 0.85 - cam_y), 2)
+        if atk.phase != "active":
+            return
+        frames = sprites.grid("efeitos/cortes.png", 128, 128)
+        if not frames:
+            return
+        seq = frames[4:8] if heavy else frames[0:4]
+        img = seq[min(len(seq) - 1, int(atk.phase_progress * len(seq)))]
+        dx, dy = atk.aim
+        angle = 0 if dy == 0 else (-90 * dy if dx == 0 else -45 * dy)
+        flip = (dx if dx else atk.facing) < 0
+        scale = 1.35 if heavy else 1.0
+        key = (id(img), flip, angle, scale, heavy)
+        cache = _SMEAR_CACHE.get(key)
+        if cache is None:
+            v = pygame.transform.flip(img, flip, False)
+            if heavy:
+                v = v.copy()
+                v.fill((255, 200, 120, 255), special_flags=pygame.BLEND_RGBA_MULT)
+            if scale != 1:
+                v = pygame.transform.scale(v, (int(v.get_width() * scale), int(v.get_height() * scale)))
+            if angle:
+                v = pygame.transform.rotate(v, angle if not flip else -angle)
+            cache = _SMEAR_CACHE[key] = v
+        rect = cache.get_rect(center=(round(bx + bw / 2 - cam_x), round(by + bh / 2 - cam_y)))
+        surf.blit(cache, rect)
+
+
+_SMEAR_CACHE = {}
