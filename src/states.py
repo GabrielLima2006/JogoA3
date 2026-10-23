@@ -9,7 +9,7 @@ from . import ui
 from . import tiles as tiles_mod
 from .background import Background
 from .bosses import BOSS_CLASSES
-from .creatures import TYPES as CREATURE_TYPES
+from .creatures import TYPES as CREATURE_TYPES, ZONE_TYPES
 from .movers import Mover
 from .physics import move_and_collide, tile_span
 from .camera import Camera
@@ -154,7 +154,8 @@ class PlayState(State):
                 if room.boss and not room.boss_defeated:
                     out.append(BOSS_CLASSES[room.boss](x, y))
             elif kind in CREATURE_TYPES:
-                out.append(CREATURE_TYPES[kind](x, y))
+                cls = ZONE_TYPES.get(room.zone, {}).get(kind, CREATURE_TYPES[kind])
+                out.append(cls(x, y))
         for e in out:
             if e.max_hp > 1:
                 e.max_hp = e.hp = max(1, round(e.max_hp * mult))
@@ -327,7 +328,7 @@ class PlayState(State):
         self.enemies = [e for e in self.enemies if e.alive]
         self.coins = [c for c in self.coins if c.alive]
         fx.update(dt)
-        self.background.update(dt)
+        self.background.update(dt, self.camera.render_offset((0, 0)))
         self.camera.update(dt, p, self.room)
         return True
 
@@ -694,11 +695,38 @@ class PlayState(State):
                         pygame.draw.rect(surf, (0, 0, 0, 70), (x + T - 3, y, 3, T))
                     if room.tile(tx, ty + 1) not in ("#", None, "X"):
                         pygame.draw.rect(surf, shadow, (x, y + T - 4, T, 4))
+                    self._tile_detail(surf, room, tx, ty, x, y, open_above)
                 elif ch == "-":
                     surf.blit(ts["oneway"], (x, y))
                 elif ch == "^":
                     surf.blit(ts["spike"], (x, y))
         return surf
+
+    def _tile_detail(self, surf, room, tx, ty, x, y, open_above):
+        """Acabamento dos blocos: luz no topo, cantos gastos, pedras, rachaduras e raízes."""
+        theme = tiles_mod.theme_of(room.zone)
+        h = (tx * 73856093 ^ ty * 19349663) & 0xFFFF          # aleatório fixo por bloco
+        solid = lambda a, b: room.tile(a, b) in ("#", None, "X")
+        left_open, right_open = not solid(tx - 1, ty), not solid(tx + 1, ty)
+        if open_above:
+            pygame.draw.line(surf, (255, 255, 255, 40), (x, y), (x + T - 1, y))
+            for corner_x, is_open in ((x, left_open), (x + T - 2, right_open)):
+                if is_open:                                    # canto gasto
+                    surf.fill((0, 0, 0, 0), (corner_x, y, 2, 2))
+        if not open_above and theme in ("island", "ruins", "temple", "hull", "bilge"):
+            if h % 7 == 0:                                     # pedra encravada
+                cx, cy = x + 6 + h % 18, y + 8 + (h >> 4) % 14
+                pygame.draw.ellipse(surf, (0, 0, 0, 60), (cx - 4, cy - 2, 9, 6))
+                pygame.draw.ellipse(surf, (255, 255, 255, 34), (cx - 3, cy - 3, 6, 3))
+            elif h % 11 == 0:                                  # rachadura
+                cx, cy = x + 4 + h % 20, y + 4 + (h >> 3) % 16
+                pygame.draw.lines(surf, (0, 0, 0, 80), False,
+                                  [(cx, cy), (cx + 4, cy + 3), (cx + 3, cy + 7), (cx + 7, cy + 10)], 1)
+        if theme == "island" and not solid(tx, ty + 1) and h % 3 == 0:
+            for k in range(2):                                 # raízes penduradas embaixo
+                rx = x + 6 + k * 12 + h % 5
+                ln = 4 + (h >> (k + 2)) % 9
+                pygame.draw.line(surf, (70, 50, 34, 220), (rx, y + T), (rx + (k * 2 - 1), y + T + ln), 1)
 
     def _draw_water(self, surf, cam_x, cam_y):
         """Água animada (tiles ~): superfície com ondas e brilho."""

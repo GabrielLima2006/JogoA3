@@ -38,26 +38,47 @@ HERO = {
              (656, 836, 90, 105), (814, 819, 82, 121), (945, 818, 87, 123)],
 }
 
+# grupos em que o desenho do rosto não bate com a direção do golpe: usa a direção do golpe
+ATTACK_FACES_RIGHT = {"heavy": True, "wave": True, "roll": True}
+
 # NPCs e criaturas que não ficaram iguais à protagonista (os outros saíram com os chifres e o
 # cabelo dela e foram descartados)
 NPCS = {
-    "fazendeiro": (130, 135, 92, 142),
-    "anciã": (250, 145, 80, 132),
-    "menino": (360, 168, 66, 108),
-    "ladino": (1194, 362, 86, 146),
-    "cavaleiro_negro": (1325, 333, 158, 180),
-    "diabrete": (48, 618, 108, 108),
-    "espirito": (205, 580, 90, 148),
-    "goblin": (385, 588, 110, 138),
-    "ogro": (528, 555, 186, 172),
-    "lobo": (760, 610, 190, 110),
-    "lich": (962, 538, 152, 190),
-    "mumia": (1185, 583, 90, 140),
-    "minotauro": (1334, 568, 182, 158),
-    "alquimista": (612, 810, 170, 158),
-    "vidente": (834, 830, 200, 140),
-    "funileiro": (1060, 808, 110, 160),
-    "gato": (1360, 905, 70, 60),
+    # nome: (recorte, cor nova do cabelo ou None). Quem tem cor nova saiu na folha com o cabelo
+    # lavanda e os chifres da protagonista: o importador troca o cabelo e apaga os chifres.
+    "aldea": ((35, 135, 69, 139), (150, 80, 50)),
+    "fazendeiro": ((135, 137, 81, 137), None),
+    "anciã": ((253, 151, 73, 123), None),
+    "menino": ((364, 167, 57, 107), None),
+    "comerciante": ((493, 122, 130, 152), (120, 80, 50)),
+    "ferreiro": ((683, 122, 135, 152), (60, 50, 50)),
+    "curandeira": ((920, 123, 120, 151), (90, 150, 80)),
+    "guarda": ((1158, 122, 112, 152), (200, 150, 70)),
+    "anciao": ((1375, 130, 89, 143), (220, 220, 220)),
+    "cavaleiro_escudo": ((33, 330, 170, 175), (190, 120, 60)),
+    "lanceiro": ((250, 330, 117, 175), (60, 42, 34)),
+    "guerreiro": ((419, 339, 174, 166), (110, 110, 120)),
+    "arqueira": ((638, 364, 114, 141), (40, 34, 48)),
+    "espadachim": ((790, 359, 134, 146), (40, 40, 60)),
+    "porta_estandarte": ((979, 330, 171, 175), (230, 200, 120)),
+    "ladino": ((1197, 369, 81, 136), None),
+    "cavaleiro_negro": ((1326, 335, 162, 174), None),
+    "diabrete": ((43, 600, 115, 123), None),
+    "espirito": ((200, 551, 98, 172), None),
+    "goblin": ((387, 593, 103, 130), None),
+    "ogro": ((532, 557, 180, 166), None),
+    "lobo": ((764, 613, 185, 110), None),
+    "lich": ((968, 540, 144, 183), None),
+    "mumia": ((1188, 585, 81, 135), None),
+    "minotauro": ((1337, 569, 174, 154), None),
+    "bardo": ((41, 790, 150, 176), (70, 50, 90)),
+    "mago_azul": ((235, 790, 143, 176), None),
+    "estudioso": ((440, 811, 122, 152), (70, 50, 40)),
+    "alquimista": ((613, 814, 168, 152), None),
+    "vidente": ((834, 838, 193, 128), None),
+    "funileiro": ((1068, 812, 97, 152), None),
+    "velho": ((1238, 826, 118, 138), (180, 180, 180)),
+    "gato": ((1360, 900, 70, 64), None),
 }
 
 
@@ -71,7 +92,44 @@ def is_bg(c):
     return False
 
 
+def grow(sheet, rect, limit=60):
+    """Aumenta o recorte enquanto a borda ainda encosta no desenho (evita modelo cortado)."""
+    x, y, w, h = rect
+    W, H = sheet.get_size()
+
+    def busy(pts):
+        return any(not is_bg(sheet.get_at(p)) for p in pts)
+    for _ in range(limit):
+        changed = False
+        if x > 0 and busy([(x, yy) for yy in range(y, y + h)]):
+            x, w, changed = x - 1, w + 1, True
+        if x + w < W and busy([(x + w - 1, yy) for yy in range(y, y + h)]):
+            w, changed = w + 1, True
+        if y > 0 and busy([(xx, y) for xx in range(x, x + w)]):
+            y, h, changed = y - 1, h + 1, True
+        if y + h < H and busy([(xx, y + h - 1) for xx in range(x, x + w)]):
+            h, changed = h + 1, True
+        if not changed:
+            break
+    return (x, y, w, h)
+
+
+def _is_shadow(sub, comp):
+    """Mancha de sombra: quase sem cor (cinza)."""
+    pts = comp.outline(every=2) or [(0, 0)]
+    sat = bright = 0
+    for p in pts:
+        c = sub.get_at(p)
+        sat += max(c.r, c.g, c.b) - min(c.r, c.g, c.b)
+        bright += (c.r + c.g + c.b) / 3
+    n = len(pts)
+    r = comp.get_bounding_rects()[0]
+    flat = r.h < 30 and r.h < r.w * 0.4                 # sombra é uma elipse achatada no chão
+    return flat and sat / n < 22 and bright / n > 35
+
+
 def cut(sheet, rect):
+    rect = grow(sheet, rect)
     sub = sheet.subsurface(pygame.Rect(rect).clip(sheet.get_rect())).copy().convert_alpha()
     w, h = sub.get_size()
     for y in range(h):
@@ -83,7 +141,10 @@ def cut(sheet, rect):
     comps = mask.connected_components(minimum=40)
     keep = pygame.mask.Mask((w, h))
     for c in comps:
-        keep.draw(c, (0, 0))
+        r = c.get_bounding_rects()[0]
+        text = r.h < 24 and r.w < 30 and c.count() < 220      # letras da folha
+        if not _is_shadow(sub, c) and not text:
+            keep.draw(c, (0, 0))
     clean = keep.to_surface(setsurface=sub, unsetcolor=(0, 0, 0, 0))
     r = keep.get_bounding_rects()
     if r:
@@ -125,6 +186,24 @@ def shrink(surf, scale):
     return pygame.transform.smoothscale(surf, (max(1, round(w * scale)), max(1, round(h * scale))))
 
 
+def looks_right(img):
+    """O rosto (pele) fica do lado para onde a personagem olha; o cabelo fica atrás."""
+    w, h = img.get_size()
+    skin, hair = [], []
+    for y in range(int(h * 0.45)):
+        for x in range(w):
+            c = img.get_at((x, y))
+            if not c.a:
+                continue
+            if c.r > 200 and 90 < c.g < 175 and c.b < 130:
+                skin.append(x)
+            elif c.b > 200 and c.r > 140:
+                hair.append(x)
+    if not skin or not hair:
+        return False
+    return sum(skin) / len(skin) > sum(hair) / len(hair)
+
+
 def body_center(surf):
     """x do centro do corpo: média das colunas com pixels nas linhas de baixo (pés e pernas)."""
     w, h = surf.get_size()
@@ -163,7 +242,11 @@ def main():
         imgs = []
         for rect in rects:
             img = snap(shrink(cut(hero_src, rect), SCALE), pal)
-            imgs.append(pygame.transform.flip(img, True, False))     # olha para a esquerda
+            # no golpe forte e na rolagem quem manda é a direção do movimento/corte, não o rosto
+            right = ATTACK_FACES_RIGHT[name] if name in ATTACK_FACES_RIGHT else looks_right(img)
+            if right:
+                img = pygame.transform.flip(img, True, False)          # todos olham para a esquerda
+            imgs.append(img)
         hero[name] = imgs
     wave = hero.pop("wave")[0]
     pygame.image.save(wave, os.path.join(EFE, "onda_roxa.png"))
@@ -171,13 +254,62 @@ def main():
 
     npc_src = pygame.image.load(os.path.join(FONTES, "npcs_modelos.webp")).convert()
     npcs = {}
-    for name, rect in NPCS.items():
-        img = shrink(cut(npc_src, rect), SCALE)
+    for name, (rect, hair) in NPCS.items():
+        img = cut(npc_src, rect)
+        if hair:
+            img = fix_borrowed_look(img, hair)
+        img = shrink(img, SCALE)
         # cada NPC mantém as próprias cores; só tira meio-tons de borda
         img = snap(img, palette_quant(img))
         npcs[name] = [pygame.transform.flip(img, True, False)]
-    pack(npcs, os.path.join(PERS, "npcs.png"), 96, 96)
+    pack(npcs, os.path.join(PERS, "npcs.png"), 128, 96)
     print("ok:", {k: len(v) for k, v in hero.items()}, len(npcs), "NPCs")
+
+
+def _is_lavender(c):
+    return c.b > 150 and c.r > 110 and c.b > c.r + 25 and c.b > c.g + 20
+
+
+def _is_horn(c):
+    return c.r > c.b + 35 and c.r >= c.g and c.r > 70
+
+
+def fix_borrowed_look(img, hair):
+    """Tira o cabelo lavanda e os chifres copiados da protagonista (cor nova, chifres apagados)."""
+    out = img.copy()
+    w, h = out.get_size()
+    is_hair = [[False] * w for _ in range(h)]
+    hair_rows = []
+    for y in range(h):
+        for x in range(w):
+            c = out.get_at((x, y))
+            if c.a and _is_lavender(c):
+                is_hair[y][x] = True
+                hair_rows.append(y)
+                k = (0.3 * c.r + 0.59 * c.g + 0.11 * c.b) / 200.0
+                out.set_at((x, y), tuple(max(0, min(255, int(v * k * 1.05))) for v in hair) + (255,))
+    if not hair_rows:
+        return out
+    top = min(hair_rows)
+    zone = top + max(8, int((max(hair_rows) - top) * 0.3))
+    outline = tuple(max(0, v // 4) for v in hair) + (255,)
+    for x in range(w):
+        first = next((y for y in range(top, zone) if is_hair[y][x]), None)
+        limit = first if first is not None else zone
+        for y in range(0, limit):
+            c = out.get_at((x, y))
+            if c.a and (first is not None or _is_horn(c) or max(c.r, c.g, c.b) < 90):
+                out.set_at((x, y), (0, 0, 0, 0))
+        if first is not None and first > 0:
+            out.set_at((x, first - 1), outline)
+    # chifres que passavam por dentro do cabelo: troca pelo cabelo vizinho
+    for y in range(top, zone):
+        for x in range(1, w - 1):
+            c = out.get_at((x, y))
+            if c.a and _is_horn(c) and not is_hair[y][x]:
+                left = out.get_at((x - 1, y))
+                out.set_at((x, y), left if left.a else (0, 0, 0, 0))
+    return out
 
 
 def palette_quant(img, levels=24):

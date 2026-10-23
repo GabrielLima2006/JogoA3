@@ -178,19 +178,16 @@ class NPC(Interactable):
 
     def draw(self, surf, cam_x, cam_y, time):
         x, y = self.x - cam_x, self.y - cam_y
-        style = "cozinheira" if self.kind == "shop" else "mercador"
-        img = pixelart.human(style, "idle", (time * 0.5) % 1.0, -1)
-        if self.kind == "smith":
-            pygame.draw.rect(surf, (70, 70, 82), (x - 40, y - 14, 22, 14))     # bigorna
-            pygame.draw.rect(surf, (96, 96, 110), (x - 44, y - 19, 30, 6))
-        else:
+        from .creatures import draw_model
+        if self.kind != "smith":
             crate = pixelart.crate()
             surf.blit(crate, crate.get_rect(midbottom=(int(x + 26), int(y))))
             for i, name in enumerate(("pao", "peixe")):
                 food = sprites.image("itens", name + ".png")
                 if food is not None:
                     surf.blit(food, food.get_rect(midbottom=(int(x + 20 + i * 14), int(y - 24))))
-        surf.blit(img, img.get_rect(midbottom=(int(x), int(y) + 2)))
+        # comerciante (mochila de poções) e ferreiro (já vem com a bigorna)
+        draw_model(surf, "comerciante" if self.kind == "shop" else "ferreiro", x, y, time, -1)
         return
         breath = math.sin(time * 2) * 1.5
         body = pygame.Rect(0, 0, 28, int(40 + breath))

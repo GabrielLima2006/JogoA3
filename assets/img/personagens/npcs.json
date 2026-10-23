@@ -1,79 +1,143 @@
 {
  "frame": [
-  96,
+  128,
   96
  ],
  "anchor": [
-  48,
+  64,
   95
  ],
  "rows": {
-  "fazendeiro": [
+  "aldea": [
    0,
    1
   ],
-  "anciã": [
+  "fazendeiro": [
    1,
    1
   ],
-  "menino": [
+  "anciã": [
    2,
    1
   ],
-  "ladino": [
+  "menino": [
    3,
    1
   ],
-  "cavaleiro_negro": [
+  "comerciante": [
    4,
    1
   ],
-  "diabrete": [
+  "ferreiro": [
    5,
    1
   ],
-  "espirito": [
+  "curandeira": [
    6,
    1
   ],
-  "goblin": [
+  "guarda": [
    7,
    1
   ],
-  "ogro": [
+  "anciao": [
    8,
    1
   ],
-  "lobo": [
+  "cavaleiro_escudo": [
    9,
    1
   ],
-  "lich": [
+  "lanceiro": [
    10,
    1
   ],
-  "mumia": [
+  "guerreiro": [
    11,
    1
   ],
-  "minotauro": [
+  "arqueira": [
    12,
    1
   ],
-  "alquimista": [
+  "espadachim": [
    13,
    1
   ],
-  "vidente": [
+  "porta_estandarte": [
    14,
    1
   ],
-  "funileiro": [
+  "ladino": [
    15,
    1
   ],
-  "gato": [
+  "cavaleiro_negro": [
    16,
+   1
+  ],
+  "diabrete": [
+   17,
+   1
+  ],
+  "espirito": [
+   18,
+   1
+  ],
+  "goblin": [
+   19,
+   1
+  ],
+  "ogro": [
+   20,
+   1
+  ],
+  "lobo": [
+   21,
+   1
+  ],
+  "lich": [
+   22,
+   1
+  ],
+  "mumia": [
+   23,
+   1
+  ],
+  "minotauro": [
+   24,
+   1
+  ],
+  "bardo": [
+   25,
+   1
+  ],
+  "mago_azul": [
+   26,
+   1
+  ],
+  "estudioso": [
+   27,
+   1
+  ],
+  "alquimista": [
+   28,
+   1
+  ],
+  "vidente": [
+   29,
+   1
+  ],
+  "funileiro": [
+   30,
+   1
+  ],
+  "velho": [
+   31,
+   1
+  ],
+  "gato": [
+   32,
    1
   ]
  }

@@ -10,6 +10,7 @@ import random
 
 import pygame
 
+from . import paisagem as pz
 from . import sprites
 from .config import Display
 from .tiles import ISLAND, T, theme_of
@@ -23,6 +24,15 @@ SKY = {
 }
 
 _static = {}
+
+# figurantes (sala -> [(modelo, coluna, linha do chão, alcance em px)])
+WALKERS = {
+    "conves": [("gato", 52, 18, 140), ("bardo", 40, 18, 40), ("aldea", 60, 18, 90)],
+    "cabine": [("estudioso", 22, 14, 50)],
+    "praia": [("fazendeiro", 8, 18, 120), ("menino", 28, 18, 90), ("aldea", 50, 12, 70)],
+    "floresta": [("anciã", 14, 37, 60), ("curandeira", 6, 37, 40)],
+    "ruinas": [("velho", 4, 17, 0)],
+}
 
 
 def _gradient(top, bottom, h=H):
@@ -131,6 +141,9 @@ class Background:
         self.rain = [(rnd.uniform(0, W), rnd.uniform(0, H), rnd.uniform(0.7, 1.2)) for _ in range(90)]
         self.next_flash = rnd.uniform(4, 9)
         self.flash = 0.0
+        self.rng = random.Random(len(room.id))   # aleatório próprio: não mexe no do jogo
+        self.motes = []                  # partículas de ambiente (mundo): vaga-lumes, folhas, poeira, gotas
+        self.time = 0.0
 
     # --- decoração presa ao cenário ---
     def _place_decor(self):
@@ -168,6 +181,16 @@ class Background:
                         default=room.rows_count - 4)
             out.insert(0, ("rail", 0, floor * T))
             out.insert(0, ("mast", 29 * T, floor * T))
+        if self.theme in ("island", "ruins"):
+            for tx in range(1, room.cols - 1):
+                for ty in range(1, room.rows_count):
+                    if room.tile(tx, ty) == "#" and room.tile(tx, ty - 1) == "." and rnd.random() < 0.35:
+                        out.append(("tuft", tx * T + rnd.randint(4, 28), ty * T))
+                    if (self.theme == "island" and room.tile(tx, ty) == "#" and room.tile(tx, ty + 1) == "."
+                            and rnd.random() < 0.18):
+                        out.append(("vine", tx * T + rnd.randint(6, 26), (ty + 1) * T))
+        for name, tx, ty, span in WALKERS.get(room.id, ()):
+            out.append(("walker", tx * T + 16, ty * T, name, span))
         if self.theme in ("temple", "ruins"):
             for tx in range(2, room.cols - 2, 7):
                 for ty in range(room.rows_count - 2, 1, -1):
@@ -176,13 +199,15 @@ class Background:
                         break
         return out
 
-    def update(self, dt):
+    def update(self, dt, cam=None):
+        self.time += dt
+        self._update_motes(dt, cam)
         if self.theme == "deck":
             self.next_flash -= dt
             self.flash = max(0.0, self.flash - dt)
             if self.next_flash <= 0:
                 self.flash = 0.25
-                self.next_flash = random.uniform(6, 12)
+                self.next_flash = self.rng.uniform(6, 12)
 
     # --- desenho ---
     def draw(self, surf, cam_x, cam_y, time):
@@ -194,16 +219,18 @@ class Background:
                 sx = (x - cam_x * 0.03) % W
                 c = int(120 + 90 * b * (0.6 + 0.4 * math.sin(time * 2 + x)))
                 surf.set_at((int(sx), int(y)), (c, c, min(255, c + 30)))
+            surf.blit(_glow(150, (120, 130, 190)), (W - 300, -60), special_flags=pygame.BLEND_RGB_ADD)
             pygame.draw.circle(surf, (226, 230, 240), (W - 150, 90), 34)
-            pygame.draw.circle(surf, (190, 196, 214), (W - 160, 82), 8)
-            surf.blit(_glow(110, (180, 190, 230)), (W - 260, -20), special_flags=pygame.BLEND_RGB_ADD)
-            if th == "deck":
-                self._draw_sea(surf, cam_x, cam_y, time)
-            else:
-                far = _tree_layer(3, (40, 52, 80), 330)
-                near = _tree_layer(9, (22, 30, 48), 420)
-                surf.blit(far, (-(cam_x * 0.15) % W - W, H - far.get_height() + 40 - cam_y * 0.05))
-                surf.blit(near, (-(cam_x * 0.3) % W - W, H - near.get_height() + 80 - cam_y * 0.1))
+            pygame.draw.circle(surf, (200, 204, 220), (W - 162, 82), 8)
+            pygame.draw.circle(surf, (205, 210, 226), (W - 138, 100), 5)
+            self._layers(surf, cam_x, cam_y, time)
+        elif th == "temple":
+            hall = pz.temple_hall(7, (34, 40, 46), (54, 62, 70), (90, 220, 200))
+            surf.blit(hall, (-(cam_x * 0.5) % W - W, -cam_y * 0.2 % 1))
+            pulse = 0.6 + 0.4 * math.sin(time * 1.6)
+            surf.blit(pz.light_rays((int(120 * pulse), int(200 * pulse), int(190 * pulse)), 4, 3), (0, 0),
+                      special_flags=pygame.BLEND_RGB_ADD)
+            surf.blit(pz.mist((40, 70, 80), 70, 140), (-(cam_x * 0.6 + time * 8) % W - W, H - 170 - cam_y * 0.05))
         else:
             surf.fill((10, 10, 14))
             wall = _wall_texture(th)
@@ -214,6 +241,38 @@ class Background:
                 for y in range(-1, H // wh + 2):
                     surf.blit(wall, (x * ww + ox - ww, y * wh + oy - wh))
         self._draw_decor(surf, cam_x, cam_y, time)
+
+    def _layers(self, surf, cam_x, cam_y, time):
+        """Paisagem em camadas (parallax) para o convés, a ilha e as ruínas."""
+        th = self.theme
+        drift = time * 6
+
+        def band(img, par, y, speed=0.0):
+            x0 = -((cam_x * par + time * speed) % img.get_width())
+            for x in (x0, x0 + img.get_width()):
+                if x < W:
+                    surf.blit(img, (x, y))
+
+        band(pz.clouds(5, (44, 52, 86, 140)), 0.04, 30 - cam_y * 0.02, 4)
+        band(pz.mountains(11, (36, 44, 74), 260, 1.1, snow=(150, 160, 200)), 0.08, H - 330 - cam_y * 0.04)
+        if th != "deck":
+            c = pz.castle(4, (30, 34, 60), (250, 200, 110))
+            cx = W * 0.62 - (cam_x * 0.1) % (W * 1.6)
+            surf.blit(c, (cx, H - 380 - cam_y * 0.05))
+        band(pz.mist((70, 80, 120), 60), 0.12, H - 260 - cam_y * 0.06, 10)
+        band(pz.clouds(9, (60, 68, 104, 120), 5, height=160), 0.1, 90 - cam_y * 0.03, 9)
+        if th == "deck":
+            self._draw_sea(surf, cam_x, cam_y, time)
+            return
+        band(pz.mountains(23, (26, 34, 56), 200, 0.8), 0.18, H - 240 - cam_y * 0.08)
+        if th == "ruins":
+            band(pz.ruins_layer(6, (24, 28, 46)), 0.3, H - 320 - cam_y * 0.12)
+        far = _tree_layer(3, (40, 52, 80), 330)
+        near = _tree_layer(9, (22, 30, 48), 420)
+        surf.blit(far, (-(cam_x * 0.25) % W - W, H - far.get_height() + 40 - cam_y * 0.1))
+        band(pz.mist((90, 110, 140), 45, 70), 0.35, H - 150 - cam_y * 0.12, 16 + drift * 0)
+        surf.blit(near, (-(cam_x * 0.4) % W - W, H - near.get_height() + 80 - cam_y * 0.15))
+        surf.blit(pz.light_rays((150, 170, 230), 5, 2), (0, 0), special_flags=pygame.BLEND_RGB_ADD)
 
     def _draw_sea(self, surf, cam_x, cam_y, time):
         horizon = self.room.height - cam_y - 40 + (cam_y * 0.0)
@@ -228,9 +287,13 @@ class Background:
 
     def _draw_decor(self, surf, cam_x, cam_y, time):
         fire = sprites.effect("fogo")
-        for kind, x, y in self.decor:
+        for item in self.decor:
+            kind, x, y = item[0], item[1], item[2]
             sx, sy = x - cam_x, y - cam_y
             # peças grandes fazem o próprio recorte
+            if kind == "walker":
+                self._draw_walker(surf, x, y, item, cam_x, cam_y, time)
+                continue
             if kind == "beam":
                 self._draw_beam(surf, sx, time)
                 continue
@@ -255,6 +318,21 @@ class Background:
                     r = crate.get_rect(midbottom=(int(sx), int(sy)))
                     surf.blit(crate, r)
                     surf.blit(barrel, barrel.get_rect(midbottom=(r.centerx, r.top + 2)))
+                continue
+            if kind == "tuft":
+                sway = math.sin(time * 2 + x * 0.05) * 1.5
+                for i, (dx, hgt, col) in enumerate(((-3, 6, (60, 110, 60)), (0, 9, (80, 140, 70)),
+                                                    (3, 7, (50, 96, 54)))):
+                    pygame.draw.line(surf, col, (sx + dx, sy), (sx + dx + sway * (i + 1) / 2, sy - hgt), 2)
+                continue
+            if kind == "vine":
+                ln = 26 + int(x) % 30
+                sway = math.sin(time * 1.3 + x * 0.03) * 3
+                pts = [(sx + math.sin(k * 0.5) * 2 + sway * k / ln * 4, sy + k) for k in range(0, ln, 4)]
+                if len(pts) > 1:
+                    pygame.draw.lines(surf, (40, 80, 50), False, pts, 2)
+                    for px, py in pts[1::2]:
+                        pygame.draw.circle(surf, (70, 130, 70), (round(px + 2), round(py)), 2)
                 continue
             if kind == "lantern":
                 pygame.draw.line(surf, (40, 34, 30), (sx, sy), (sx, sy + 18), 2)
@@ -328,8 +406,96 @@ class Background:
         for x in range(off - 24, W + 24, 24):
             pygame.draw.rect(surf, (40, 28, 22), (x, y - 28, 6, 28))
 
+    # --- partículas de ambiente ---
+    MOTES = {"island": ("firefly", "leaf"), "ruins": ("firefly", "dust"), "temple": ("dust", "ember"),
+             "hull": ("dust",), "bilge": ("drip", "dust")}
+
+    def _update_motes(self, dt, cam):
+        kinds = self.MOTES.get(self.theme)
+        if not kinds or cam is None:
+            return
+        cx, cy = cam
+        while len(self.motes) < 46:
+            kind = self.rng.choice(kinds)
+            x = cx + self.rng.uniform(-40, W + 40)
+            y = cy + (self.rng.uniform(-20, 0) if kind in ("leaf", "drip") else self.rng.uniform(0, H))
+            if kind == "ember":
+                y = cy + H + 10
+            self.motes.append([kind, x, y, self.rng.uniform(0, 6.28), self.rng.uniform(4, 9)])
+        alive = []
+        for m in self.motes:
+            kind = m[0]
+            m[3] += dt
+            m[4] -= dt
+            if kind == "firefly":
+                m[1] += math.cos(m[3] * 0.9) * 14 * dt
+                m[2] += math.sin(m[3] * 1.3) * 10 * dt
+            elif kind == "leaf":
+                m[1] += (18 + math.sin(m[3] * 2) * 30) * dt
+                m[2] += 34 * dt
+            elif kind == "dust":
+                m[1] += math.sin(m[3] * 0.7) * 6 * dt
+                m[2] -= 4 * dt
+            elif kind == "ember":
+                m[1] += math.sin(m[3] * 3) * 12 * dt
+                m[2] -= 40 * dt
+            elif kind == "drip":
+                m[2] += 260 * dt
+            inside = cx - 80 < m[1] < cx + W + 80 and cy - 80 < m[2] < cy + H + 80
+            if m[4] > 0 and inside:
+                alive.append(m)
+        self.motes = alive
+
+    def _draw_motes(self, surf, cam_x, cam_y):
+        for kind, x, y, t, life in self.motes:
+            sx, sy = round(x - cam_x), round(y - cam_y)
+            if not (0 <= sx < W and 0 <= sy < H):
+                continue
+            fade = min(1.0, life / 1.5)
+            if kind == "firefly":
+                k = (0.5 + 0.5 * math.sin(t * 4)) * fade
+                surf.blit(_glow(10, (int(200 * k), int(255 * k), int(120 * k))), (sx - 10, sy - 10),
+                          special_flags=pygame.BLEND_RGB_ADD)
+                surf.set_at((sx, sy), (240, 255, 170))
+            elif kind == "leaf":
+                c = (110, 150, 70) if int(x) % 2 else (150, 110, 60)
+                w = 3 if math.sin(t * 5) > 0 else 1
+                pygame.draw.rect(surf, c, (sx, sy, w, 2))
+            elif kind == "dust":
+                v = int(140 * fade)
+                surf.set_at((sx, sy), (v, v, min(255, v + 20)))
+            elif kind == "ember":
+                surf.blit(_glow(6, (int(255 * fade), int(130 * fade), int(40 * fade))), (sx - 6, sy - 6),
+                          special_flags=pygame.BLEND_RGB_ADD)
+                surf.set_at((sx, sy), (255, 200, 120))
+            elif kind == "drip":
+                pygame.draw.line(surf, (110, 150, 200), (sx, sy), (sx, sy + 4), 1)
+
+    def _draw_walker(self, surf, x, y, item, cam_x, cam_y, time):
+        """Figurante que anda devagar de um lado para o outro (só cenário)."""
+        from .creatures import draw_model
+        name, span = item[3], item[4]
+        period = max(4.0, span / 18)
+        k = (time / period) % 2.0
+        pos = k if k < 1 else 2 - k
+        ease = 0.5 - 0.5 * math.cos(pos * math.pi)
+        wx = x - span / 2 + span * ease
+        facing = 1 if k < 1 else -1
+        moving = span > 0 and 0.06 < pos < 0.94
+        sx, sy = wx - cam_x, y - cam_y
+        if -100 < sx < W + 100 and -100 < sy < H + 100:
+            draw_model(surf, name, sx, sy, time + x * 0.01, facing, moving)
+
     def draw_front(self, surf, cam_x, cam_y, time):
-        """Chuva no convés, clarão de relâmpago e vinheta em todas as salas."""
+        """Partículas, chuva no convés, clarão de relâmpago e vinheta em todas as salas."""
+        self._draw_motes(surf, cam_x, cam_y)
+        if self.theme in ("island", "ruins"):
+            leaf = pz.foliage(31, (10, 16, 22, 255))
+            x0 = -((cam_x * 1.25) % leaf.get_width())
+            y = H - 46 + max(0, (self.room.height - cam_y - H) * 0.3)
+            for x in (x0, x0 + leaf.get_width()):
+                if x < W and y < H:
+                    surf.blit(leaf, (x, y))
         surf.blit(_vignette(), (0, 0))
         if self.theme != "deck":
             return

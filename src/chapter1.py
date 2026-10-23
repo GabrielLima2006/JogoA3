@@ -147,6 +147,7 @@ def room_praia():
     g.rect(36, 12, 58, 20)                    # penhasco: 6 acima (pulo duplo)
     g.put(4, 17, "B").put(25, 17, "*")
     g.put(28, 17, "j").put(33, 17, "k").put(48, 11, "c")
+    g.put(31, 17, "g").put(53, 11, "g").put(44, 6, "f")       # lobos e diabrete
     return g.rows()
 
 
@@ -160,6 +161,7 @@ def room_floresta():
     g.rect(38, 6, 46, 6)
     g.put(10, 4, "*").put(44, 5, "*").put(38, 20, "*")
     g.put(18, 27, "j").put(30, 16, "f").put(9, 36, "j")
+    g.put(14, 36, "g").put(12, 18, "f")                        # lobo no chão e diabrete no alto
     return g.rows()
 
 
@@ -182,6 +184,7 @@ def room_templo():
     g.hline(11, 14, 15, "-").hline(19, 23, 14, "C").hline(38, 41, 15, "-")
     g.put(3, 17, "B").put(40, 14, "*")
     g.put(52, 17, "c").put(56, 17, "s")
+    g.put(39, 14, "t").put(26, 8, "f")                         # lich na plataforma e espírito
     return g.rows()
 
 
