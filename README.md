@@ -41,12 +41,12 @@ para quem já conhece o caminho. (Estimativa; o tempo real aparece no HUD e fica
 
 No reino de Aurel, Nyra esconde os chifres sob o capuz e vende truques como se fosse feiticeira. A bordo da
 Gaivota Rubra, ela enfrenta a tripulação enfeitiçada, sobe o mastro na tempestade, desembarca em Velmora e
-chega ao Templo da Maré. Cada chefe tem uma mecânica ligada ao mundo: a água que inunda o porão, o vento no
+chega ao Templo da Maré. Cada chefe tem uma mecânica ligada ao mundo: os ratos do porão, o vento no
 alto do mastro, o canhonaço do navio pirata e as ilusões do Feiticeiro da Maré. Três páginas escondidas do
 diário da capitã revelam a história inteira e liberam o final verdadeiro.
 
 - **3 áreas:** navio (cabine, convés, porão, cordame), ilha (praia, floresta, ruínas) e Templo da Maré.
-- **4 chefes:** Tico (Rei dos Ratos, inunda a toca), Aldric (Cavaleiro Rubro, rajadas de vento), Selka
+- **4 chefes:** Tico (Rei dos Ratos, investida e ratos), Aldric (Cavaleiro Rubro, rajadas de vento), Selka
   (Canhoneira da Tempestade, canhonaço) e Caelum (Feiticeiro da Maré, ilusões e maré). Todos têm duas fases.
 - **Habilidades:** dash (Passo ilusório) desde o começo; pulo duplo (Levitação) depois do primeiro chefe,
   abrindo caminho para o mastro e a ilha.
@@ -117,6 +117,12 @@ Os controles também aparecem no jogo, em **Como jogar** e na tela de pausa.
 
 Todos os assets de terceiros são gratuitos. Autor, link e licença de cada um estão em
 [`assets/CREDITOS.md`](assets/CREDITOS.md) e também aparecem na tela **Créditos** do jogo.
+
+> **Personagens novos em produção (PixelLab):** os personagens e as animações estão sendo refeitos no
+> [PixelLab](https://www.pixellab.ai), ferramenta de geração de pixel art. Por enquanto só a protagonista foi
+> feita: [personagem no PixelLab](https://www.pixellab.ai/create-character/ef1888d6-775c-41a3-8d0c-693294b46e44).
+> Os demais personagens, inimigos e chefes ainda usam os sprites atuais e serão trocados aos poucos. Isso entra
+> na seção [Uso de IA](#9-uso-de-ia).
 
 | Asset | Autor | Uso |
 |---|---|---|
