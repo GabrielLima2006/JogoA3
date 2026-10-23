@@ -222,13 +222,14 @@ def draw_protagonist(surf, key, x, foot_y, scale=2, t=0.0, facing=1):
 
 # ---------------------------------------------------------------------------
 INTRO_SLIDES = [
-    "Noite de tempestade. O navio da capitã corta o mar escuro rumo a uma ilha esquecida.",
-    "Você viaja como {passageiro}. Diz ser {feiticeiro}... mas seu único truque é enganar "
-    "muito bem. E saber lutar.",
-    "No porto, gente vem sumindo há semanas. A capitã desconfia de alguém a bordo.",
-    "Um grito no convés. A capitã caiu, envenenada. Os ratos do porão uivam e a tripulação "
-    "parece enfeitiçada.",
-    "Alguém está usando magia de verdade neste navio. Descubra quem antes que a maré leve todos.",
+    "Reino de Aurel. Há dez anos, uma ilusão saiu de controle na academia de magia e um aprendiz foi banido.",
+    "Nyra, a aprendiz de chifres, ficou calada. Desde então vive escondida sob o capuz, vendendo truques "
+    "como se fosse uma feiticeira de verdade.",
+    "Agora ela viaja na Gaivota Rubra, o navio da Capitã Maren, rumo à ilha de Velmora. No porto, gente some "
+    "toda lua cheia.",
+    "Noite de tempestade. Um grito no convés: a capitã caiu, envenenada. Os ratos do porão uivam e a "
+    "tripulação parece enfeitiçada.",
+    "Alguém está usando magia de verdade. E a Maré, que dorme sob Velmora, está acordando.",
 ]
 
 
@@ -297,7 +298,7 @@ HOWTO_PAGES = [
     ("Objetivo", [
         "Explore o navio e a ilha, vença os 4 chefes e liberte os desaparecidos.",
         "O dash você já tem; o pulo duplo vem do primeiro chefe e abre o mastro e a ilha.",
-        "Ache as 3 cartas da capitã para ver o final verdadeiro.",
+        "Ache as 3 páginas do diário da capitã para ver o final verdadeiro.",
         "Moedas compram melhorias na loja; amuletos dão bônus permanentes.",
         "Bola de cristal (W): salva o jogo e recupera os corações.",
         "Golpes acertados enchem o orbe de foco. Segure F para se curar.",
@@ -308,7 +309,7 @@ HOWTO_PAGES = [
         "Tábuas rachadas desabam pouco depois de pisadas. Não pare em cima!",
         "Ataque para baixo no ar (S + clique) quica em inimigos e espinhos.",
         "Chefes têm 2 fases: na metade da vida ficam mais rápidos e perigosos.",
-        "A nota final (S, A, B, C) depende de tempo, quedas e cartas encontradas.",
+        "A nota final (S, A, B, C) depende de tempo, quedas e páginas do diário.",
     ]),
 ]
 
@@ -363,7 +364,7 @@ class RecordsState(Screen):
             ui.text(surf, "Vença o chefe final para registrar sua nota.", 24, (W // 2, H // 2 + 26),
                     Colors.UI_DIM, "center")
         else:
-            cols = [("Nota", 110), ("Pontos", 200), ("Tempo", 340), ("Quedas", 460), ("Cartas", 580),
+            cols = [("Nota", 110), ("Pontos", 200), ("Tempo", 340), ("Quedas", 460), ("Diário", 580),
                     ("Dificuldade", 700)]
             for label, x in cols:
                 ui.text(surf, label, 22, (x, 120), Colors.UI_ACCENT)

@@ -1,114 +1,120 @@
-# Maré de Mentiras — história completa
+# Maré de Mentiras — história completa (versão fantasia)
 
 ## Sinopse
 
-Numa noite de tempestade, o navio da capitã segue para uma ilha esquecida. A bordo viaja uma
-passageira que se apresenta como **feiticeira**. Na verdade, seu único "feitiço" é o Passo ilusório:
-um passo de fumaça rápido, truque de quem vive de enganar e de lutar. No porto, gente vem sumindo há
-semanas, e a capitã desconfia de alguém do próprio navio.
+No reino costeiro de **Aurel**, a academia de magia expulsou um aprendiz há dez anos: uma ilusão saiu de
+controle e alguém precisava levar a culpa. O culpado de verdade era **Nyra**, uma aprendiz meio-demônia de
+chifres, que ficou calada. Quem foi banido foi o melhor amigo dela, **Caelum**.
 
-Pouco depois, a capitã cai envenenada no convés e a tripulação começa a agir como se estivesse
-enfeitiçada. Alguém está usando magia de verdade. A protagonista desce ao porão, sobe ao mastro,
-desembarca na ilha e chega ao Templo da Maré enfrentando, um por um, os cúmplices do verdadeiro
-culpado: **o melhor amigo de infância dela**, que anos atrás levou a culpa por um erro que era
-dela e nunca foi defendido. Agora, como Feiticeiro da Maré, ele quer tirar tudo de quem o deixou cair.
+Hoje Nyra vive escondida sob o capuz, vendendo truques como se fosse uma feiticeira de verdade. O único
+feitiço que domina é o **Passo ilusório**, um passo de fumaça que a leva alguns metros à frente num piscar.
+Ela embarca na **Gaivota Rubra**, o navio da **Capitã Maren**, rumo à ilha de **Velmora**, onde gente do
+porto some toda lua cheia.
 
-Três cartas escondidas da capitã contam a história inteira. Quem encontra as três vê o final verdadeiro.
+Numa noite de tempestade, a capitã cai envenenada e a tripulação parece enfeitiçada. Do porão ao mastro,
+da praia ao **Templo da Maré**, Nyra enfrenta os cúmplices de um feiticeiro que quer acordar a criatura que
+dorme sob a ilha e afogar Aurel. O feiticeiro é Caelum. As três páginas do diário da capitã contam a história
+inteira e liberam o final verdadeiro.
 
-## Premissa e conflito
+## Premissa, conflito e tema
 
-- **Premissa:** uma enganadora que finge ser feiticeira precisa enfrentar magia real para salvar o navio
-  e os desaparecidos.
-- **Conflito externo:** a maldição da maré controla a tripulação; o feiticeiro prende os desaparecidos no
-  Templo da Maré.
-- **Conflito interno:** a mentira que ela contou anos atrás. O vilão é a consequência dessa mentira.
-- **Tema:** mentiras têm preço; a verdade (as cartas) é o que liberta todo mundo de verdade.
+- **Premissa:** uma meio-demônia que finge ser feiticeira precisa enfrentar magia de verdade.
+- **Conflito externo:** Caelum controla a Maré, sequestra gente do porto e quer afogar o reino.
+- **Conflito interno:** a mentira de Nyra criou o vilão. Vencer não basta; ela precisa contar a verdade.
+- **Tema:** ilusões e mentiras cobram um preço; só a verdade desfaz a maldição.
 
 ## Personagens
 
-| Personagem | Quem é | Papel |
+| Nome | Quem é | Papel no jogo |
 |---|---|---|
-| **A feiticeira** (protagonista) | Passageira que diz ser feiticeira; cabelo lavanda, casaco azul, espada | Jogável. Começa com o Passo ilusório (dash) |
-| **A capitã** | Comandante do navio, investigava os desaparecimentos | Envenenada no convés logo no início; deixa um bilhete e 3 cartas escondidas |
-| **O melhor amigo de infância** | Reencontra a protagonista no navio, cachecol roxo | Parece aliado no convés; é o Feiticeiro da Maré, chefe final |
-| **O Grumete** | Garoto da tripulação com medo de ser expulso | Chefe 1. Tomou um "tônico" do homem de cachecol roxo e virou Rei dos Ratos |
-| **O Imediato** | Segundo no comando, ambicioso | Chefe 2. Trocou a lealdade pelo navio e vestiu a armadura rubra: Cavaleiro Rubro |
-| **A Irmã da Capitã** | Pirata, irmã da capitã | Chefe 3. Escondeu as cartas porque o feiticeiro mantém alguém que ela ama preso no templo |
-| **A cozinheira** | Cozinheira do navio | Loja no convés |
-| **O mercador** | Ferreiro de bordo | Melhora a espada (moedas + minério) |
-| **Capangas e piratas de escudo** | Tripulantes enfeitiçados | Inimigos comuns |
+| **Nyra** | Meio-demônia de chifres, cabelo lavanda, casaco azul, espada leve. Esperta, irônica, culpada | Protagonista. Começa com o Passo ilusório (dash) |
+| **Capitã Maren** | Capitã da Gaivota Rubra, investigava os sumiços | Envenenada no início; o diário dela tem 3 páginas escondidas |
+| **Caelum** | Ex-aprendiz da academia, banido no lugar de Nyra. Cachecol roxo | Parece aliado no convés; é o Feiticeiro da Maré (chefe final) |
+| **Tico** | Grumete medroso | Chefe 1: tomou o "tônico" de Caelum e virou o **Rei dos Ratos** |
+| **Aldric** | Imediato ambicioso | Chefe 2: trocou a lealdade pelo navio e virou o **Cavaleiro Rubro** |
+| **Selka** | Irmã de Maren, pirata canhoneira | Chefe 3: luta porque Caelum prendeu o filho dela no templo |
+| **Bram** | Comerciante de mochila cheia de poções | Loja do convés |
+| **Ulfgar** | Ferreiro de bordo | Melhora a espada |
+| Passageiros e ilhéus | Bardo, aldeãs, fazendeiro, menino, curandeira, estudioso, anciã, gato | Figurantes |
+| Criaturas | Ratos, gaivotas, ladinos, guardas de escudo (navio); lobos, goblins, diabretes (ilha); múmias, lich, espíritos, cavaleiro negro (templo) | Inimigos |
 
-## Roteiro, passo a passo
+## Roteiro
 
-### Introdução (telas de texto)
-1. Noite de tempestade. O navio da capitã corta o mar escuro rumo a uma ilha esquecida.
-2. Você viaja como passageira. Diz ser feiticeira, mas seu único truque é enganar muito bem. E saber lutar.
-3. No porto, gente vem sumindo há semanas. A capitã desconfia de alguém a bordo.
-4. Um grito no convés. A capitã caiu, envenenada. Os ratos do porão uivam e a tripulação parece enfeitiçada.
-5. Alguém está usando magia de verdade neste navio. Descubra quem antes que a maré leve todos.
+### Introdução
+1. Reino de Aurel. Há dez anos, uma ilusão saiu de controle na academia de magia e um aprendiz foi banido.
+2. Nyra, a aprendiz de chifres, ficou calada. Desde então vive escondida sob o capuz, vendendo truques.
+3. Agora ela viaja na Gaivota Rubra rumo a Velmora. No porto, gente some toda lua cheia.
+4. Tempestade. A capitã cai envenenada; os ratos uivam e a tripulação parece enfeitiçada.
+5. Alguém está usando magia de verdade. E a Maré, que dorme sob Velmora, está acordando.
 
-### Ato 1 — O navio
-- **Cabine** (início): bola de cristal para salvar.
-- **Convés** (hub): a capitã caída, lábios arroxeados. Bilhete na mão dela: *"O tônico... o grumete...
-  no porão."* O melhor amigo reencontra a protagonista: *"Vi o grumete descer correndo pela escotilha.
-  Os ratos lá embaixo estão... estranhos."* Loja e ferreiro ficam aqui.
-- **Porão** e **Porão Alagado:** ratos, capangas, tábuas podres que desabam, plataformas móveis sobre a
-  água. **Carta 1:** *"Alguém está levando gente do porto. Desaparecidos, todos ligados a mim."*
-- **Chefe 1 — O Grumete / Rei dos Ratos** (Toca dos Ratos). Antes: *"O tônico... ele disse que ia acalmar
-  a capitã! E agora... os ratos me obedecem!"* Depois: *"Eu só queria não ser expulso do navio... Um homem
-  de cachecol roxo me deu o tônico. Disse que era remédio."* Recompensa: **Levitação (pulo duplo)**.
+### Ato 1 — A Gaivota Rubra
+- **Convés:** Maren caída, com um bilhete: *"O tônico... o Tico... no porão."* Caelum reencontra Nyra e aponta
+  o porão. Bram (loja) e Ulfgar (ferreiro) ficam aqui.
+- **Porão e Porão Alagado:** tábuas podres, plataformas sobre a água. **Página 1:** gente de Aurel some toda lua
+  cheia, sempre rumo a Velmora.
+- **Chefe 1 — Tico, Rei dos Ratos:** chama a água do porão, que **sobe e inunda a toca** (suba nas plataformas),
+  investe contra as paredes e invoca ratos. Recompensa: **Levitação (pulo duplo)**.
 
 ### Ato 2 — O mastro
-- **Cordame** e **Vergas:** subida pelo mastro na tempestade, gaivotas, canhões, plataformas móveis.
-  **Carta 2** (exige pulo duplo): *"Os sumidos estão vivos, presos no Templo da Maré, na ilha."*
-- **Chefe 2 — O Imediato / Cavaleiro Rubro** (Cesto da Gávea). Antes: *"Ele me prometeu este navio!
-  A armadura rubra é o preço, e eu pago!"* Na metade da vida se transforma e fica mais rápido. Depois:
-  *"A ambição me cegou. O navio está atracando na ilha... O feiticeiro está no templo. Os desaparecidos
-  também."* O navio atraca e a prancha do convés abre para a ilha.
+- **Cordame e Vergas:** subida na tempestade. **Página 2:** os sumidos estão vivos no Templo da Maré.
+- **Chefe 2 — Aldric, Cavaleiro Rubro:** no cesto da gávea, chama **rajadas de vento** que empurram Nyra para a
+  borda (o dash atravessa o vento); na metade da vida a armadura se transforma. O navio atraca em Velmora.
 
-### Ato 3 — A ilha
-- **Praia:** vala de espinhos e um penhasco que só se sobe com pulo duplo.
-- **Floresta:** escalada vertical com plataforma móvel. **Carta 3:** *"Achei o culpado: meu velho amigo de
-  infância. Ele nunca me perdoou por aquele dia."*
-- **Chefe 3 — A Irmã da Capitã / Lâmina da Tempestade** (Ruínas). Antes: *"Ele tem alguém que eu amo
-  preso no templo. Não posso deixar você passar!"* Pistola, estocadas e bombas. Depois: *"Escondi as cartas
-  da minha irmã para proteger quem eu amo... Vá. Salve todos. E pare aquele monstro... que um dia foi seu
-  amigo."*
+### Ato 3 — Velmora
+- **Praia e Bosque dos Vaga-lumes:** lobos, goblins e diabretes. **Página 3:** o culpado é Caelum, o mago
+  banido, que diz ter levado a culpa de outra pessoa.
+- **Chefe 3 — Selka, Canhoneira da Tempestade:** nas ruínas, atira com a pistola, dá estocadas e chama o
+  **canhonaço** do navio dela: marcas vermelhas no chão mostram onde as balas vão cair.
 
 ### Ato 4 — O Templo da Maré
-- **Templo:** espinhos, tábuas que desabam, plataformas móveis.
-- **Chefe final — O Melhor Amigo / Feiticeiro da Maré** (Altar). *"Anos atrás eu levei a culpa no seu
-  lugar, e você ficou calado. Agora vou tirar tudo de você!"* Flutua, teleporta, lança caveiras que
-  perseguem, chama raios, ondas e slimes da maré.
+- **Templo:** múmias, lich, espíritos, espinhos e tábuas que desabam.
+- **Chefe final — Caelum, Feiticeiro da Maré:** flutua, teleporta, lança caveiras, chama raios e ondas, cria
+  **ilusões de si mesmo** (as cópias atiram, mas não têm sombra; acertar o verdadeiro desfaz todas) e, na
+  fase 2, faz a **maré subir** na arena.
 
 ### Finais
-- **Final verdadeiro (com as 3 cartas):** o feitiço se desfaz, as correntes do templo caem, os desaparecidos
-  voltam vivos. Com as cartas, a verdade é contada no porto: os cúmplices foram enganados e o verdadeiro
-  culpado vai a julgamento. A protagonista confessa o erro de anos atrás. *Pela primeira vez, a mentira não
-  é o seu truque.*
-- **Final comum (sem as 3 cartas):** o feitiço se desfaz e os desaparecidos voltam, mas ninguém no porto
-  acredita na história inteira.
-- Depois de qualquer final: tela de **resultado** com tempo, quedas, moedas, cartas, pontuação e nota (S, A,
-  B ou C), com opção de jogar de novo ou voltar ao menu.
+- **Verdadeiro (3 páginas):** Caelum cai, a Maré se recolhe, os desaparecidos voltam e Maren acorda. Com o
+  diário, Aurel ouve a história inteira, e Nyra conta a verdade sobre a academia. Sem ilusões nem capuz, a
+  feiticeira de chifres volta para casa.
+- **Comum:** todos são salvos, mas ninguém em Aurel acredita na história inteira.
 
-## Mundo
+## Duração estimada
 
-| Área | Salas | Destaques |
-|---|---|---|
-| Navio | Cabine, Convés, Porão, Porão Alagado, Toca dos Ratos | Hub, loja, ferreiro, carta 1, chefe 1 |
-| Mastro | Cordame, Vergas, Cesto da Gávea | Carta 2, chefe 2, o navio atraca |
-| Ilha | Praia, Floresta, Ruínas | Carta 3, chefe 3 |
-| Templo | Templo da Maré, Altar | Chefe final |
-
-Itens espalhados: amuletos (Lâmina Longa, Coletor, Passo de Vento, Vigor, Força Bruta), fragmentos de
-vida (4 = +1 coração), comida (cura 2 corações), moedas e minério.
-
-## Duração
-
-Estimativa (o jogo ainda não foi cronometrado com jogadores; o tempo aparece no HUD e fica nos recordes):
-
-| Estilo de jogo | Tempo estimado |
+| Estilo | Tempo |
 |---|---|
-| Primeira vez, só a história | 40 a 60 minutos |
-| Completo (3 cartas, amuletos e fragmentos) | 60 a 80 minutos |
-| Quem já conhece o caminho | 15 a 20 minutos |
+| Primeira vez, só a história | 40 a 60 min |
+| Completo (diário, amuletos e fragmentos) | 60 a 80 min |
+| Quem já conhece o caminho | 15 a 20 min |
+
+## Descrições para gerar modelos (pixel art)
+
+Base comum para todos os pedidos: *"pixel art 2D, vista lateral de metroidvania, personagem de corpo inteiro,
+proporção chibi de 2 cabeças e meia (como a protagonista), contorno escuro de 1 px, sombreamento em 3 tons,
+paleta noturna com azul-marinho, roxo e laranja quente, fundo transparente, olhando para a direita, sprite
+de ~64 px de altura"*. Peça a mesma pose em poses separadas: parado, andando (6 a 8 quadros), ataque (4 a 6),
+dano, morte.
+
+- **Nyra (protagonista):** meio-demônia jovem, dois chifres curvos cor de bronze saindo do cabelo, cabelo longo
+  lavanda claro quase branco, olhos verdes, pele morena clara, casaco azul-cobalto curto com detalhes dourados
+  e capuz caído, saia escura, botas vermelhas, espada fina na mão. Expressão confiante e um pouco culpada.
+- **Capitã Maren:** mulher de 40 anos, cabelo prateado preso, tricórnio escuro com pena vermelha, sobretudo
+  azul-noite com botões dourados, cicatriz no queixo. Pose desmaiada (deitada) e de pé (final).
+- **Caelum, Feiticeiro da Maré (chefe final):** homem jovem e magro, capuz e manto azul-escuro com bordas de
+  espuma do mar, cachecol roxo esfarrapado, olhos brilhando turquesa, mãos envoltas em água que gira, coroa de
+  conchas quebradas. Flutua. Versão "amigo" no convés: sem capuz, cabelo castanho, cachecol roxo, roupa simples.
+- **Tico, Rei dos Ratos (chefe 1):** garoto franzino de boné azul montado num rato gigante cinza de olhos
+  vermelhos, com coroa improvisada de lata; água escorrendo; ratos menores em volta.
+- **Aldric, Cavaleiro Rubro (chefe 2):** imediato alto em armadura vermelha de placas com detalhes de casco de
+  navio, capa rasgada pelo vento, espada larga; fase 2: armadura racha e solta vapor vermelho.
+- **Selka, Canhoneira da Tempestade (chefe 3):** pirata de cabelo preto curto com bandana vermelha, casaco
+  carmesim longo, pistola de pederneira numa mão e sabre na outra, cinto de balas de canhão pequenas,
+  expressão desesperada.
+- **Bram, comerciante:** homem baixo e simpático, barba ruiva, mochila gigante com frascos de poção pendurados.
+- **Ulfgar, ferreiro:** anão musculoso, avental de couro, martelo, bigorna ao lado.
+- **Ilhéus de Velmora:** fazendeiro de chapéu de palha, menino de túnica marrom, anciã curvada de xale roxo,
+  curandeira de manto verde com cajado de folhas, bardo com alaúde.
+- **Criaturas do navio:** rato do porão (cinza, olhos vermelhos), gaivota da tempestade, ladino encapuzado roxo,
+  guarda de escudo com brasão de âncora.
+- **Criaturas de Velmora:** lobo cinza-azulado, goblin verde de faca, diabrete roxo voador.
+- **Criaturas do templo:** múmia de faixas, lich esquelético com cajado de caveira roxa, espírito de chama
+  roxa, cavaleiro negro de armadura com espinhos, slime da maré (azul translúcido).

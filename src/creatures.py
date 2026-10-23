@@ -50,7 +50,8 @@ def npc_frame(name):
     return frames[row[0]], tuple(_NPC_META["anchor"])
 
 
-def draw_model(surf, name, x, foot_y, t, facing, moving=False, white=False, lean=0.0, float_amp=0.0):
+def draw_model(surf, name, x, foot_y, t, facing, moving=False, white=False, lean=0.0, float_amp=0.0, scale=1.0,
+               alpha=255):
     """Desenha um modelo parado com vida: respira, balança ao andar, inclina ao atacar, flutua."""
     img, (ax, ay) = npc_frame(name)
     if img is None:
@@ -64,9 +65,15 @@ def draw_model(surf, name, x, foot_y, t, facing, moving=False, white=False, lean
         sy = 1.0 + 0.025 * math.sin(t * 3)
         bob = 0
     lift = math.sin(t * 2.5) * float_amp
+    if scale != 1.0:
+        v = pygame.transform.scale(v, (round(v.get_width() * scale), round(v.get_height() * scale)))
+        ay = (ay + 1) * scale - 1
     w, h = v.get_size()
     if abs(sy - 1) > 0.01:
         v = pygame.transform.scale(v, (w, max(1, round(h * sy))))
+    if alpha < 255:
+        v = v.copy()
+        v.set_alpha(alpha)
     if lean:
         v = pygame.transform.rotate(v, -lean * facing)
     r = v.get_rect(midbottom=(round(x), round(foot_y - bob + lift + (h - ay - 1) * sy)))

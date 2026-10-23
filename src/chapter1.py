@@ -11,7 +11,7 @@ Mapa (portas pelos dígitos na borda; ver world.py):
                 [Porão 1]──[Porão 2]──[Toca: CHEFE 1]
 
 Habilidades: Passo ilusório (dash) desde o início · Levitação (pulo duplo, chefe 1).
-Cartas da capitã (3) escondidas: com as três, o final verdadeiro.
+Páginas do diário da Capitã Maren (3) escondidas: com as três, o final verdadeiro.
 """
 
 from .rooms import Grid
@@ -199,8 +199,8 @@ def room_altar():
 
 
 ROOM_DEFS = [
-    {"id": "cabine", "name": "Cabine", "zone": "interior", "rows": room_cabine()},
-    {"id": "conves", "name": "Convés", "zone": "convés", "rows": room_conves(), "npcs": ["capita", "amigo"],
+    {"id": "cabine", "name": "Cabine de Nyra", "zone": "interior", "rows": room_cabine()},
+    {"id": "conves", "name": "Convés da Gaivota Rubra", "zone": "convés", "rows": room_conves(), "npcs": ["capita", "amigo"],
      "key": "atracado"},
     {"id": "porao1", "name": "Porão", "zone": "porão", "rows": room_porao1(), "items": [("charm", "lamina")]},
     {"id": "porao2", "name": "Porão Alagado", "zone": "porão", "rows": room_porao2(),
@@ -214,14 +214,14 @@ ROOM_DEFS = [
      "items": [("letter", "carta2"), ("charm", "vento")],
      "movers": [{"x0": 36, "y0": 13, "x1": 44, "y1": 13, "w": 3, "speed": 95}]},
     {"id": "gavea", "name": "Cesto da Gávea", "zone": "convés", "rows": room_gavea(), "boss": "cavaleiro"},
-    {"id": "praia", "name": "Praia da Ilha", "zone": "ilha", "rows": room_praia(), "items": [("food", "torta")]},
-    {"id": "floresta", "name": "Floresta", "zone": "ilha", "rows": room_floresta(),
+    {"id": "praia", "name": "Praia de Velmora", "zone": "ilha", "rows": room_praia(), "items": [("food", "torta")]},
+    {"id": "floresta", "name": "Bosque dos Vaga-lumes", "zone": "ilha", "rows": room_floresta(),
      "items": [("letter", "carta3"), ("charm", "vigor"), ("fragment", None)],
      "movers": [{"x0": 42, "y0": 20, "x1": 42, "y1": 10, "w": 3, "speed": 70}]},
-    {"id": "ruinas", "name": "Ruínas", "zone": "ruínas", "rows": room_ruinas(), "boss": "irma"},
+    {"id": "ruinas", "name": "Ruínas de Velmora", "zone": "ruínas", "rows": room_ruinas(), "boss": "irma"},
     {"id": "templo", "name": "Templo da Maré", "zone": "templo", "rows": room_templo(), "items": [("charm", "forca")],
      "movers": [{"x0": 26, "y0": 13, "x1": 34, "y1": 13, "w": 3, "speed": 110}]},
-    {"id": "altar", "name": "Altar", "zone": "templo", "rows": room_altar(), "boss": "feiticeiro"},
+    {"id": "altar", "name": "Altar da Maré", "zone": "templo", "rows": room_altar(), "boss": "feiticeiro"},
 ]
 
 ROOM_LINKS = [
@@ -248,37 +248,40 @@ START_ABILITIES = ("dash",)   # o Passo ilusório é o truque da protagonista de
 # ---------------------------------------------------------------------------
 
 CHARACTERS = {
-    "capita": {"name": "A capitã", "style": "corpo", "prompt": "Examinar", "color": (40, 44, 70), "height": 18},
-    "amigo": {"name": "Melhor amigo de infância", "style": "amigo", "color": (70, 120, 90), "height": 44},
+    "capita": {"name": "Capitã Maren", "style": "corpo", "prompt": "Examinar", "color": (40, 44, 70), "height": 18},
+    "amigo": {"name": "Caelum", "style": "amigo", "color": (70, 120, 90), "height": 44},
 }
 
 DIALOGS = {
     "capita": {
         "first": [
-            "A capitã está caída no convés. Os lábios estão arroxeados: veneno.",
-            "Na mão dela, um papel amassado: \"O tônico... o grumete... no porão.\"",
+            "A Capitã Maren está caída no convés. Os lábios estão arroxeados: veneno.",
+            "Na mão dela, um bilhete amassado: \"O tônico... o Tico... no porão.\"",
         ],
-        "repeat": ["Você promete a si mesm{o}: vai descobrir quem fez isso."],
+        "repeat": ["Nyra promete a si mesma: vai descobrir quem fez isso."],
     },
     "amigo": {
         "first": [
-            "Que noite! Quem diria que eu ia te reencontrar justo neste navio.",
-            "Vi o grumete descer correndo pela escotilha. Os ratos lá embaixo estão... estranhos.",
-            "Vai lá, {feiticeiro}. Eu cuido do convés.",
+            "Nyra?! Dez anos e você ainda esconde esses chifres debaixo do capuz.",
+            "Sou eu, Caelum. Da academia, lembra? Viajo como passageiro, que nem você.",
+            "Vi o Tico, o grumete, descer correndo pela escotilha. Os ratos lá embaixo estão... estranhos.",
+            "Vai lá, feiticeira. Eu cuido do convés.",
         ],
         "repeat": ["O porão fica pela escotilha, perto do mastro. Cuidado com a água."],
     },
 }
 
 FLAG_MESSAGES = {
-    "atracado": ("O navio atracou", "A prancha do convés agora leva à ilha."),
+    "atracado": ("A Gaivota Rubra atracou", "A prancha do convés agora leva à ilha de Velmora."),
 }
 
 LETTERS = {
-    "carta1": ("Carta da capitã (1/3)", "\"Alguém está levando gente do porto. Desaparecidos, todos ligados a mim.\""),
-    "carta2": ("Carta da capitã (2/3)", "\"Os sumidos estão vivos, presos no Templo da Maré, na ilha.\""),
-    "carta3": ("Carta da capitã (3/3)",
-               "\"Achei o culpado: meu velho amigo de infância. Ele nunca me perdoou por aquele dia.\""),
+    "carta1": ("Diário da Capitã Maren (1/3)",
+               "\"Gente do porto de Aurel some toda lua cheia. Todos embarcaram rumo a Velmora.\""),
+    "carta2": ("Diário da Capitã Maren (2/3)",
+               "\"Estão vivos, presos no Templo da Maré. Alguém quer acordar o que dorme lá embaixo.\""),
+    "carta3": ("Diário da Capitã Maren (3/3)",
+               "\"É Caelum, o mago banido da academia. Diz que levou a culpa de outra pessoa.\""),
 }
 
 # id -> classe em bosses.py, recompensa, falas de apresentação e de derrota
@@ -286,7 +289,7 @@ BOSSES = {
     "rei_rato": {
         "reward": ("ability", "double_jump"),
         "speaker": "grumete",
-        "intro": "O tônico... ele disse que ia acalmar a capitã! E agora... os ratos me obedecem!",
+        "intro": "O tônico... disseram que ia acalmar a capitã! Agora a água e os ratos me obedecem!",
         "after": [
             "Eu só queria não ser expulso do navio...",
             "Um homem de cachecol roxo me deu o tônico. Disse que era remédio.",
@@ -296,41 +299,42 @@ BOSSES = {
         "reward": ("fragment", None),
         "flag": "atracado",
         "speaker": "imediato",
-        "intro": "Ele me prometeu este navio! A armadura rubra é o preço, e eu pago!",
+        "intro": "Ele me prometeu a Gaivota Rubra! A armadura e o vento são o preço, e eu pago!",
         "after": [
-            "A ambição me cegou. O navio está atracando na ilha...",
-            "O feiticeiro está no templo. Os desaparecidos também.",
+            "A ambição me cegou. O navio está atracando em Velmora...",
+            "O feiticeiro está no Templo da Maré. Os desaparecidos também.",
         ],
     },
     "irma": {
         "reward": None,
         "speaker": "irma",
-        "intro": "Ele tem alguém que eu amo preso no templo. Não posso deixar você passar!",
+        "intro": "Ele prendeu meu filho no templo. Os canhões da minha irmã vão te parar!",
         "after": [
-            "Escondi as cartas da minha irmã para proteger quem eu amo...",
-            "Vá. Salve todos. E pare aquele monstro... que um dia foi seu amigo.",
+            "Escondi o diário da Maren para proteger o meu menino...",
+            "Vá, Nyra. Salve todos. E pare o Caelum... ele era seu amigo.",
         ],
     },
     "feiticeiro": {
         "reward": None,
         "speaker": "amigo",
-        "intro": "Anos atrás eu levei a culpa no seu lugar, e você ficou calado. Agora vou tirar tudo de você!",
+        "intro": "Na academia, a ilusão que explodiu era sua. Eu levei a culpa e você ficou calada. "
+                 "Agora a Maré vai engolir Aurel!",
         "after": [],
     },
 }
 
 ENDING_TRUE = [
-    "O feitiço da maré se desfaz. As correntes do templo caem.",
-    "Os desaparecidos voltam para o navio, vivos.",
-    "Com as cartas da capitã, a verdade é contada no porto: os cúmplices foram enganados,",
-    "e o verdadeiro culpado é levado a julgamento.",
-    "Você confessa o erro de anos atrás. Pela primeira vez, a mentira não é o seu truque.",
+    "Caelum cai de joelhos. A Maré se recolhe e as correntes do templo se partem.",
+    "Os desaparecidos voltam para a Gaivota Rubra, vivos. A Capitã Maren acorda.",
+    "Com o diário da capitã, Aurel ouve a história inteira: Tico, Aldric e Selka foram enganados.",
+    "E Nyra, pela primeira vez, conta a verdade sobre a academia. Caelum não estava sozinho na culpa.",
+    "Sem ilusões nem capuz, a feiticeira de chifres volta para casa.",
     "FINAL VERDADEIRO",
 ]
 ENDING_NORMAL = [
-    "O feitiço da maré se desfaz. As correntes do templo caem.",
-    "Os desaparecidos voltam para o navio, vivos.",
-    "Mas sem as cartas da capitã, ninguém no porto acredita na história inteira...",
-    "(Encontre as 3 cartas escondidas para ver o final verdadeiro.)",
+    "Caelum cai de joelhos. A Maré se recolhe e as correntes do templo se partem.",
+    "Os desaparecidos voltam para a Gaivota Rubra, vivos.",
+    "Mas sem o diário da capitã, ninguém em Aurel acredita na história inteira...",
+    "(Encontre as 3 páginas do diário para ver o final verdadeiro.)",
     "FIM",
 ]

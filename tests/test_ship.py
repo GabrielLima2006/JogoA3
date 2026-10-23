@@ -250,11 +250,11 @@ def test_movers():
 
 def test_bosses():
     random.seed(5)
-    specs = [("toca", RatKing, ["charge", "leap", "summon"]),
-             ("gavea", RedKnight, ["slash", "leap"]),
-             ("ruinas", PirateSister, ["pistol", "lunge", "bomb"]),
-             ("altar", Sorcerer, ["skulls", "lightning", "tele_out"])]
-    for room, cls, attacks in specs:
+    specs = [("toca", RatKing, ["charge", "flood", "summon"], "Flood"),
+             ("gavea", RedKnight, ["slash", "leap"], "Gust"),
+             ("ruinas", PirateSister, ["pistol", "lunge", "cannon"], "CannonShot"),
+             ("altar", Sorcerer, ["skulls", "lightning", "tele_out", "illusion"], "Illusion")]
+    for room, cls, attacks, signature in specs:
         s = game(("dash", "double_jump"), name=f"chefe_{room}.json")
         r = s.play.world.rooms[room]
         floor = {"toca": 15, "gavea": 17, "ruinas": 17, "altar": 19}[room]
@@ -265,13 +265,16 @@ def test_bosses():
         woke = s.wait_until(lambda: boss.awake, 4.0, held={"right"})
         check(f"{cls.name}: acorda, fecha a arena e se apresenta", woke and r.fight_active)
         seen = set()
-        for _ in range(int(25 / SIM_DT)):
+        made = set()
+        for _ in range(int(30 / SIM_DT)):
             s.step()
             s.p.invuln = 99
             seen.add(boss.state.replace("_tele", ""))
-            if all(a in seen for a in attacks):
+            made |= {type(h).__name__ for h in s.play.hazards} | {type(e).__name__ for e in s.play.enemies}
+            if all(a in seen for a in attacks) and signature in made:
                 break
         check(f"{cls.name}: usa todos os ataques", all(a in seen for a in attacks), str(sorted(seen)))
+        check(f"{cls.name}: mecânica própria ({signature})", signature in made, str(sorted(made)))
         check(f"{cls.name}: fica dentro da arena", -2 <= boss.x and boss.right <= r.width + 2)
         # derrota
         boss.hp = 1

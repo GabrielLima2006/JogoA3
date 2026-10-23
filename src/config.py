@@ -8,9 +8,9 @@ distâncias em pixels, velocidades em px/s, acelerações em px/s², tempos em s
 class Game:
     # nome ainda não definido pelo grupo: troque aqui quando decidirem
     TITLE = "Maré de Mentiras"
-    SUBTITLE = "a maldição do Templo da Maré"
+    SUBTITLE = "a feiticeira de chifres e o Templo da Maré"
     CHAPTERS = {
-        1: "Jantar no molhado em veneno",
+        1: "A Maré de Velmora",
         2: "O leme estranhamente destruído",
         3: "A carta de sumiço",
         4: "Desvio de rota premeditado",

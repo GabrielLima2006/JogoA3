@@ -28,10 +28,10 @@ clique em **Mais informações** e depois em **Executar assim mesmo** (o execut�
 
 ## 2. Descrição
 
-> **Sinopse:** numa noite de tempestade, uma passageira que finge ser feiticeira vê a capitã do navio cair
-> envenenada e a tripulação ficar enfeitiçada. Do porão ao mastro, da ilha ao Templo da Maré, ela enfrenta
-> os cúmplices do Feiticeiro da Maré até descobrir que o vilão é seu melhor amigo de infância, que anos atrás
-> levou a culpa por um erro dela. Três cartas escondidas da capitã revelam a história inteira.
+> **Sinopse:** Nyra, uma meio-demônia de chifres que finge ser feiticeira, viaja no navio da Capitã Maren
+> rumo à ilha de Velmora. A capitã cai envenenada, a tripulação fica enfeitiçada e uma criatura chamada Maré
+> está acordando sob o Templo. Por trás de tudo está Caelum, o melhor amigo de Nyra, banido da academia de magia
+> por um erro que era dela.
 >
 > História completa (personagens, falas, atos e finais): [docs/HISTORIA.md](docs/HISTORIA.md)
 
@@ -39,23 +39,21 @@ clique em **Mais informações** e depois em **Executar assim mesmo** (o execut�
 para quem já conhece o caminho. (Estimativa; o tempo real aparece no HUD e fica salvo nos recordes.)
 
 
-Noite de tempestade. Você viaja no navio da capitã fingindo ser feiticeira, mas seu único truque de
-verdade é enganar bem e saber lutar. Gente do porto vem desaparecendo, a capitã
-cai envenenada e a tripulação começa a agir como se estivesse enfeitiçada.
-
-Explore o navio e a ilha onde ele atraca, enfrente quatro chefes com estilos de luta diferentes e
-descubra quem está por trás da maldição da maré. Três cartas escondidas da capitã revelam a história
-inteira e liberam o final verdadeiro.
+No reino de Aurel, Nyra esconde os chifres sob o capuz e vende truques como se fosse feiticeira. A bordo da
+Gaivota Rubra, ela enfrenta a tripulação enfeitiçada, sobe o mastro na tempestade, desembarca em Velmora e
+chega ao Templo da Maré. Cada chefe tem uma mecânica ligada ao mundo: a água que inunda o porão, o vento no
+alto do mastro, o canhonaço do navio pirata e as ilusões do Feiticeiro da Maré. Três páginas escondidas do
+diário da capitã revelam a história inteira e liberam o final verdadeiro.
 
 - **3 áreas:** navio (cabine, convés, porão, cordame), ilha (praia, floresta, ruínas) e Templo da Maré.
-- **4 chefes:** O Grumete (Rei dos Ratos), O Imediato (Cavaleiro Rubro), A Irmã da Capitã (Lâmina
-  da Tempestade) e o chefe final, O Melhor Amigo (Feiticeiro da Maré). Todos têm duas fases.
+- **4 chefes:** Tico (Rei dos Ratos, inunda a toca), Aldric (Cavaleiro Rubro, rajadas de vento), Selka
+  (Canhoneira da Tempestade, canhonaço) e Caelum (Feiticeiro da Maré, ilusões e maré). Todos têm duas fases.
 - **Habilidades:** dash (Passo ilusório) desde o começo; pulo duplo (Levitação) depois do primeiro chefe,
   abrindo caminho para o mastro e a ilha.
 - **Parkour:** plataformas móveis, tábuas que desabam, espinhos, água e saltos que exigem as habilidades.
 - **Itens:** moedas, comida que cura, amuletos, fragmentos de vida, loja e ferreiro.
 - **Três dificuldades** (7, 5 ou 4 corações).
-- **Dois finais:** comum e verdadeiro (com as 3 cartas).
+- **Dois finais:** comum e verdadeiro (com as 3 páginas do diário).
 
 ## 3. Como rodar
 

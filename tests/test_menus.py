@@ -54,8 +54,8 @@ def test_new_game_flow():
     check("depois da dificuldade vem a introdução", isinstance(st, IntroState))
     check("escolhas guardadas no progresso", st.progress.protagonist == "ela"
           and st.progress.difficulty == "dificil" and st.progress.chapter == 1)
-    check("texto da introdução usa a forma feminina", "feiticeira" in st.slides[1] and "passageira" in st.slides[1],
-          st.slides[1][:60])
+    check("introdução apresenta Nyra e a ilha de Velmora", any("Nyra" in x for x in st.slides if x)
+          and any("Velmora" in x for x in st.slides if x), st.slides[1][:60])
     _press(app, "menu_confirm")
     check("Enter durante a digitação completa o texto", st.index == 0 and st._full())
     _press(app, "menu_confirm")

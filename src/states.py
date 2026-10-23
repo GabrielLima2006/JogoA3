@@ -454,8 +454,8 @@ class PlayState(State):
             done()
 
     def _speaker_name(self, style):
-        return {"grumete": "O Grumete", "imediato": "O Imediato", "irma": "A Irmã da Capitã",
-                "amigo": "O Melhor Amigo"}.get(style, style)
+        return {"grumete": "Tico, o grumete", "imediato": "Aldric, o imediato", "irma": "Selka, irmã da capitã",
+                "amigo": "Caelum"}.get(style, style)
 
     def break_tile(self, tx, ty):
         self.room.broken.add((tx, ty))
@@ -796,11 +796,15 @@ class PlayState(State):
         for e in self.enemies:
             e.draw(surf, cam_x, cam_y)
         for h in self.hazards:
-            h.draw(surf, cam_x, cam_y, self.time)
+            if not getattr(h, "front", False):
+                h.draw(surf, cam_x, cam_y, self.time)
         for c in self.coins:
             c.draw(surf, cam_x, cam_y)
         self.projectiles.draw(surf, cam_x, cam_y)
         self.player.draw(surf, cam_x, cam_y)
+        for h in self.hazards:
+            if getattr(h, "front", False):
+                h.draw(surf, cam_x, cam_y, self.time)
         self.effects.draw_world(surf, cam_x, cam_y)
         self._draw_water(surf, cam_x, cam_y)
         self.background.draw_front(surf, cam_x, cam_y, self.time)
@@ -1354,7 +1358,7 @@ class ResultsState(State):
                 Colors.UI_ACCENT, "center")
         m, sec = divmod(int(self.time), 60)
         rows = [("Tempo", f"{m}:{sec:02d}"), ("Quedas", str(self.deaths)), ("Moedas", str(self.coins)),
-                ("Cartas da capitã", f"{self.letters}/3"), ("Pontuação", str(self.score))]
+                ("Páginas do diário", f"{self.letters}/3"), ("Pontuação", str(self.score))]
         y = 160
         for label, value in rows:
             ui.text(surf, label, 28, (W // 2 - 200, y), Colors.UI_DIM)

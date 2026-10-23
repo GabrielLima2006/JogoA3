@@ -16,7 +16,7 @@ from . import pixelart, sprites
 from .config import Physics as PH
 from .creatures import Rat, TideSlime
 from .enemies import Enemy, approach, wall_ahead
-from .physics import rects_overlap
+from .physics import move_and_collide, rects_overlap
 
 
 class Boss(Enemy):
@@ -185,12 +185,120 @@ class Wave:
         pygame.draw.lines(surf, (190, 230, 250), False, pts, 3)
 
 
+class Flood:
+    """A água da arena sobe, fica um tempo e baixa. Quem estiver com os pés na água leva dano;
+    as plataformas altas ficam secas. Desenhada na frente do jogador."""
+    front = True
+
+    def __init__(self, room_width, floor_y, height=72, rise=0.9, hold=2.6, tick=0.7):
+        self.w, self.floor_y, self.max_h = room_width, floor_y, height
+        self.rise, self.hold, self.t, self.tick, self.cool = rise, hold, 0.0, tick, 0.0
+        self.alive = True
+
+    @property
+    def level(self):
+        t, r, h = self.t, self.rise, self.hold
+        if t < r:
+            k = t / r
+        elif t < r + h:
+            k = 1.0
+        else:
+            k = max(0.0, 1 - (t - r - h) / r)
+        return self.max_h * (1 - (1 - k) ** 2)
+
+    def update(self, dt, room, player, ctx):
+        self.t += dt
+        self.cool = max(0.0, self.cool - dt)
+        surface = self.floor_y - self.level
+        if self.level > 10 and player.alive and player.bottom > surface + 6 and self.cool <= 0:
+            if player.take_hit(1, player.cx - player.facing * 10, ctx):
+                self.cool = self.tick
+                ctx.effects.burst(player.cx, surface, 10, (150, 210, 240), speed=(60, 200))
+        if self.t > self.rise * 2 + self.hold:
+            self.alive = False
+        return self.alive
+
+    def draw(self, surf, cam_x, cam_y, time):
+        lvl = self.level
+        if lvl < 2:
+            # aviso: bolhas subindo do chão
+            for i in range(12):
+                x = (i * 97 + int(time * 40)) % self.w
+                pygame.draw.circle(surf, (150, 210, 240), (int(x - cam_x), int(self.floor_y - 6 - cam_y)), 2)
+            return
+        top = self.floor_y - lvl
+        water = pygame.Surface((self.w, int(lvl) + 4), pygame.SRCALPHA)
+        water.fill((30, 90, 150, 120))
+        pts = [(x, 4 + math.sin(x * 0.05 + time * 4) * 3) for x in range(0, self.w + 16, 16)]
+        water.fill((0, 0, 0, 0), (0, 0, self.w, 8))
+        pygame.draw.polygon(water, (30, 90, 150, 120), pts + [(self.w, 8), (0, 8)])
+        pygame.draw.lines(water, (190, 230, 250, 230), False, pts, 2)
+        surf.blit(water, (-cam_x, top - 4 - cam_y))
+
+
+class Gust:
+    """Rajada de vento: avisa com riscos no ar e depois empurra o jogador na horizontal."""
+
+    def __init__(self, direction, warn=0.7, duration=2.0, force=250):
+        self.dir, self.warn, self.duration, self.force = direction, warn, duration, force
+        self.t = 0.0
+        self.alive = True
+        self.streaks = [(random.uniform(0, 1), random.uniform(0, 1), random.uniform(0.6, 1.4)) for _ in range(40)]
+
+    def update(self, dt, room, player, ctx):
+        self.t += dt
+        if self.t > self.warn and player.alive:
+            k = min(1.0, (self.t - self.warn) / 0.3)
+            if player.dashing:
+                k *= 0.3          # o dash corta o vento
+            grounded = player.on_ground
+            move_and_collide(player, self.dir * self.force * k * dt, 0, room)
+            player.on_ground = grounded      # empurrar de lado não tira do chão
+        if self.t > self.warn + self.duration:
+            self.alive = False
+        return self.alive
+
+    def draw(self, surf, cam_x, cam_y, time):
+        w, h = surf.get_size()
+        strong = self.t > self.warn
+        col = (210, 230, 255) if strong else (140, 160, 200)
+        for fx, fy, sp in self.streaks:
+            x = (fx * w + self.dir * time * 900 * sp) % w
+            y = fy * h
+            ln = 40 if strong else 14
+            pygame.draw.line(surf, col, (x, y), (x - self.dir * ln, y), 1)
+
+
+class CannonShot:
+    """Canhonaço do navio: marca o chão e, depois do aviso, uma bala cai do céu e explode."""
+
+    def __init__(self, x, floor_y, warn=1.0):
+        self.x, self.floor_y, self.warn = x, floor_y, warn
+        self.alive = True
+
+    def update(self, dt, room, player, ctx):
+        self.warn -= dt
+        if self.warn <= 0:
+            ctx.hazards.append(Bomb(self.x, self.floor_y - 460, 0, 900))
+            ctx.audio.play("shoot")
+            self.alive = False
+        return self.alive
+
+    def draw(self, surf, cam_x, cam_y, time):
+        x, y = int(self.x - cam_x), int(self.floor_y - cam_y)
+        col = (255, 80, 80) if int(time * 16) % 2 else (255, 220, 120)
+        r = 14 + int(6 * max(0.0, self.warn))
+        pygame.draw.line(surf, col, (x - r, y - 4), (x + r, y - 4), 3)
+        pygame.draw.line(surf, col, (x - 8, y - 12), (x + 8, y + 4), 3)
+        pygame.draw.line(surf, col, (x + 8, y - 12), (x - 8, y + 4), 3)
+
+
 # ---------------------------------------------------------------------------
 # 1. O Grumete — Rei dos Ratos
 # ---------------------------------------------------------------------------
 
 class RatKing(Boss):
-    name = "O Grumete"
+    name = "Tico"
     title = "Rei dos Ratos"
     color = (150, 140, 146)
     max_hp = 70
@@ -198,6 +306,7 @@ class RatKing(Boss):
     def __init__(self, foot_x, foot_y):
         super().__init__(foot_x, foot_y, 60, 34)
         self.charge_dir = 1
+        self.floor_y = foot_y
 
     def think(self, dt, room, player, ctx):
         sp = 1.3 if self.phase2 else 1.0
@@ -212,10 +321,12 @@ class RatKing(Boss):
             self.timer -= dt * sp
             if self.timer <= 0 and self.on_ground:
                 minions = sum(1 for e in ctx.enemies if isinstance(e, Rat) and e.alive)
-                opts, w = ["charge", "leap", "summon"], [3, 2, 2 if minions < 3 else 0]
+                flooding = any(isinstance(h, Flood) for h in ctx.hazards)
+                opts, w = ["charge", "flood", "summon", "leap"], [3, 0 if flooding else 3, 2 if minions < 3 else 0,
+                                                                  2 if self.phase2 else 0]
                 pick = self.choose(opts, w)
                 self.state = pick + "_tele"
-                self.timer = {"charge": 0.55, "leap": 0.4, "summon": 0.5}[pick] / sp
+                self.timer = {"charge": 0.55, "flood": 0.7, "leap": 0.4, "summon": 0.5}[pick] / sp
         elif st == "charge_tele":
             self.vx = approach(self.vx, -self.direction * 50, 1500 * dt)
             self.timer -= dt
@@ -261,6 +372,17 @@ class RatKing(Boss):
                 ctx.audio.play("impact")
                 self.state = "idle"
                 self.timer = random.uniform(0.6, 0.9)
+        elif st == "flood_tele":
+            # bate o pé e chama a água do porão
+            self.vx = 0.0
+            self.squash = min(self.squash, 0.8)
+            self.timer -= dt
+            if self.timer <= 0:
+                ctx.hazards.append(Flood(room.width, self.floor_y, height=78 if self.phase2 else 70))
+                ctx.effects.add_shake(6)
+                ctx.audio.play("boss")
+                self.state = "idle"
+                self.timer = 1.0
         elif st == "summon_tele":
             self.vx = 0.0
             self.timer -= dt
@@ -298,7 +420,7 @@ K_ANIMS = {
 
 
 class RedKnight(Boss):
-    name = "O Imediato"
+    name = "Aldric"
     title = "Cavaleiro Rubro"
     color = (230, 40, 100)
     max_hp = 110
@@ -341,8 +463,15 @@ class RedKnight(Boss):
             self.vx = approach(self.vx, target, 900 * dt)
             self.timer -= dt * sp
             if self.timer <= 0 and self.on_ground:
-                pick = self.choose(["slash", "leap"], [3 if abs(dx) < 380 else 1, 2])
-                if pick == "slash":
+                windy = any(isinstance(h, Gust) for h in ctx.hazards)
+                pick = self.choose(["slash", "leap", "gust"], [3 if abs(dx) < 380 else 1, 2, 0 if windy else 2])
+                if pick == "gust":
+                    # ergue a espada e chama o vento do alto do mastro, empurrando para longe dele
+                    self.state = "idle"
+                    self.timer = 1.4 / sp
+                    ctx.hazards.append(Gust(1 if dx > 0 else -1, force=280 if self.powered else 230))
+                    ctx.audio.play("dash")
+                elif pick == "slash":
                     self.state = "slash_tele"
                     self.timer = 0.5 / sp
                     self.slashes_left = 2 if self.powered else 1
@@ -442,8 +571,8 @@ class RedKnight(Boss):
 # ---------------------------------------------------------------------------
 
 class PirateSister(Boss):
-    name = "A Irmã da Capitã"
-    title = "Lâmina da Tempestade"
+    name = "Selka"
+    title = "Canhoneira da Tempestade"
     color = (190, 50, 60)
     max_hp = 120
 
@@ -472,9 +601,9 @@ class PirateSister(Boss):
             self.vx = approach(self.vx, self.direction * 70 if abs(dx) > 300 else 0.0, 900 * dt)
             self.timer -= dt * sp
             if self.timer <= 0 and self.on_ground:
-                pick = self.choose(["pistol", "lunge", "bomb"], [3, 3 if abs(dx) < 420 else 1, 2])
+                pick = self.choose(["pistol", "lunge", "cannon"], [3, 3 if abs(dx) < 420 else 1, 2])
                 self.state = pick + "_tele"
-                self.timer = {"pistol": 0.45, "lunge": 0.38, "bomb": 0.35}[pick] / sp
+                self.timer = {"pistol": 0.45, "lunge": 0.38, "cannon": 0.5}[pick] / sp
                 if pick == "lunge":
                     self.lunges_left = 2 if self.phase2 else 1
         elif st == "hop":
@@ -534,18 +663,19 @@ class PirateSister(Boss):
             if self.timer <= 0:
                 self.state = "idle"
                 self.timer = 0.4
-        elif st == "bomb_tele":
+        elif st == "cannon_tele":
+            # ergue a pistola e dá o sinal: o navio da irmã dispara sobre as marcas
             self.vx = 0.0
             self.timer -= dt
             if self.timer <= 0:
-                n = 2 if self.phase2 else 1
+                n = 5 if self.phase2 else 3
+                start = player.cx - (n - 1) / 2 * 110
                 for i in range(n):
-                    flight = 0.9 + i * 0.25
-                    vx = (player.cx + i * 70 * self.direction - self.cx) / flight
-                    ctx.hazards.append(Bomb(self.cx, self.top + 20, vx, -560))
+                    x = max(40, min(room.width - 40, start + i * 110))
+                    ctx.hazards.append(CannonShot(x, self.bottom, warn=0.9 + i * 0.18))
                 ctx.audio.play("attack_quick")
                 self.state = "idle"
-                self.timer = random.uniform(0.6, 0.9)
+                self.timer = random.uniform(1.0, 1.3)
 
     def draw(self, surf, cam_x, cam_y):
         st = self.state
@@ -568,7 +698,7 @@ class PirateSister(Boss):
 # ---------------------------------------------------------------------------
 
 class Sorcerer(Boss):
-    name = "O Melhor Amigo"
+    name = "Caelum"
     title = "Feiticeiro da Maré"
     color = (120, 220, 210)
     max_hp = 160
@@ -604,10 +734,13 @@ class Sorcerer(Boss):
         if st == "idle":
             self.timer -= dt * sp
             if self.timer <= 0:
-                opts, w = ["skulls", "lightning", "teleport"], [3, 3, 2]
+                decoys = sum(1 for e in ctx.enemies if isinstance(e, Illusion) and e.alive)
+                flooding = any(isinstance(h, Flood) for h in ctx.hazards)
+                opts, w = ["skulls", "lightning", "teleport", "illusion"], [3, 3, 2, 0 if decoys else 3]
                 if self.phase2:
-                    opts += ["wave", "summon"]
-                    w += [2, 1 if sum(1 for e in ctx.enemies if isinstance(e, TideSlime)) < 2 else 0]
+                    opts += ["wave", "summon", "tide"]
+                    w += [2, 1 if sum(1 for e in ctx.enemies if isinstance(e, TideSlime)) < 2 else 0,
+                          0 if flooding else 2]
                 pick = self.choose(opts, w)
                 if pick == "teleport":
                     self.state = "tele_out"
@@ -615,7 +748,8 @@ class Sorcerer(Boss):
                     ctx.effects.sprite("fumaca_caveira", self.cx, self.cy, fps=16, scale=2)
                 else:
                     self.state = pick + "_tele"
-                    self.timer = {"skulls": 0.55, "lightning": 0.45, "wave": 0.5, "summon": 0.5}[pick] / sp
+                    self.timer = {"skulls": 0.55, "lightning": 0.45, "wave": 0.5, "summon": 0.5,
+                                  "illusion": 0.6, "tide": 0.7}[pick] / sp
         elif st == "tele_out":
             self.vx = self.vy = 0.0
             self.timer -= dt
@@ -660,6 +794,25 @@ class Sorcerer(Boss):
                 ctx.audio.play("boss")
                 self.state = "idle"
                 self.timer = 1.2
+        elif st == "illusion_tele":
+            # cria cópias de si nas outras âncoras; acertar o verdadeiro desfaz as ilusões
+            self.timer -= dt
+            if self.timer <= 0:
+                for i, (ax2, ay2) in enumerate(self.anchors):
+                    if i != self.anchor_i:
+                        ctx.spawn_enemy(Illusion(ax2, ay2 + 40, self))
+                        ctx.effects.sprite("fumaca_caveira", ax2, ay2, fps=16, scale=2)
+                ctx.audio.play("boss")
+                self.state = "idle"
+                self.timer = 1.0
+        elif st == "tide_tele":
+            self.timer -= dt
+            if self.timer <= 0:
+                ctx.hazards.append(Flood(room.width, self.floor_y, height=70, hold=3.0))
+                ctx.effects.add_shake(7)
+                ctx.audio.play("boss")
+                self.state = "idle"
+                self.timer = 1.0
         elif st == "summon_tele":
             self.timer -= dt
             if self.timer <= 0:
@@ -670,17 +823,63 @@ class Sorcerer(Boss):
                 self.state = "idle"
                 self.timer = 1.0
 
+    def take_hit(self, damage, direction, knockback, knock_up, stun, ctx):
+        was = self.hp
+        super().take_hit(damage, direction, knockback, knock_up, stun, ctx)
+        if self.hp < was:                       # acertou o verdadeiro: as ilusões se desfazem
+            for e in ctx.enemies:
+                if isinstance(e, Illusion) and e.alive:
+                    e.vanish(ctx)
+
     def draw(self, surf, cam_x, cam_y):
-        st = self.state
-        pose = "cast" if st.endswith("_tele") else ("hurt" if self.flash > 0 else "idle")
-        img = pixelart.sorcerer(pose, (self.anim_t * 0.7) % 1.0, self.direction)
-        if self.alpha < 255:
-            img = img.copy()
-            img.set_alpha(self.alpha)
-        rect = img.get_rect(center=(round(self.cx - cam_x), round(self.cy - cam_y)))
-        # aura
-        pygame.draw.ellipse(surf, (40, 120, 120), (rect.centerx - 30, rect.bottom - 6, 60, 10))
-        surf.blit(img, rect)
+        from .creatures import draw_model
+        lean = 12 if self.state.endswith("_tele") else 0
+        draw_model(surf, "mago_azul", self.cx - cam_x, self.bottom - cam_y, self.anim_t, self.direction,
+                   white=self.flash > 0 or self.telegraphing(), lean=lean, float_amp=3.0, scale=1.25,
+                   alpha=self.alpha)
+        # brilho da maré nas mãos e sombra no chão (as ilusões não têm sombra)
+        k = 0.5 + 0.5 * math.sin(self.anim_t * 5)
+        pygame.draw.circle(surf, (int(90 + 120 * k), 220, 230), (round(self.cx - cam_x + self.direction * 20),
+                                                                 round(self.cy - cam_y + 4)), 4)
+        shadow = pygame.Rect(0, 0, 50, 8)
+        shadow.center = (round(self.cx - cam_x), round(self.floor_y - cam_y - 2))
+        pygame.draw.ellipse(surf, (20, 60, 70), shadow)
+
+
+class Illusion(Enemy):
+    """Cópia de Caelum: atira caveiras, some com um golpe. Não tem sombra no chão (a dica)."""
+    gravity = False
+    max_hp = 1
+    contact_damage = 1
+    knockback_resist = 0.0
+    color = (120, 220, 210)
+
+    def __init__(self, x, foot_y, master):
+        super().__init__(x, foot_y, 36, 80)
+        self.master = master
+        self.cool = random.uniform(1.0, 1.8)
+        self.t = 0.0
+
+    def think(self, dt, room, player, ctx):
+        self.t += dt
+        self.vx = self.vy = 0.0
+        self.direction = 1 if player.cx > self.cx else -1
+        self.cool -= dt
+        if self.cool <= 0:
+            self.cool = 2.4
+            a = math.atan2(player.cy - self.cy, player.cx - self.cx)
+            ctx.projectiles.spawn(self.cx, self.cy, math.cos(a), math.sin(a), speed=150, look="caveira", homing=0.8)
+        if not self.master.alive:
+            self.alive = False
+
+    def vanish(self, ctx):
+        self.alive = False
+        ctx.effects.sprite("fumaca_caveira", self.cx, self.cy, fps=18, scale=2)
+
+    def draw(self, surf, cam_x, cam_y):
+        from .creatures import draw_model
+        draw_model(surf, "mago_azul", self.cx - cam_x, self.bottom - cam_y, self.t, self.direction,
+                   white=self.flash > 0, float_amp=3.0, scale=1.25, alpha=200 + int(40 * math.sin(self.t * 9)))
 
 
 BOSS_CLASSES = {"rei_rato": RatKing, "cavaleiro": RedKnight, "irma": PirateSister, "feiticeiro": Sorcerer}
