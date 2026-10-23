@@ -559,14 +559,14 @@ def test_dash_pit():
 def test_hazard_and_death():
     s = Sim()
     s.goto("LB", 15, 14)
-    safe = s.play.last_safe
+    checkpoint, cx, cy = s.play._spawn_point()
     hp0 = s.p.hp
     s.wait_until(lambda: s.play.hazard_timer > 0, 3.0, held={"right"})
     check("espinhos causam dano", s.p.hp == hp0 - 1)
     s.wait_until(lambda: s.play.hazard_timer <= 0, 2.0)
     s.step()
-    check("volta ao último chão seguro", s.p.on_ground and s.p.bottom == 14 * T and s.p.right <= 18 * T,
-          f"seguro registrado em x={safe[1]:.0f}")
+    check("volta ao último checkpoint", s.play.room is checkpoint and abs(s.p.cx - cx) < 4,
+          f"{s.play.room.id} x={s.p.cx:.0f}")
     check("velocidades zeradas ao voltar", abs(s.p.vx) < 1 and s.p.vy == 0)
 
     # morte e reaparecimento pelo fluxo do App

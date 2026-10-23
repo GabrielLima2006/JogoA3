@@ -21,6 +21,7 @@ class Skin:
     faces_right = True
     procedural_attacks = False   # True: pose de golpe gerada por código (sem quadros de ataque)
     motion_lean = False
+    drawn_slashes = ()           # animações cujos quadros já têm o corte desenhado
 
     def anchor_x(self, name):
         return self.anchor[0]
@@ -63,33 +64,51 @@ class HeroSkin(Skin):
 
 
 class SorceressSkin(Skin):
-    """Feiticeira: parada/andando do pacote + ações geradas por tools/gerar_feiticeira.py."""
+    """Feiticeira.
+
+    - parada/andando/partida: pacote original;
+    - golpe rápido, golpe forte, dash, pulo, queda e aterrissagem: modelos da equipe
+      (tools/importar_modelos.py -> feiticeira_modelos.png, quadros 112x72);
+    - golpe para cima, diagonal, para baixo, dano e morte: tools/gerar_feiticeira.py
+      (feiticeira_acoes.png, quadros 80x64).
+    """
     anchor = (21, 54)
     faces_right = False
     procedural_attacks = False
-    motion_lean = True           # inclina um pouco na corrida
-    ACTION_ANCHOR_X = 40         # quadros de feiticeira_acoes.png (80x64, pé em x=40)
-    ACTIONS = {"quick": (0, 4), "heavy": (1, 5), "up": (2, 3), "down": (3, 2), "jump": (4, 2),
-               "fall": (5, 2), "dash": (6, 2), "hurt": (7, 1), "death": (8, 5), "land": (9, 1)}
+    motion_lean = True
+    drawn_slashes = ("quick", "heavy")      # quadros já trazem o corte desenhado
+    MODELS = {"quick": (0, 0, 5), "heavy": (1, 0, 4), "dash": (2, 0, 6), "jump": (3, 1, 2), "fall": (3, 3, 1),
+              "land": (3, 4, 2), "roll": (4, 0, 7)}
+    ACTIONS = {"up": (2, 3), "down": (3, 2), "hurt": (7, 1), "death": (8, 5), "diag": (10, 4)}
 
     def anims(self):
         idle = sprites.grid("personagens/feiticeira_parada.png", 46, 55)
         walk = sprites.grid("personagens/feiticeira_andando.png", 45, 58)
         acts = sprites.grid("personagens/feiticeira_acoes.png", 80, 64)
+        models = sprites.grid("personagens/feiticeira_modelos.png", 112, 72)
         anims = {
             "idle": Anim(idle, 10),
             "run_start": Anim(sprites.grid("personagens/feiticeira_partida.png", 45, 58), 24, loop=False),
             "run": Anim(walk, 26),
             "heal": Anim(idle, 4),
         }
-        fps = {"jump": 8, "fall": 8, "dash": 20, "death": 7, "down": 10}
+        fps = {"jump": 9, "fall": 8, "dash": 40, "death": 7, "down": 10, "land": 16, "roll": 18}
+        loop = ("fall", "dash", "down")
+        cols = 7
+        for name, (row, start, n) in self.MODELS.items():
+            frames = models[row * cols + start:row * cols + start + n] if models else []
+            anims[name] = Anim(frames, fps.get(name, 1), loop=name in loop)
         for name, (row, n) in self.ACTIONS.items():
             frames = acts[row * 5:row * 5 + n] if acts else []
-            anims[name] = Anim(frames, fps.get(name, 1), loop=name in ("jump", "fall", "dash", "down"))
+            anims[name] = Anim(frames, fps.get(name, 1), loop=name in loop)
         return anims
 
     def anchor_x(self, name):
-        return self.ACTION_ANCHOR_X if name in self.ACTIONS else self.anchor[0]
+        if name in self.MODELS:
+            return 56
+        if name in self.ACTIONS:
+            return 40
+        return self.anchor[0]
 
 
 SKINS = {"ele": HeroSkin(), "ela": SorceressSkin()}
@@ -107,7 +126,7 @@ def state_of(player):
         if dy > 0:
             return "down", 0
         if dy < 0:
-            return "up", atk.t / atk.spec.total
+            return ("diag" if atk.aim[0] else "up"), atk.t / atk.spec.total
         name = atk.spec.name
         return ("heavy" if name == "heavy" else "quick"), atk.t / atk.spec.total
     if player.hurt_lock > 0:
@@ -132,7 +151,7 @@ def frame_for(skin, name, t):
                 return start.frame(t)        # transição parado -> correndo
             t -= dur
     anim = skin.get(name)
-    if name in ("quick", "heavy", "up") and anim.frames:
+    if name in ("quick", "heavy", "up", "diag") and anim.frames:
         # golpes: o tempo vem normalizado (0..1) pela duração do ataque
         i = min(len(anim.frames) - 1, int(t * len(anim.frames)))
         return anim.frames[i]

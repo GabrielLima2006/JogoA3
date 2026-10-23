@@ -26,6 +26,28 @@ def test_start_abilities():
     check("o primeiro chefe dá o pulo duplo", chapter1.BOSSES["rei_rato"]["reward"] == ("ability", "double_jump"))
 
 
+def test_water_returns_to_checkpoint():
+    s = game(name="agua.json")
+    s.pr.bench = None
+    s.goto("porao2", 14, 18)
+    s.play.enemies = []
+    mover = s.play.movers[0]
+    s.p.place(mover.x + mover.w / 2, mover.y)          # em cima da plataforma móvel
+    s.step()
+    s.play.riding = None
+    s.p.place(30 * T, 21 * T - 4)                      # cai na água do canal
+    s.p.vy = 200
+    for _ in range(int(3.0 / SIM_DT)):
+        s.step()
+        if s.play.room.id == "cabine" and s.p.on_ground:
+            break
+    check("cair na água volta ao último checkpoint (sem loop)", s.play.room.id == "cabine" and s.p.alive,
+          s.play.room.id)
+    hp = s.p.hp
+    s.run(2.0)
+    check("depois de voltar não toma dano de novo", s.p.hp == hp and s.play.hazard_timer <= 0)
+
+
 def test_structure():
     s = game()
     w = s.play.world
@@ -351,5 +373,5 @@ def test_render_all():
     check("todas as salas desenham com a protagonista", True)
 
 
-TESTS = [test_start_abilities, test_structure, test_doors, test_crumble, test_movers, test_items_and_letters, test_dialogs_and_npcs,
+TESTS = [test_start_abilities, test_water_returns_to_checkpoint, test_structure, test_doors, test_crumble, test_movers, test_items_and_letters, test_dialogs_and_npcs,
          test_endings, test_bosses, test_render_all, test_gates, test_reach_none, test_reach_dash, test_reach_double]

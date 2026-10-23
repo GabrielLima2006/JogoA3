@@ -613,11 +613,14 @@ class PlayState(State):
         self.hazard_timer = PCfg.HAZARD_FREEZE
 
     def _respawn_at_safe(self):
-        room_id, x, y = self.last_safe
+        """Depois de cair em água ou espinhos, volta sempre ao último checkpoint (bola de cristal).
+        Voltar ao "último chão firme" podia cair numa tábua ou plataforma que já não estava lá e
+        prender a jogadora num loop de quedas."""
+        room, x, y = self._spawn_point()
         p = self.player
-        if room_id != self.room.id:
+        if room is not self.room:
             p.place(x, y)
-            self.load_room(self.world.rooms[room_id])
+            self.load_room(room)
         p.place(x, y)
         p.vx = p.vy = 0.0
         p.dash_time = 0.0

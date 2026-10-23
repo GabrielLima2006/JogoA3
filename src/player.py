@@ -504,6 +504,13 @@ class Player(Body):
         self.scale_x += (1.0 - self.scale_x) * k
         self.scale_y += (1.0 - self.scale_y) * k
         atk = self.attack
+        if (atk is not None and atk.spec.name == "heavy" and atk.phase == "active" and atk.aim[1] == 0
+                and not getattr(atk, "wave_done", False)):
+            atk.wave_done = True
+            wave = sprites.image("efeitos", "onda_roxa.png")
+            if wave is not None:                 # onda roxa do golpe forte (só visual)
+                ctx.effects.travel(wave, self.cx + atk.facing * 40, self.cy, atk.facing * 560, 0.28,
+                                   flip=atk.facing > 0)
         if atk is not None and atk.spec.name == "heavy" and atk.phase == "windup":
             self.charge_fx_timer -= dt
             if self.charge_fx_timer <= 0:
@@ -654,6 +661,9 @@ class Player(Body):
             return
         if atk.phase != "active":
             return
+        skin = SKINS.get(self.progress.protagonist, SKINS["ele"])
+        if atk.aim[1] == 0 and spec.name in skin.drawn_slashes:
+            return                       # o corte já vem desenhado no quadro
         frames = sprites.grid("efeitos/cortes.png", 128, 128)
         if not frames:
             return

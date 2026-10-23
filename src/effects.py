@@ -65,6 +65,7 @@ class EffectSystem:
         self.particles = []
         self.ghosts = []
         self.rings = []
+        self.travelers = []
         self.shake = 0.0
         self.hitstop = 0.0
         self.screen_flash = 0.0
@@ -75,6 +76,7 @@ class EffectSystem:
         self.particles.clear()
         self.ghosts.clear()
         self.rings.clear()
+        self.travelers.clear()
         self.shake = 0.0
         self.hitstop = 0.0
         self.screen_flash = 0.0
@@ -120,6 +122,10 @@ class EffectSystem:
     def ghost(self, rect, color, image=None):
         self.ghosts.append(Ghost(pygame.Rect(rect), 0.16, color, image))
 
+    def travel(self, image, x, y, vx, life=0.35, flip=False):
+        """Imagem que corre para o lado e some (onda do golpe forte)."""
+        self.travelers.append([image, x, y, vx, life, life, flip])
+
     def ring(self, x, y, radius, life, color, width=3):
         self.rings.append(Ring(x, y, radius, life, color, width))
 
@@ -133,6 +139,10 @@ class EffectSystem:
         for s in self.sprite_fx:
             s.t += dt
         self.sprite_fx = [s for s in self.sprite_fx if not s.done]
+        for tr in self.travelers:
+            tr[1] += tr[3] * dt
+            tr[4] -= dt
+        self.travelers = [tr for tr in self.travelers if tr[4] > 0]
         alive = []
         for p in self.particles:
             p.life -= dt
@@ -183,6 +193,10 @@ class EffectSystem:
             if s.angle:
                 img = pygame.transform.rotate(img, s.angle)
             surf.blit(img, img.get_rect(center=(round(s.x - cam_x), round(s.y - cam_y))))
+        for img, x, y, vx, life, total, flip in self.travelers:
+            v = sprites.variant(img, flip, False, 1).copy()
+            v.set_alpha(int(255 * min(1.0, life / total * 1.6)))
+            surf.blit(v, v.get_rect(center=(round(x - cam_x), round(y - cam_y))))
         for p in self.particles:
             k = p.life / p.max_life
             size = max(1, int(p.size * (0.4 + 0.6 * k) + 0.5))

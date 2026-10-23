@@ -1,0 +1,80 @@
+{
+ "frame": [
+  96,
+  96
+ ],
+ "anchor": [
+  48,
+  95
+ ],
+ "rows": {
+  "fazendeiro": [
+   0,
+   1
+  ],
+  "anciã": [
+   1,
+   1
+  ],
+  "menino": [
+   2,
+   1
+  ],
+  "ladino": [
+   3,
+   1
+  ],
+  "cavaleiro_negro": [
+   4,
+   1
+  ],
+  "diabrete": [
+   5,
+   1
+  ],
+  "espirito": [
+   6,
+   1
+  ],
+  "goblin": [
+   7,
+   1
+  ],
+  "ogro": [
+   8,
+   1
+  ],
+  "lobo": [
+   9,
+   1
+  ],
+  "lich": [
+   10,
+   1
+  ],
+  "mumia": [
+   11,
+   1
+  ],
+  "minotauro": [
+   12,
+   1
+  ],
+  "alquimista": [
+   13,
+   1
+  ],
+  "vidente": [
+   14,
+   1
+  ],
+  "funileiro": [
+   15,
+   1
+  ],
+  "gato": [
+   16,
+   1
+  ]
+ }
+}

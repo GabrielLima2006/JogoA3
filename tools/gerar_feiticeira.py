@@ -42,7 +42,7 @@ WEAPON = {(47, 24, 80), (81, 55, 63)}
 WEAPON_EDGE = {(166, 75, 10), (67, 21, 0)}
 
 # linhas da folha: nome -> lista de poses
-ANIMS = ["quick", "heavy", "up", "down", "jump", "fall", "dash", "hurt", "death", "land"]
+ANIMS = ["quick", "heavy", "up", "down", "jump", "fall", "dash", "hurt", "death", "land", "diag"]
 
 
 def load_walk():
@@ -212,6 +212,9 @@ def build():
                   compose(stance, 20, 0, None, whole_angle=65, shift=(8, 6)),
                   compose(stance, 20, 0, None, whole_angle=88, shift=(10, 8))],
         "land": [compose(stance, -4, 0, (-130, 16), squash=0.9)],
+        # diagonal para cima: lâmina sai de trás e corta em 45 graus
+        "diag": [compose(stance, 6, 0, (170, 18)), compose(stance, -4, 2, (60, 21)), compose(stance, -8, 3, (40, 21)),
+                 compose(stance, -2, 1, (15, 18))],
     }
     cols = max(len(v) for v in rows.values())
     sheet = pygame.Surface((FW * cols, FH * len(ANIMS)), pygame.SRCALPHA)

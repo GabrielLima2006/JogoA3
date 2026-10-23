@@ -18,6 +18,10 @@ conferidos na página do pacote antes da entrega: autor, link e licença exatos.
 
 ## Feito pela equipe
 
+- Modelos da protagonista (golpes, dash, pulo, rolagem) e de NPCs/criaturas: folhas da equipe em
+  `assets/fontes/`, importadas por `tools/importar_modelos.py` (`feiticeira_modelos.png`, `npcs.png`,
+  `efeitos/onda_roxa.png`). [CONFIRMAR com o grupo como esses modelos foram feitos, para a seção "Uso de IA".]
+
 - Personagens do navio (capitã, grumete, imediato, irmã da capitã, amigo, mercador), Rei dos Ratos,
   Feiticeiro da Maré, ratos, gaivotas, canhões e caixotes: desenhados por código em `src/pixelart.py`.
 - Ícones de itens, tábuas de madeira, espinhos, mastro, velas, vigas e decoração do navio:
