@@ -62,13 +62,14 @@ habilidades daquele trecho, e impossível antes delas.
 - **Entrega A3:** README completo, créditos, capturas de tela, executável e release no GitHub.
 - **Protagonista única, dash inicial, animações novas e elenco no estilo dela.**
 
-## Correções pendentes (prioridade)
+## Feito na rodada de 22/10 (noite)
 
-- **Loop de morte na água:** quando a jogadora está numa plataforma móvel ou numa tábua que desaba e cai na
-  água/espinhos, o jogo devolve ao "último chão firme", que era a própria plataforma/tábua. Ela já não está
-  lá, então a jogadora cai de novo e entra em loop. **Decisão do Gabriel:** ao cair em água ou espinhos,
-  voltar sempre ao **último checkpoint** (bola de cristal). Conferir também a perda de vida nessa volta e
-  cobrir com teste (cair do porão alagado e das tábuas do porão).
+- Volta ao último checkpoint ao cair em água/espinhos (sem loop), com teste.
+- Animações da protagonista com os modelos da equipe (combo, golpe forte, dash, pulo, queda, aterrissagem),
+  orientação padronizada, golpe diagonal com animação própria; golpe forte sem a "onda" que parecia tiro.
+- 33 modelos de NPCs/criaturas importados; os que copiavam a protagonista ganharam cabelo próprio e
+  perderam os chifres. Loja, ferreiro, capangas, guardas, lobos, goblins, múmias, lich, espíritos no jogo.
+- Cenário: fundos em camadas, partículas, mato, cipós, figurantes, acabamento dos blocos.
 
 ## Próximos passos
 
@@ -76,14 +77,14 @@ Direção geral: o jogo é **inspirado** em Hollow Knight (exploração, bancos,
 quique), mas **não pode ser uma cópia**. Cada sistema e cada chefe precisa ter identidade própria ligada ao
 navio, à maré e à história da feiticeira que finge ser maga.
 
-1. **Corrigir modelos no jogo:** revisar personagens que ficaram estranhos em cena (chapéus, cabelo curto,
+1. ~~**Corrigir modelos no jogo**~~ (feito; falta o chefe final no estilo novo): revisar personagens que ficaram estranhos em cena (chapéus, cabelo curto,
    cores de pele, tamanhos, restos de pixels da espada original), o chefe final (ainda no estilo antigo) e a
    escala dos chefes em relação à protagonista.
 2. **Fluidez da movimentação:** mais quadros de transição (virar, começar e parar de correr, subir/descer no
    ar, aterrissar), sem mudar os valores de física aprovados.
 3. **Melhorar animações:** golpes com mais quadros e rastro, cura, dano e morte mais expressivos, idle com
    variações; inimigos e NPCs com reações próprias.
-4. **Golpe na diagonal:** a mira diagonal (W + A/D + ataque) continua na lógica, mas usa a pose de golpe para
+4. ~~**Golpe na diagonal**~~ (feito): a mira diagonal (W + A/D + ataque) continua na lógica, mas usa a pose de golpe para
    cima. Criar quadros próprios da diagonal e conferir o alcance do golpe.
 5. **Level design mais vivo:** NPCs andando e reagindo, animais, objetos que balançam com o navio, água com
    ondas, luz das lanternas, partículas (respingos, folhas, poeira), mais caminhos secretos e salas com
