@@ -5,7 +5,7 @@ import math
 
 import pygame
 
-from .config import Colors, Combat, Enemies, Energy, Projectile as PCfg, World
+from .config import Colors, Combat, Effects as FX, Enemies, Energy, Projectile as PCfg, World
 from .physics import rects_overlap
 from .world import BREAKABLE
 
@@ -105,15 +105,27 @@ def resolve_player_attack(player, enemies, projectiles, ctx):
             fx_angle = 0 if not ady else (-90 * ady if not adx else -45 * ady)
             ctx.effects.sprite("golpe_forte" if spec.name == "heavy" else "golpe", hx, hy, fps=28,
                                flip=(adx or atk.facing) < 0, angle=fx_angle)
+            # faíscas brancas + pausa curtinha e tremor (o golpe "pesa")
+            ctx.effects.burst(hx, hy, 6, (255, 255, 255), speed=(160, 380), life=(0.08, 0.18), size=(1, 3),
+                              angle=math.atan2(ady, adx), spread=math.pi * 0.5)
             if spec.name == "heavy":
                 ctx.effects.burst(hx, hy, 22, Colors.HEAVY_SLASH, speed=(120, 420), gravity=500,
                                   angle=math.atan2(ady, adx), spread=math.pi * 1.1)
                 ctx.effects.ring(hx, hy, 34, 0.22, Colors.HEAVY_SLASH, 4)
+                ctx.effects.add_hitstop(FX.HIT_STOP_HEAVY)
+                ctx.effects.add_shake(FX.HIT_SHAKE_HEAVY)
                 ctx.audio.play("heavy_hit")
             else:
                 ctx.effects.burst(hx, hy, 10, Colors.QUICK_SLASH, speed=(80, 260), gravity=400,
                                   angle=math.atan2(ady, adx), spread=math.pi * 0.9)
+                ctx.effects.add_hitstop(FX.HIT_STOP_QUICK)
+                ctx.effects.add_shake(FX.HIT_SHAKE_QUICK)
                 ctx.audio.play("hit")
+            if not enemy.alive:
+                # golpe final: mais faísca, tremor e pausa um pouco maior
+                ctx.effects.burst(enemy.cx, enemy.cy, 16, (255, 230, 200), speed=(120, 360), gravity=300)
+                ctx.effects.add_hitstop(FX.KILL_HIT_STOP)
+                ctx.effects.add_shake(FX.KILL_SHAKE)
     if Combat.PLAYER_PROJECTILE_PARRY:
         for p in projectiles.items:
             if p.alive and p.hostile and rects_overlap(box, p.rect_tuple()):

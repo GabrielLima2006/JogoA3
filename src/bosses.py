@@ -321,12 +321,10 @@ class RatKing(Boss):
             self.timer -= dt * sp
             if self.timer <= 0 and self.on_ground:
                 minions = sum(1 for e in ctx.enemies if isinstance(e, Rat) and e.alive)
-                flooding = any(isinstance(h, Flood) for h in ctx.hazards)
-                opts, w = ["charge", "flood", "summon", "leap"], [3, 0 if flooding else 3, 2 if minions < 3 else 0,
-                                                                  2 if self.phase2 else 0]
+                opts, w = ["charge", "leap", "summon"], [3, 2, 2 if minions < 3 else 0]
                 pick = self.choose(opts, w)
                 self.state = pick + "_tele"
-                self.timer = {"charge": 0.55, "flood": 0.7, "leap": 0.4, "summon": 0.5}[pick] / sp
+                self.timer = {"charge": 0.55, "leap": 0.4, "summon": 0.5}[pick] / sp
         elif st == "charge_tele":
             self.vx = approach(self.vx, -self.direction * 50, 1500 * dt)
             self.timer -= dt
@@ -372,17 +370,6 @@ class RatKing(Boss):
                 ctx.audio.play("impact")
                 self.state = "idle"
                 self.timer = random.uniform(0.6, 0.9)
-        elif st == "flood_tele":
-            # bate o pé e chama a água do porão
-            self.vx = 0.0
-            self.squash = min(self.squash, 0.8)
-            self.timer -= dt
-            if self.timer <= 0:
-                ctx.hazards.append(Flood(room.width, self.floor_y, height=78 if self.phase2 else 70))
-                ctx.effects.add_shake(6)
-                ctx.audio.play("boss")
-                self.state = "idle"
-                self.timer = 1.0
         elif st == "summon_tele":
             self.vx = 0.0
             self.timer -= dt
@@ -396,13 +383,27 @@ class RatKing(Boss):
                 self.state = "idle"
                 self.timer = 0.9
 
+    ATTACK_STATES = ("charge_tele", "charge", "leap_tele", "leap", "summon_tele")
+
     def draw(self, surf, cam_x, cam_y):
-        phase = (self.x * 0.03) % 1.0 if abs(self.vx) > 30 else (self.anim_t * 0.8) % 1.0
-        img = pixelart.rat(phase, self.direction, scale=2, cap=True, glow=self.awake)
-        w = int(img.get_width() * (2 - self.squash))
-        h = int(img.get_height() * self.squash)
-        img = pygame.transform.scale(sprites.variant(img, False, self.flash > 0 or self.telegraphing()), (w, h))
-        surf.blit(img, img.get_rect(midbottom=(round(self.cx - cam_x), round(self.bottom - cam_y + 6))))
+        # modelo do Gabriel (PixelLab, 48x48, vista sudoeste: olha para a esquerda), em 2x
+        moving = abs(self.vx) > 30
+        if self.state in self.ATTACK_STATES:
+            img = sprites.image("chefes", "rei_rato_ataque.png")
+        elif moving and int(self.x * 0.06) % 2:
+            img = sprites.image("chefes", "rei_rato_andando.png")
+        else:
+            img = sprites.image("chefes", "rei_rato_parado.png")
+        if img is None:
+            phase = (self.x * 0.03) % 1.0 if moving else (self.anim_t * 0.8) % 1.0
+            img = pixelart.rat(phase, -1, scale=1, cap=True, glow=self.awake)
+        bob = abs(math.sin(self.x * 0.05)) * 3 if moving else (1 if (self.anim_t * 1.5) % 1.0 > 0.5 else 0)
+        v = sprites.variant(img, self.direction > 0, self.flash > 0 or self.telegraphing(), 2)
+        w = int(v.get_width() * (2 - self.squash))
+        h = int(v.get_height() * self.squash)
+        if (w, h) != v.get_size():
+            v = pygame.transform.scale(v, (w, h))
+        surf.blit(v, v.get_rect(midbottom=(round(self.cx - cam_x), round(self.bottom - cam_y + 2 - bob))))
         if self.state == "stunned":
             self._stars(surf, cam_x, cam_y)
 
@@ -832,11 +833,14 @@ class Sorcerer(Boss):
                     e.vanish(ctx)
 
     def draw(self, surf, cam_x, cam_y):
-        from .creatures import draw_model
-        lean = 12 if self.state.endswith("_tele") else 0
-        draw_model(surf, "mago_azul", self.cx - cam_x, self.bottom - cam_y, self.anim_t, self.direction,
-                   white=self.flash > 0 or self.telegraphing(), lean=lean, float_amp=3.0, scale=1.25,
-                   alpha=self.alpha)
+        pose = "cast" if self.state.endswith("_tele") else ("hurt" if self.flash > 0 else "idle")
+        img = pixelart.sorcerer(pose, (self.anim_t * 0.7) % 1.0, self.direction)
+        img = sprites.variant(img, False, self.flash > 0 or self.telegraphing())
+        if self.alpha < 255:
+            img = img.copy()
+            img.set_alpha(self.alpha)
+        lift = math.sin(self.anim_t * 2.5) * 3
+        surf.blit(img, img.get_rect(midbottom=(round(self.cx - cam_x), round(self.bottom - cam_y + 4 + lift))))
         # brilho da maré nas mãos e sombra no chão (as ilusões não têm sombra)
         k = 0.5 + 0.5 * math.sin(self.anim_t * 5)
         pygame.draw.circle(surf, (int(90 + 120 * k), 220, 230), (round(self.cx - cam_x + self.direction * 20),
@@ -877,9 +881,11 @@ class Illusion(Enemy):
         ctx.effects.sprite("fumaca_caveira", self.cx, self.cy, fps=18, scale=2)
 
     def draw(self, surf, cam_x, cam_y):
-        from .creatures import draw_model
-        draw_model(surf, "mago_azul", self.cx - cam_x, self.bottom - cam_y, self.t, self.direction,
-                   white=self.flash > 0, float_amp=3.0, scale=1.25, alpha=200 + int(40 * math.sin(self.t * 9)))
+        img = pixelart.sorcerer("idle", (self.t * 0.7) % 1.0, self.direction)
+        img = sprites.variant(img, False, self.flash > 0).copy()
+        img.set_alpha(200 + int(40 * math.sin(self.t * 9)))
+        lift = math.sin(self.t * 2.5) * 3
+        surf.blit(img, img.get_rect(midbottom=(round(self.cx - cam_x), round(self.bottom - cam_y + 4 + lift))))
 
 
 BOSS_CLASSES = {"rei_rato": RatKing, "cavaleiro": RedKnight, "irma": PirateSister, "feiticeiro": Sorcerer}

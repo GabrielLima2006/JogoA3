@@ -1,0 +1,36 @@
+{
+  "group_id": "a5f3b50b-7aab-48ad-993b-2585dc7bf97a",
+  "states": [
+    {
+      "character": {
+        "id": "be081026-51af-4069-82fa-ab4395bda038",
+        "name": "Idle",
+        "prompt": "Make a idle versions state from this character",
+        "size": {
+          "width": 32,
+          "height": 32
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-23T02:59:55.786938+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-23T11:46:36.473488"
+}

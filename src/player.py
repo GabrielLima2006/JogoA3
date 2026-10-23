@@ -99,6 +99,7 @@ class Player(Body):
         self.scale_x = self.scale_y = 1.0
         self.charge_fx_timer = 0.0
         self.landing_impact = 0.0
+        self.step_dist = 0.0          # distância andada desde o último passo (poeira e som)
         self.drop_timer = 0.0
         self.anim_state = "idle"
         self.anim_time = 0.0
@@ -190,6 +191,8 @@ class Player(Body):
 
         # --- facing ---
         if move_x and self.attack is None and not self.dashing:
+            if move_x != self.facing and self.on_ground and abs(self.vx) > FX.SKID_MIN_SPEED:
+                self._skid(ctx)
             self.facing = move_x
 
         # --- movimento e colisão ---
@@ -205,6 +208,11 @@ class Player(Body):
 
         if self.hit_left or self.hit_right:
             if self.dashing:
+                # bateu na parede no meio do dash: poeira e um tranquinho
+                side = 1 if self.hit_right else -1
+                ctx.effects.dust(self.cx + side * self.w / 2, self.cy, 6, -side)
+                ctx.effects.add_shake(FX.WALL_BUMP_SHAKE)
+                ctx.audio.play("land")
                 self._end_dash(keep_speed=False)
             self.vx = 0.0
         if self.hit_ceiling and self.vy < 0:
@@ -224,9 +232,28 @@ class Player(Body):
         if not self.on_ground and self.coyote <= 0 and self.jumps_used == 0:
             self.jumps_used = 1
 
+        self._footsteps(dt, ctx)
         self._update_visuals(dt, ctx)
 
     # ------------------------------------------------------------------
+    def _footsteps(self, dt, ctx):
+        """Na corrida: um passo a cada FX.STEP_DISTANCE px, com poeirinha atrás e som baixo."""
+        if not (self.on_ground and not self.dashing and abs(self.vx) > 60):
+            self.step_dist = FX.STEP_DISTANCE * 0.6        # o primeiro passo sai logo
+            return
+        self.step_dist += abs(self.vx) * dt
+        if self.step_dist >= FX.STEP_DISTANCE:
+            self.step_dist = 0.0
+            back = -1 if self.vx > 0 else 1
+            ctx.effects.dust(self.cx + back * 6, self.bottom, 2, back)
+            ctx.audio.play("step")
+
+    def _skid(self, ctx):
+        """Virou de lado correndo: derrapa levantando poeira."""
+        ctx.effects.dust(self.cx + self.facing * 8, self.bottom, 7, self.facing)
+        ctx.audio.play("skid")
+        self.scale_x, self.scale_y = 1.12, 0.9
+
     def _tick_timers(self, dt):
         self.drop_timer = max(0.0, self.drop_timer - dt)
         if not self.on_ground:
@@ -331,6 +358,11 @@ class Player(Body):
         if impact_vy > 200:
             ctx.effects.dust(self.cx, self.bottom, int(4 + 8 * k), 0)
             ctx.audio.play("land")
+        if impact_vy > FX.HARD_LAND_SPEED:
+            # queda alta: anel de poeira, fumaça e um tremor leve
+            ctx.effects.ring(self.cx, self.bottom - 2, 30, 0.25, (170, 170, 190), 2)
+            ctx.effects.sprite("fumaca_marrom", self.cx, self.bottom - 10, fps=22)
+            ctx.effects.add_shake(FX.HARD_LAND_SHAKE * k)
         self.landing_impact = k
         if impact_vy > 500:
             self.land_timer = 0.12

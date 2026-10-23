@@ -37,7 +37,8 @@ class Audio:
     SFX_VOLUME = 0.55
     MUSIC_VOLUME = 0.32
     # ajuste fino por efeito (alguns arquivos vêm mais altos que outros)
-    SFX_GAIN = {"checkpoint": 0.6, "buy": 0.6, "item": 0.7, "boss": 0.8, "ui_move": 0.6, "coin": 0.5}
+    SFX_GAIN = {"checkpoint": 0.6, "buy": 0.6, "item": 0.7, "boss": 0.8, "ui_move": 0.6, "coin": 0.5,
+                "step": 0.35, "skid": 0.5}
     # música por tela/zona (arquivos em assets/music/)
     MUSIC = {
         "menu": "title_01.ogg",
@@ -299,6 +300,18 @@ class Effects:
     MAX_PARTICLES = 700
     HURT_HITSTOP = 0.06
     HURT_SHAKE = 6.0
+    # sensação dos golpes e do movimento (só efeitos: não mudam a física)
+    HIT_STOP_QUICK = 0.03
+    HIT_STOP_HEAVY = 0.07
+    HIT_SHAKE_QUICK = 1.5
+    HIT_SHAKE_HEAVY = 4.5
+    KILL_HIT_STOP = 0.06
+    KILL_SHAKE = 3.5
+    STEP_DISTANCE = 46.0          # px entre passos na corrida
+    SKID_MIN_SPEED = 160.0        # velocidade mínima para derrapar ao virar
+    HARD_LAND_SPEED = 720.0       # queda que levanta anel de poeira e treme
+    HARD_LAND_SHAKE = 3.0
+    WALL_BUMP_SHAKE = 1.5
     ROOM_FADE = 0.22
 
 

@@ -6,6 +6,7 @@ import random
 from helpers import SIM_DT, Sim, T, check, in_room, stands_on, try_reach
 from src import chapter1
 from src.bosses import PirateSister, RatKing, RedKnight, Sorcerer
+from src.config import Progression
 from src.physics import tile_span
 from src.progress import Progress
 from src.states import BossIntroState, DialogState, EndingState, ResultsState
@@ -115,9 +116,15 @@ def test_doors():
 
 
 PATHS_NONE = [
+    ("Cabine: cama", "cabine", 10, 14, stands_on("cabine", 11, 3, 8)),
+    ("Cabine: prateleira", "cabine", 6, 11, stands_on("cabine", 8, 10, 15)),
     ("Convés: cordame 1", "conves", 26, 18, stands_on("conves", 15, 24, 28)),
     ("Convés: cordame 2", "conves", 26, 15, stands_on("conves", 12, 19, 23)),
     ("Convés: cordame 3", "conves", 21, 12, stands_on("conves", 9, 24, 28)),
+    ("Convés: caixote da mezena", "conves", 41, 18, stands_on("conves", 16, 44, 45)),
+    ("Convés: mezena 1", "conves", 45, 16, stands_on("conves", 14, 47, 51)),
+    ("Convés: mezena 2", "conves", 50, 14, stands_on("conves", 11, 53, 57)),
+    ("Convés: mezena 3", "conves", 56, 11, stands_on("conves", 8, 59, 64)),
     ("Porão 1: volta 1", "porao1", 28, 20, stands_on("porao1", 17, 24, 27)),
     ("Porão 1: volta 2", "porao1", 25, 17, stands_on("porao1", 14, 17, 20)),
     ("Porão 1: volta 3", "porao1", 18, 14, stands_on("porao1", 11, 24, 27)),
@@ -125,58 +132,104 @@ PATHS_NONE = [
     ("Porão 1: volta 5", "porao1", 18, 8, stands_on("porao1", 5, 21, 22)),
     ("Porão 1: volta 6", "porao1", 21, 5, stands_on("porao1", 3, 20, 21)),
     ("Porão 1: sobe ao convés", "porao1", 20, 3, in_room("conves")),
-    ("Porão 1: poça", "porao1", 32, 20, stands_on("porao1", 20, 38, 44)),
+    ("Porão 1: prateleira alta", "porao1", 18, 8, stands_on("porao1", 7, 8, 13)),
+    ("Porão 1: pula o buraco", "porao1", 28, 20, stands_on("porao1", 20, 34, 40)),
+    ("Porão 1: caixotes", "porao1", 38, 20, stands_on("porao1", 20, 43, 54)),
+    ("Porão 1: volta dos caixotes", "porao1", 45, 20, stands_on("porao1", 20, 34, 40)),
+    ("Porão 1: degrau 1 do alçapão", "porao1", 8, 27, stands_on("porao1", 24, 10, 12)),
+    ("Porão 1: degrau 2 do alçapão", "porao1", 11, 24, stands_on("porao1", 22, 10, 12)),
+    ("Porão 1: sai pelo alçapão", "porao1", 11, 22, stands_on("porao1", 20, 10, 12)),
     ("Porão 2: ilha A", "porao2", 7, 20, stands_on("porao2", 18, 13, 15)),
     ("Porão 2: tábuas até a ilha B", "porao2", 33, 16, stands_on("porao2", 17, 38, 40)),
     ("Porão 2: chão leste", "porao2", 39, 17, stands_on("porao2", 20, 44, 62)),
     ("Porão 2: volta do chão leste", "porao2", 45, 20, stands_on("porao2", 17, 38, 40)),
-    ("Toca: plataforma", "toca", 4, 15, stands_on("toca", 12, 7, 11)),
+    ("Porão 2: prateleira até a viga", "porao2", 52, 10, stands_on("porao2", 9, 41, 46)),
+    ("Porão 2: viga 2 (tábuas)", "porao2", 42, 9, stands_on("porao2", 8, 32, 37)),
+    ("Porão 2: viga 3", "porao2", 33, 8, stands_on("porao2", 8, 23, 28)),
+    ("Porão 2: viga 4", "porao2", 24, 8, stands_on("porao2", 8, 14, 19)),
+    ("Porão 2: nicho da carta", "porao2", 15, 8, stands_on("porao2", 8, 13, 13)),
+    ("Toca: plataforma", "toca", 4, 15, stands_on("toca", 12, 6, 10)),
+    ("Toca: barris", "toca", 15, 15, stands_on("toca", 13, 19, 20)),
+    ("Toca: plataforma do meio", "toca", 19, 13, stands_on("toca", 10, 17, 22)),
 ]
 
 PATHS_DASH = [
-    ("Convés: sobe ao cordame", "conves", 34, 4, in_room("cordame1")),
-    ("Cordame: 1", "cordame1", 15, 39, stands_on("cordame1", 36, 8, 13)),
-    ("Cordame: 2 (dash)", "cordame1", 10, 36, stands_on("cordame1", 33, 21, 25)),
-    ("Cordame: 3", "cordame1", 22, 33, stands_on("cordame1", 30, 30, 35)),
-    ("Cordame: 4 (tábuas)", "cordame1", 31, 30, stands_on("cordame1", 27, 22, 26)),
-    ("Cordame: 5", "cordame1", 23, 27, stands_on("cordame1", 24, 12, 17)),
-    ("Cordame: 7", "cordame1", 33, 18, stands_on("cordame1", 15, 22, 26)),
-    ("Cordame: 8", "cordame1", 23, 15, stands_on("cordame1", 12, 12, 16)),
-    ("Cordame: 9", "cordame1", 13, 12, stands_on("cordame1", 9, 4, 8)),
-    ("Cordame: 10", "cordame1", 5, 9, stands_on("cordame1", 6, 12, 15)),
-    ("Cordame: 11", "cordame1", 13, 6, stands_on("cordame1", 4, 20, 24)),
-    ("Cordame: ponta", "cordame1", 21, 4, stands_on("cordame1", 4, 31, 38)),
-    ("Vergas: verga", "cordame2", 6, 15, stands_on("cordame2", 13, 13, 16)),
-    ("Vergas: mastro (dash)", "cordame2", 14, 13, stands_on("cordame2", 14, 24, 26)),
-    ("Vergas: tábuas", "cordame2", 25, 14, stands_on("cordame2", 14, 29, 34)),
-    ("Gávea: plataforma", "gavea", 14, 17, stands_on("gavea", 14, 5, 9)),
+    ("Convés: verga do traquete (pulo + dash)", "conves", 25, 9, stands_on("conves", 7, 11, 15)),
+    ("Toca: plataforma ao meio (dash)", "toca", 9, 12, stands_on("toca", 10, 17, 22)),
 ]
 
 PATHS_DJ = [
     ("Convés: mastro (pulo duplo)", "conves", 26, 9, stands_on("conves", 4, 28, 36)),
-    ("Vergas: carta 2 (pulo duplo)", "cordame2", 25, 14, stands_on("cordame2", 8, 29, 32)),
+    ("Convés: sobe ao cordame", "conves", 34, 4, in_room("cordame1")),
+    ("Convés: cesto da mezena (pulo duplo)", "conves", 60, 8, stands_on("conves", 3, 51, 55)),
+    ("Cordame: pouso", "cordame1", 15, 39, stands_on("cordame1", 36, 14, 23)),
+    ("Cordame: oeste 1", "cordame1", 15, 36, stands_on("cordame1", 33, 9, 14)),
+    ("Cordame: oeste 2", "cordame1", 10, 33, stands_on("cordame1", 30, 2, 7)),
+    ("Cordame: oeste 3 (tábuas)", "cordame1", 6, 30, stands_on("cordame1", 27, 9, 13)),
+    ("Cordame: oeste 4 (oco do mastro)", "cordame1", 11, 27, stands_on("cordame1", 25, 14, 18)),
+    ("Cordame: oeste 5", "cordame1", 15, 25, stands_on("cordame1", 22, 3, 8)),
+    ("Cordame: oeste 6", "cordame1", 7, 22, stands_on("cordame1", 19, 10, 15)),
+    ("Cordame: oeste 7", "cordame1", 11, 19, stands_on("cordame1", 16, 3, 7)),
+    ("Cordame: verga grande", "cordame1", 6, 16, stands_on("cordame1", 13, 8, 31)),
+    ("Cordame: leste 1", "cordame1", 22, 36, stands_on("cordame1", 33, 25, 30)),
+    ("Cordame: leste 2", "cordame1", 29, 33, stands_on("cordame1", 30, 32, 37)),
+    ("Cordame: leste 3 (tábuas)", "cordame1", 33, 30, stands_on("cordame1", 27, 26, 30)),
+    ("Cordame: amuleto", "cordame1", 29, 27, stands_on("cordame1", 25, 33, 37)),
+    ("Cordame: leste, volta à verga", "cordame1", 30, 18, stands_on("cordame1", 13, 8, 31)),
+    ("Cordame: topo 1", "cordame1", 9, 13, stands_on("cordame1", 10, 3, 8)),
+    ("Cordame: topo 2", "cordame1", 7, 10, stands_on("cordame1", 7, 10, 15)),
+    ("Cordame: topo 3 (tábuas)", "cordame1", 14, 7, stands_on("cordame1", 6, 18, 22)),
+    ("Cordame: topo 4", "cordame1", 21, 6, stands_on("cordame1", 5, 25, 28)),
+    ("Cordame: ponta", "cordame1", 27, 5, stands_on("cordame1", 4, 31, 38)),
+    ("Vergas: verga", "cordame2", 6, 15, stands_on("cordame2", 13, 13, 17)),
+    ("Vergas: mastro de proa", "cordame2", 16, 13, stands_on("cordame2", 11, 21, 23)),
+    ("Vergas: tábuas", "cordame2", 23, 11, stands_on("cordame2", 11, 27, 33)),
+    ("Vergas: corda", "cordame2", 15, 13, stands_on("cordame2", 8, 14, 18)),
+    ("Vergas: cesto da carta 2", "cordame2", 15, 8, stands_on("cordame2", 5, 3, 7)),
+    ("Vergas: destroço 1", "cordame2", 23, 11, stands_on("cordame2", 16, 25, 26)),
+    ("Vergas: destroço 2", "cordame2", 26, 16, stands_on("cordame2", 16, 30, 31)),
+    ("Vergas: destroço 3", "cordame2", 31, 16, stands_on("cordame2", 16, 35, 36)),
+    ("Vergas: destroço do amuleto", "cordame2", 36, 16, stands_on("cordame2", 16, 39, 41)),
+    ("Vergas: do destroço à plataforma leste", "cordame2", 41, 16, stands_on("cordame2", 15, 48, 58)),
+    ("Gávea: plataforma", "gavea", 14, 17, stands_on("gavea", 14, 5, 9)),
+    ("Gávea: plataforma alta", "gavea", 8, 14, stands_on("gavea", 10, 14, 21)),
     ("Praia: vala de espinhos", "praia", 12, 18, stands_on("praia", 18, 23, 35)),
+    ("Praia: coqueiro (pulo duplo)", "praia", 24, 18, stands_on("praia", 13, 25, 29)),
     ("Praia: penhasco (pulo duplo)", "praia", 33, 18, stands_on("praia", 12, 36, 58)),
-    ("Floresta: 1", "floresta", 4, 37, stands_on("floresta", 32, 6, 11)),
-    ("Floresta: 2", "floresta", 9, 32, stands_on("floresta", 28, 16, 20)),
-    ("Floresta: 3 (tábuas)", "floresta", 18, 28, stands_on("floresta", 25, 25, 30)),
-    ("Floresta: 4", "floresta", 28, 25, stands_on("floresta", 21, 35, 40)),
-    ("Floresta: 6", "floresta", 32, 10, stands_on("floresta", 8, 20, 24)),
-    ("Floresta: carta 3", "floresta", 22, 8, stands_on("floresta", 5, 8, 13)),
-    ("Floresta: saída", "floresta", 32, 10, stands_on("floresta", 6, 38, 46)),
-    ("Ruínas: plataforma", "ruinas", 14, 17, stands_on("ruinas", 12, 6, 11)),
-    ("Ruínas: plataforma alta", "ruinas", 9, 12, stands_on("ruinas", 8, 16, 23)),
-    ("Templo: 1", "templo", 8, 18, stands_on("templo", 15, 11, 14)),
-    ("Templo: 2 (tábuas)", "templo", 12, 15, stands_on("templo", 14, 19, 23)),
-    ("Templo: saída", "templo", 40, 15, stands_on("templo", 18, 47, 58)),
-    ("Altar: plataforma", "altar", 12, 19, stands_on("altar", 14, 6, 11)),
-    ("Altar: plataforma alta", "altar", 9, 14, stands_on("altar", 10, 17, 26)),
+    ("Floresta: 1", "floresta", 4, 37, stands_on("floresta", 34, 6, 11)),
+    ("Floresta: 2", "floresta", 9, 34, stands_on("floresta", 31, 14, 19)),
+    ("Floresta: 3 (tábuas)", "floresta", 17, 31, stands_on("floresta", 29, 23, 28)),
+    ("Floresta: 4", "floresta", 26, 29, stands_on("floresta", 26, 32, 37)),
+    ("Floresta: galho do amuleto", "floresta", 35, 26, stands_on("floresta", 32, 43, 46)),
+    ("Floresta: volta do amuleto", "floresta", 44, 32, stands_on("floresta", 29, 37, 39)),
+    ("Floresta: volta do amuleto 2", "floresta", 38, 29, stands_on("floresta", 26, 32, 37)),
+    ("Floresta: oeste 1", "floresta", 34, 26, stands_on("floresta", 22, 24, 29)),
+    ("Floresta: oeste 2", "floresta", 26, 22, stands_on("floresta", 19, 14, 19)),
+    ("Floresta: oeste 3", "floresta", 16, 19, stands_on("floresta", 16, 5, 10)),
+    ("Floresta: árvore oca", "floresta", 8, 16, stands_on("floresta", 13, 8, 12)),
+    ("Floresta: copa 1", "floresta", 10, 13, stands_on("floresta", 10, 15, 20)),
+    ("Floresta: copa 2", "floresta", 17, 10, stands_on("floresta", 8, 24, 29)),
+    ("Floresta: copa 3", "floresta", 27, 8, stands_on("floresta", 7, 32, 35)),
+    ("Floresta: saída", "floresta", 34, 7, stands_on("floresta", 6, 38, 46)),
+    ("Floresta: fragmento", "floresta", 26, 8, stands_on("floresta", 3, 22, 26)),
+    ("Ruínas: arco", "ruinas", 14, 17, stands_on("ruinas", 12, 8, 12)),
+    ("Ruínas: plataforma alta", "ruinas", 11, 12, stands_on("ruinas", 8, 16, 23)),
+    ("Templo: pilar A", "templo", 8, 18, stands_on("templo", 15, 12, 13)),
+    ("Templo: pedras soltas", "templo", 13, 15, stands_on("templo", 14, 17, 20)),
+    ("Templo: pilar B ao C", "templo", 35, 14, stands_on("templo", 15, 40, 41)),
+    ("Templo: saída", "templo", 41, 15, stands_on("templo", 18, 47, 58)),
+    ("Templo: galeria", "templo", 35, 14, stands_on("templo", 9, 30, 45)),
+    ("Templo: câmara selada", "templo", 31, 9, stands_on("templo", 8, 18, 25)),
+    ("Altar: plataforma", "altar", 3, 19, stands_on("altar", 16, 6, 13)),
+    ("Altar: altar", "altar", 17, 19, stands_on("altar", 16, 20, 23)),
+    ("Altar: plataforma alta", "altar", 22, 16, stands_on("altar", 11, 18, 25)),
 ]
 
 GATES = [
     ("sem pulo duplo não chega ao cordame", ("dash",), "conves", 26, 9, stands_on("conves", 4, 28, 36)),
+    ("sem pulo duplo não chega ao cesto da mezena", ("dash",), "conves", 60, 8, stands_on("conves", 3, 51, 55)),
     ("sem pulo duplo não sobe o penhasco da praia", ("dash",), "praia", 33, 18, stands_on("praia", 12, 36, 58)),
-    ("sem pulo duplo não pega a carta das vergas", ("dash",), "cordame2", 25, 14, stands_on("cordame2", 8, 29, 32)),
+    ("sem pulo duplo não sobe o coqueiro", ("dash",), "praia", 24, 18, stands_on("praia", 13, 25, 29)),
 ]
 
 
@@ -212,22 +265,23 @@ def test_gates():
 
 def test_crumble():
     s = game(name="tabua.json")
-    s.goto("porao1", 43, 20)
+    s.goto("porao1", 12, 27)
     room = s.play.room
-    s.p.place(46 * T + 16, 20 * T)
+    s.p.place(16 * T + 16, 27 * T)
     s.step()
     s.run(0.2)
     check("tábua começa a ceder quando pisada", bool(s.play.crumble_timers) or bool(room.crumbled))
     s.run(0.5)
-    check("tábua desaba depois de um instante", any(k[1] == 20 for k in room.crumbled))
-    s.goto("porao1", 40, 20)
+    check("tábua desaba depois de um instante", any(k[1] == 27 for k in room.crumbled))
+    s.goto("porao1", 8, 27)
     s.run(3.5)
     check("tábua volta depois", not room.crumbled)
-    s2 = game(name="tabua2.json")
-    s2.goto("porao1", 42, 20)
-    s2.play.enemies = []
-    ok = s2.wait_until(lambda: s2.p.left >= 51 * T, 2.0, held={"right"})
-    check("correndo dá para atravessar as tábuas antes de caírem", ok and s2.p.hp == s2.p.max_hp)
+    for start, held, done in ((27, "left", lambda p: p.right <= 14 * T), (12, "right", lambda p: p.left >= 26 * T)):
+        s2 = game(name="tabua2.json")
+        s2.goto("porao1", start, 27)
+        s2.play.enemies = []
+        ok = s2.wait_until(lambda: done(s2.p), 2.5, held={held})
+        check(f"correndo dá para atravessar as tábuas da sentina ({held})", ok and s2.p.hp == s2.p.max_hp)
 
 
 def test_movers():
@@ -250,7 +304,7 @@ def test_movers():
 
 def test_bosses():
     random.seed(5)
-    specs = [("toca", RatKing, ["charge", "flood", "summon"], "Flood"),
+    specs = [("toca", RatKing, ["charge", "leap", "summon"], "Rat"),
              ("gavea", RedKnight, ["slash", "leap"], "Gust"),
              ("ruinas", PirateSister, ["pistol", "lunge", "cannon"], "CannonShot"),
              ("altar", Sorcerer, ["skulls", "lightning", "tele_out", "illusion"], "Illusion")]
@@ -258,7 +312,8 @@ def test_bosses():
         s = game(("dash", "double_jump"), name=f"chefe_{room}.json")
         r = s.play.world.rooms[room]
         floor = {"toca": 15, "gavea": 17, "ruinas": 17, "altar": 19}[room]
-        s.goto(room, 6, floor, enemies=True)
+        start = {"gavea": 14}.get(room, 6)            # na gávea, começa depois do barril
+        s.goto(room, start, floor, enemies=True)
         boss = s.play.boss
         check(f"{cls.name}: chefe da sala certa", isinstance(boss, cls))
         s.p.invuln = 99
@@ -282,12 +337,14 @@ def test_bosses():
         if isinstance(boss, RedKnight):
             boss.powered = True
         for _ in range(6):
+            s.play.hazards.clear()                     # vento/canhonaço não atrapalham o golpe final
             boss.state = "idle"
             boss.timer = 5
             boss.vx = boss.vy = 0
-            fx = boss.cx - 34
+            side = 1 if boss.cx < r.width / 2 else -1      # ataca pelo lado com espaço
+            fx = boss.cx + side * 34
             s.p.place(fx, s.play._floor_below(fx, boss.top))
-            s.p.facing = 1
+            s.p.facing = -side
             aim = {"up"} if not boss.gravity else set()
             if not boss.gravity:
                 # o feiticeiro flutua: desce para alcance de um golpe para cima
@@ -310,7 +367,8 @@ def test_bosses():
         else:
             if info["reward"]:
                 kind, arg = info["reward"]
-                has = any(i.kind == kind and i.arg == arg for i in s.play.items) or arg in s.pr.abilities
+                has = (any(i.kind == kind and i.arg == arg for i in s.play.items) or arg in s.pr.abilities
+                       or f"{room}:boss" in s.pr.collected)          # já pegou: o jogador estava em cima
                 check(f"{cls.name}: recompensa aparece na arena", has)
             if info.get("flag"):
                 check(f"{cls.name}: libera {info['flag']}", info["flag"] in s.pr.flags)
@@ -318,15 +376,32 @@ def test_bosses():
 
 def test_items_and_letters():
     s = game(("dash", "double_jump"), name="itens.json")
-    s.goto("porao2", 52, 10)
-    got = s.wait_until(lambda: "carta1" in s.pr.letters, 1.5, held={"right"})
+    s.goto("porao2", 9, 8)
+    got = s.wait_until(lambda: "carta1" in s.pr.letters, 1.5, held={"left"})
     check("pegar a carta registra o texto", got)
-    s.goto("praia", 24, 18)
+    s.goto("praia", 25, 13)
     s.p.hp = 2
     s.wait_until(lambda: "praia:0" in s.pr.collected, 1.0, held={"right"})
     check("comida recupera 2 corações", s.p.hp == 4)
     saved = Progress.load(s.save_path)
     check("cartas ficam salvas", saved is not None and "carta1" in saved.letters)
+
+
+def test_secrets():
+    s = game(("dash", "double_jump"), name="segredos.json")
+    rooms = [r for r in s.play.world.rooms.values() if not r.id.startswith("L")]
+    cracked = sorted(r.id for r in rooms if r.tiles_of({"X"}))
+    check("paredes rachadas escondem segredos em várias salas", len(cracked) >= 5, ", ".join(cracked))
+    frags = sum(1 for r in rooms for it in r.items if it[0] == "fragment")
+    frags += sum(1 for b in chapter1.BOSSES.values() if b["reward"] and b["reward"][0] == "fragment")
+    check("fragmentos espalhados fecham um coração inteiro", frags == Progression.FRAGMENTS_PER_HP, str(frags))
+    s.goto("porao2", 13, 8)
+    s.p.facing = -1
+    s.step(set(), {"attack_quick"})
+    s.run(0.4)
+    check("golpe abre a madeira rachada do nicho da carta 1", bool(s.play.room.broken))
+    ok = s.wait_until(lambda: "carta1" in s.pr.letters, 2.0, held={"left"})
+    check("atrás da madeira rachada está a carta 1", ok)
 
 
 def test_endings():
@@ -376,5 +451,5 @@ def test_render_all():
     check("todas as salas desenham com a protagonista", True)
 
 
-TESTS = [test_start_abilities, test_water_returns_to_checkpoint, test_structure, test_doors, test_crumble, test_movers, test_items_and_letters, test_dialogs_and_npcs,
+TESTS = [test_start_abilities, test_water_returns_to_checkpoint, test_structure, test_doors, test_crumble, test_movers, test_items_and_letters, test_secrets, test_dialogs_and_npcs,
          test_endings, test_bosses, test_render_all, test_gates, test_reach_none, test_reach_dash, test_reach_double]

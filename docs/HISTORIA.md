@@ -52,8 +52,8 @@ inteira e liberam o final verdadeiro.
   o porão. Bram (loja) e Ulfgar (ferreiro) ficam aqui.
 - **Porão e Porão Alagado:** tábuas podres, plataformas sobre a água. **Página 1:** gente de Aurel some toda lua
   cheia, sempre rumo a Velmora.
-- **Chefe 1 — Tico, Rei dos Ratos:** chama a água do porão, que **sobe e inunda a toca** (suba nas plataformas),
-  investe contra as paredes e invoca ratos. Recompensa: **Levitação (pulo duplo)**.
+- **Chefe 1 — Tico, Rei dos Ratos:** investe contra as paredes (e fica tonto), salta soltando espinhos e
+  invoca ratos. Recompensa: **Levitação (pulo duplo)**.
 
 ### Ato 2 — O mastro
 - **Cordame e Vergas:** subida na tempestade. **Página 2:** os sumidos estão vivos no Templo da Maré.

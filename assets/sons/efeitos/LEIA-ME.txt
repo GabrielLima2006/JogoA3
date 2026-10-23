@@ -1,8 +1,10 @@
-Coloque aqui os efeitos sonoros (.wav, .ogg ou .mp3) com estes nomes:
+Efeitos sonoros (.wav, .ogg ou .mp3), carregados por nome em src/audio.py (SFX_NAMES):
 
 jump, double_jump, land, dash, attack_quick, attack_heavy, heavy_charge,
 hit, heavy_hit, hurt, death, enemy_death, shoot, impact, checkpoint,
-ui_move, ui_select
+ui_move, ui_select, heal, block, coin, item, buy, boss, step, skid
 
-Exemplo: assets/audio/jump.wav
+Também nesta pasta, ainda sem uso no código (entram ao pôr o nome em SFX_NAMES):
+break_wood (caixote quebrando), explosion, ability (habilidade nova), door (porta/parede quebrando)
+
 Arquivos ausentes são ignorados; o jogo roda normalmente sem som.

@@ -25,11 +25,50 @@ SKY = {
 
 _static = {}
 
+# céus em camadas (Craftpix, "New free backgrounds"): nome do arquivo, escurecimento (noite)
+SKY_PACKS = {
+    "noite": 0.72, "tempestade": 0.8, "roxo": 0.6, "cinza": 0.62,
+}
+SKY_OF_ROOM = {"cordame1": "tempestade", "cordame2": "tempestade", "gavea": "tempestade", "ruinas": "cinza"}
+SKY_OF_THEME = {"deck": "noite", "island": "roxo", "ruins": "cinza"}
+SKY_PARALLAX = (0.0, 0.015, 0.035, 0.06)
+
+
+def _sky_layers(name):
+    """As 4 camadas do céu em 2x (pixel art sem borrar), escurecidas para a noite.
+    No céu de tempestade, o raio desenhado na última camada vira uma camada à parte
+    (só aparece quando o relâmpago pisca)."""
+    key = ("sky", name)
+    if key not in _static:
+        k = SKY_PACKS[name]
+        layers, bolt = [], None
+        for i in range(1, 5):
+            img = sprites.image("fundos", f"ceu_{name}_{i}.png")
+            if img is None:
+                layers = []
+                break
+            img = pygame.transform.scale(img, (img.get_width() * 2, img.get_height() * 2))
+            if name == "tempestade" and i == 4:
+                bolt = pygame.Surface(img.get_size(), pygame.SRCALPHA)
+                w, h = img.get_size()
+                for y in range(h):
+                    for x in range(w):
+                        c = img.get_at((x, y))
+                        if c.a and c.r + c.g + c.b > 520:
+                            bolt.set_at((x, y), c)
+                            img.set_at((x, y), (0, 0, 0, 0))
+            if k != 1.0:
+                v = int(255 * k)
+                img.fill((v, v, v, 255), special_flags=pygame.BLEND_RGBA_MULT)
+            layers.append(img)
+        _static[key] = (layers, bolt)
+    return _static[key]
+
 # figurantes (sala -> [(modelo, coluna, linha do chão, alcance em px)])
 WALKERS = {
-    "conves": [("gato", 52, 18, 140), ("bardo", 40, 18, 40), ("aldea", 60, 18, 90)],
-    "cabine": [("estudioso", 22, 14, 50)],
-    "praia": [("fazendeiro", 8, 18, 120), ("menino", 28, 18, 90), ("aldea", 50, 12, 70)],
+    "conves": [("bardo", 40, 18, 40), ("aldea", 60, 18, 90)],
+    "cabine": [("bardo", 22, 14, 50)],
+    "praia": [("fazendeiro", 8, 18, 120), ("velho", 28, 18, 90), ("aldea", 50, 12, 70)],
     "floresta": [("anciã", 14, 37, 60), ("curandeira", 6, 37, 40)],
     "ruinas": [("velho", 4, 17, 0)],
 }
@@ -90,6 +129,19 @@ def _prop(kind):
             img = img.copy()
             img.fill((150, 140, 140, 255), special_flags=pygame.BLEND_RGBA_MULT)
         _static[key] = img
+    return _static[key]
+
+
+def _splash_frames():
+    """Respingo (Super Pixel Effects, "burst splatter" verde) pintado de água e reduzido."""
+    key = ("splash",)
+    if key not in _static:
+        out = []
+        for fr in sprites.effect("respingo"):
+            f = pygame.transform.scale(fr, (fr.get_width() // 2, fr.get_height() // 2))
+            f.fill((120, 170, 255, 210), special_flags=pygame.BLEND_RGBA_MULT)
+            out.append(f)
+        _static[key] = out
     return _static[key]
 
 
@@ -202,7 +254,7 @@ class Background:
     def update(self, dt, cam=None):
         self.time += dt
         self._update_motes(dt, cam)
-        if self.theme == "deck":
+        if self.theme == "deck" or SKY_OF_ROOM.get(self.room.id) == "tempestade":
             self.next_flash -= dt
             self.flash = max(0.0, self.flash - dt)
             if self.next_flash <= 0:
@@ -212,7 +264,12 @@ class Background:
     # --- desenho ---
     def draw(self, surf, cam_x, cam_y, time):
         th = self.theme
-        if th in SKY:
+        sky = SKY_OF_ROOM.get(self.room.id, SKY_OF_THEME.get(th))
+        layers, bolt = _sky_layers(sky) if sky else ([], None)
+        if th in SKY and layers:
+            self._draw_sky(surf, layers, bolt, cam_x, cam_y, time)
+            self._layers(surf, cam_x, cam_y, time, packed_sky=True)
+        elif th in SKY:
             top, bottom = SKY[th]
             surf.blit(_gradient(top, bottom), (0, 0))
             for x, y, b in self.stars:
@@ -242,8 +299,23 @@ class Background:
                     surf.blit(wall, (x * ww + ox - ww, y * wh + oy - wh))
         self._draw_decor(surf, cam_x, cam_y, time)
 
-    def _layers(self, surf, cam_x, cam_y, time):
-        """Paisagem em camadas (parallax) para o convés, a ilha e as ruínas."""
+    def _draw_sky(self, surf, layers, bolt, cam_x, cam_y, time):
+        """Céu do pacote: camadas com parallax lento e nuvens andando com o vento."""
+        lh = layers[0].get_height()
+        y = -min(lh - H, max(0, cam_y * 0.03))
+        for i, img in enumerate(layers):
+            lw = img.get_width()
+            x0 = -((cam_x * SKY_PARALLAX[i] + time * (2 + 3 * i) * (i > 0)) % lw)
+            for x in (x0, x0 + lw):
+                if x < W:
+                    surf.blit(img, (x, y))
+        if bolt is not None and self.flash > 0:
+            x0 = -((cam_x * SKY_PARALLAX[3]) % bolt.get_width())
+            surf.blit(bolt, (x0, y))
+
+    def _layers(self, surf, cam_x, cam_y, time, packed_sky=False):
+        """Paisagem em camadas (parallax) para o convés, a ilha e as ruínas.
+        packed_sky: o céu do pacote já foi desenhado (sem as nuvens desenhadas por código)."""
         th = self.theme
         drift = time * 6
 
@@ -253,14 +325,16 @@ class Background:
                 if x < W:
                     surf.blit(img, (x, y))
 
-        band(pz.clouds(5, (44, 52, 86, 140)), 0.04, 30 - cam_y * 0.02, 4)
+        if not packed_sky:
+            band(pz.clouds(5, (44, 52, 86, 140)), 0.04, 30 - cam_y * 0.02, 4)
         band(pz.mountains(11, (36, 44, 74), 260, 1.1, snow=(150, 160, 200)), 0.08, H - 330 - cam_y * 0.04)
         if th != "deck":
             c = pz.castle(4, (30, 34, 60), (250, 200, 110))
             cx = W * 0.62 - (cam_x * 0.1) % (W * 1.6)
             surf.blit(c, (cx, H - 380 - cam_y * 0.05))
         band(pz.mist((70, 80, 120), 60), 0.12, H - 260 - cam_y * 0.06, 10)
-        band(pz.clouds(9, (60, 68, 104, 120), 5, height=160), 0.1, 90 - cam_y * 0.03, 9)
+        if not packed_sky:
+            band(pz.clouds(9, (60, 68, 104, 120), 5, height=160), 0.1, 90 - cam_y * 0.03, 9)
         if th == "deck":
             self._draw_sea(surf, cam_x, cam_y, time)
             return
@@ -415,8 +489,17 @@ class Background:
         if not kinds or cam is None:
             return
         cx, cy = cam
-        while len(self.motes) < 46:
-            kind = self.rng.choice(kinds)
+        quota = 46 // len(kinds)                 # cada tipo tem sua cota (gotas caem rápido e somem)
+        count = {k: 0 for k in kinds}
+        for m in self.motes:
+            if m[0] in count:
+                count[m[0]] += 1
+        while True:
+            missing = [k for k in kinds if count[k] < quota]
+            if not missing:
+                break
+            kind = self.rng.choice(missing)
+            count[kind] += 1
             x = cx + self.rng.uniform(-40, W + 40)
             y = cy + (self.rng.uniform(-20, 0) if kind in ("leaf", "drip") else self.rng.uniform(0, H))
             if kind == "ember":
@@ -441,6 +524,12 @@ class Background:
                 m[2] -= 40 * dt
             elif kind == "drip":
                 m[2] += 260 * dt
+                tile = self.room.tile(int(m[1] // T), int(m[2] // T))
+                above = self.room.tile(int(m[1] // T), int((m[2] - 260 * dt) // T))
+                if tile in ("#", "~", "X") and above == ".":   # caiu do ar na água ou no chão: respinga
+                    m[0], m[2], m[3], m[4] = "splash", (int(m[2] // T)) * T + (6 if tile == "~" else 0), 0.0, 0.5
+            elif kind == "splash":
+                pass
             inside = cx - 80 < m[1] < cx + W + 80 and cy - 80 < m[2] < cy + H + 80
             if m[4] > 0 and inside:
                 alive.append(m)
@@ -470,6 +559,11 @@ class Background:
                 surf.set_at((sx, sy), (255, 200, 120))
             elif kind == "drip":
                 pygame.draw.line(surf, (110, 150, 200), (sx, sy), (sx, sy + 4), 1)
+            elif kind == "splash":
+                frames = _splash_frames()
+                if frames:
+                    fr = frames[min(len(frames) - 1, int(t * 16))]
+                    surf.blit(fr, fr.get_rect(midbottom=(sx, sy + 2)))
 
     def _draw_walker(self, surf, x, y, item, cam_x, cam_y, time):
         """Figurante que anda devagar de um lado para o outro (só cenário)."""

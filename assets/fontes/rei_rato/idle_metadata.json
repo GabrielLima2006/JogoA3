@@ -1,0 +1,36 @@
+{
+  "group_id": "4284ad4a-44d2-4a11-a2e5-ae7724fd6fa4",
+  "states": [
+    {
+      "character": {
+        "id": "ef1888d6-775c-41a3-8d0c-693294b46e44",
+        "name": "Idle",
+        "prompt": "Rei dos Ratos: garoto magrinho de bon\u00e9 azul montado num rato gigante cinza de olhos vermelhos, com coroa de lata torta. Poses: investida, salto, chamando ratos.",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-23T11:50:29.304292+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-23T11:59:12.918633"
+}

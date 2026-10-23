@@ -1,0 +1,36 @@
+{
+  "group_id": "4284ad4a-44d2-4a11-a2e5-ae7724fd6fa4",
+  "states": [
+    {
+      "character": {
+        "id": "07268329-a644-4b42-b45f-6c1bf4a0b362",
+        "name": "Attack",
+        "prompt": "Rei dos Ratos: garoto magrinho de bon\u00e9 azul montado num rato gigante cinza de olhos vermelhos, com coroa de lata torta. Poses: investida, salto, chamando ratos.",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-23T11:58:11.547989+00:00"
+      },
+      "folder": "Attack",
+      "frames": {
+        "rotations": {
+          "south": "Attack/rotations/south.png",
+          "south-east": "Attack/rotations/south-east.png",
+          "east": "Attack/rotations/east.png",
+          "north-east": "Attack/rotations/north-east.png",
+          "north": "Attack/rotations/north.png",
+          "north-west": "Attack/rotations/north-west.png",
+          "west": "Attack/rotations/west.png",
+          "south-west": "Attack/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-23T12:00:10.918681"
+}

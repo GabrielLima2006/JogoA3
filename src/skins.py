@@ -1,7 +1,8 @@
 """Visual do protagonista: escolhe a animação certa para o estado do jogador.
 
 "Ele": espadachim (heroi.png, quadros 80x80, 16 por linha).
-"Ela": feiticeira (feiticeira_parada.png e feiticeira_andando.png).
+"Ela": feiticeira de chifres nova (heroina.png, de tools/gerar_heroina.py). A feiticeira antiga
+(feiticeira_parada/andando + ações de tools/gerar_feiticeira.py) fica como "feiticeira_antiga".
 """
 
 import math
@@ -65,21 +66,21 @@ class HeroSkin(Skin):
 
 class SorceressSkin(Skin):
     """Feiticeira: parada/andando/partida do pacote + ações de tools/gerar_feiticeira.py
-    (feiticeira_acoes.png, quadros 80x64). Os modelos importados de feiticeira_modelos.png
+    (feiticeira_acoes.png, quadros 96x72). Os modelos importados de feiticeira_modelos.png
     ficaram de fora a pedido do Gabriel."""
     anchor = (21, 54)
     faces_right = False
     procedural_attacks = False
     motion_lean = True
     drawn_slashes = ()
-    ACTION_ANCHOR_X = 40
+    ACTION_ANCHOR_X = 48
     ACTIONS = {"quick": (0, 4), "heavy": (1, 5), "up": (2, 3), "down": (3, 2), "jump": (4, 2),
                "fall": (5, 2), "dash": (6, 2), "hurt": (7, 1), "death": (8, 5), "land": (9, 1), "diag": (10, 4)}
 
     def anims(self):
         idle = sprites.grid("personagens/feiticeira_parada.png", 46, 55)
         walk = sprites.grid("personagens/feiticeira_andando.png", 45, 58)
-        acts = sprites.grid("personagens/feiticeira_acoes.png", 80, 64)
+        acts = sprites.grid("personagens/feiticeira_acoes.png", 96, 72)
         anims = {
             "idle": Anim(idle, 10),
             "run_start": Anim(sprites.grid("personagens/feiticeira_partida.png", 45, 58), 24, loop=False),
@@ -96,7 +97,31 @@ class SorceressSkin(Skin):
         return self.ACTION_ANCHOR_X if name in self.ACTIONS else self.anchor[0]
 
 
-SKINS = {"ele": HeroSkin(), "ela": SorceressSkin()}
+class HeroineSkin(Skin):
+    """Protagonista nova (modelo 32x32 do PixelLab feito pelo Gabriel, vista "west" em 2x).
+    Todos os quadros vêm de tools/gerar_heroina.py (heroina.png, 96x80, pé em x = 48)."""
+    anchor = (48, 79)
+    faces_right = False
+    procedural_attacks = False
+    motion_lean = False          # os quadros já inclinam; girar pixel art 2x deixaria serrilhado
+    drawn_slashes = ("quick", "heavy")
+    ROWS = ["idle", "run_start", "run", "jump", "fall", "land", "quick", "heavy", "up", "diag", "down",
+            "dash", "hurt", "death", "heal"]
+    FPS = {"idle": 6, "run_start": 20, "run": 14, "jump": 8, "fall": 8, "dash": 20, "death": 7, "down": 10,
+           "heal": 4}
+    LOOP = ("idle", "run", "jump", "fall", "dash", "down", "heal")
+
+    def anims(self):
+        f = sprites.grid("personagens/heroina.png", 96, 80)
+        cols = 8
+        anims = {}
+        for r, name in enumerate(self.ROWS):
+            frames = [fr for fr in f[r * cols:(r + 1) * cols] if fr.get_bounding_rect().w]
+            anims[name] = Anim(frames, self.FPS.get(name, 1), loop=name in self.LOOP)
+        return anims
+
+
+SKINS = {"ele": HeroSkin(), "ela": HeroineSkin(), "feiticeira_antiga": SorceressSkin()}
 
 
 def state_of(player):

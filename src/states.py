@@ -683,11 +683,9 @@ class PlayState(State):
             for tx in range(room.cols):
                 ch = room.tile(tx, ty)
                 x, y = tx * T, ty * T
-                var = (tx * 7 + ty * 13) % 4
                 if ch == "#":
                     open_above = room.tile(tx, ty - 1) not in ("#", None, "X")
-                    group = ts["top"] if open_above else ts["fill"]
-                    surf.blit(group[var % len(group)], (x, y))
+                    surf.blit(tiles_mod.solid_tile(ts, room, tx, ty), (x, y))
                     # sombra nas bordas laterais e de baixo expostas (dá volume)
                     if room.tile(tx - 1, ty) not in ("#", None, "X"):
                         pygame.draw.rect(surf, (0, 0, 0, 70), (x, y, 3, T))
@@ -1031,24 +1029,47 @@ class ListState(Overlay):
                     Colors.UI_DIM, "center")
 
 
-class BenchState(ListState):
-    title = "Banco — amuletos"
+class BenchState(Overlay):
+    """Bola de cristal: salva, cura e abre a tela de amuletos (grade com ícones)."""
 
-    def entries(self):
-        pr = self.play.progress
-        out = []
-        for cid in pr.charms_owned:
-            c = CHARMS[cid]
-            eq = cid in pr.charms_equipped
-            mark = "[x] " if eq else "[  ] "
-            out.append((mark + c["name"], f"custo {c['cost']}", c["desc"], eq or pr.can_equip(cid),
-                        lambda cid=cid: self._toggle(cid)))
-        out.append(("Levantar", f"espaços {pr.notches_used}/{pr.notches}",
-                    "Vida restaurada e jogo salvo. Equipe amuletos aqui.", True, self.on_close))
-        return out
+    def __init__(self, app, play):
+        super().__init__(app, play)
+        from .amuletos import CharmScreen
+        self.screen = CharmScreen(play.progress)
+        self.notice = ""
+        self.notice_t = 0.0
+        self.t = 0.0
+
+    def frame(self, dt, inp):
+        self.t += dt
+        self.notice_t = max(0.0, self.notice_t - dt)
+        if inp.was_pressed("pause"):
+            inp.consume()
+            self.on_close()
+            return
+        moves = {"left": (-1, 0), "right": (1, 0), "menu_up": (0, -1), "menu_down": (0, 1)}
+        for action, (dx, dy) in moves.items():
+            if inp.was_pressed(action):
+                self.screen.move(dx, dy)
+                self.app.audio.play("ui_move")
+        for i, r in enumerate(self.screen.rects):
+            if r.collidepoint(inp.mouse_pos):
+                self.screen.index = i
+        clicked = inp.mouse_clicked
+        if clicked and self.screen.close_rect.collidepoint(inp.mouse_pos):
+            inp.consume()
+            self.on_close()
+            return
+        on_cell = any(r.collidepoint(inp.mouse_pos) for r in self.screen.rects)
+        if inp.was_pressed("menu_confirm") or (clicked and on_cell):
+            self._toggle(self.screen.selected())
+        inp.consume()
 
     def _toggle(self, cid):
         pr = self.play.progress
+        if cid not in pr.charms_owned:
+            self.say("Você ainda não encontrou este amuleto.")
+            return
         if pr.toggle_charm(cid):
             self.play.player.recompute_stats()
             self.play.player.hp = self.play.player.max_hp
@@ -1057,9 +1078,18 @@ class BenchState(ListState):
         else:
             self.say("Espaços de amuleto insuficientes.")
 
+    def say(self, msg):
+        self.notice = msg
+        self.notice_t = 2.0
+
     def on_close(self):
         self.play.save()
         self.close()
+
+    def draw(self, surf):
+        self.play.draw(surf)
+        ui.dim(surf, 200)
+        self.screen.draw(surf, self.t, self.notice if self.notice_t > 0 else "")
 
 
 class ShopState(ListState):

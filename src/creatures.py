@@ -50,9 +50,43 @@ def npc_frame(name):
     return frames[row[0]], tuple(_NPC_META["anchor"])
 
 
+# Modelos de npcs.png trocados por personagens de pacotes da internet (pedido do Gabriel, até
+# chegarem as artes originais): humanos viram papéis do elenco; múmia e cavaleiro negro, esqueletos.
+AS_CAST = {"comerciante": "mercador", "ferreiro": "ferreiro", "ladino": "capanga", "cavaleiro_escudo": "escudeiro",
+           "aldea": "aldea", "curandeira": "curandeira", "fazendeiro": "pescador", "bardo": "marinheiro",
+           "estudioso": "amigo", "velho": "pescador", "anciã": "aldea", "menino": "grumete"}
+AS_SKELETON = {"mumia": "amarelo", "cavaleiro_negro": "branco"}
+SKELETON_ANCHOR = (46, 63)          # pé no quadro 96x64 (o esqueleto olha para a direita)
+
+
+def _skeleton_frame(color, t, moving, lean):
+    """Quadro do esqueleto (Skeletons Free Pack): parado, andando ou atacando."""
+    kind = "ataque" if lean else ("andando" if moving else "parado")
+    frames = sprites.grid(f"inimigos/esqueleto_{color}_{kind}.png", 96, 64)
+    if not frames:
+        return None
+    return frames[int(t * (14 if lean else 10)) % len(frames)]
+
+
 def draw_model(surf, name, x, foot_y, t, facing, moving=False, white=False, lean=0.0, float_amp=0.0, scale=1.0,
                alpha=255):
     """Desenha um modelo parado com vida: respira, balança ao andar, inclina ao atacar, flutua."""
+    if name in AS_CAST:
+        from . import elenco
+        pose = "attack" if lean else ("walk" if moving else "idle")
+        img = elenco.character(AS_CAST[name], pose, (t * (1.6 if moving else 0.5)) % 1.0, facing)
+        v = sprites.variant(img, False, white, scale)
+        if alpha < 255:
+            v = v.copy()
+            v.set_alpha(alpha)
+        lift = math.sin(t * 2.5) * float_amp
+        surf.blit(v, v.get_rect(midbottom=(round(x), round(foot_y + 3 * scale + lift))))
+        return
+    if name in AS_SKELETON:
+        fr = _skeleton_frame(AS_SKELETON[name], t, moving, lean)
+        if fr is not None:
+            sprites.blit_anchor(surf, fr, x, foot_y, SKELETON_ANCHOR, flip=facing < 0, white=white, scale=scale)
+            return
     img, (ax, ay) = npc_frame(name)
     if img is None:
         return

@@ -1,0 +1,36 @@
+{
+  "group_id": "a5f3b50b-7aab-48ad-993b-2585dc7bf97a",
+  "states": [
+    {
+      "character": {
+        "id": "64ddf011-46ac-4c6d-8080-6c08dca942f4",
+        "name": "I want sword attack",
+        "prompt": "Make a idle versions state from this character",
+        "size": {
+          "width": 32,
+          "height": 32
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-23T03:05:18.288569+00:00"
+      },
+      "folder": "I_want_sword_attack",
+      "frames": {
+        "rotations": {
+          "south": "I_want_sword_attack/rotations/south.png",
+          "south-east": "I_want_sword_attack/rotations/south-east.png",
+          "east": "I_want_sword_attack/rotations/east.png",
+          "north-east": "I_want_sword_attack/rotations/north-east.png",
+          "north": "I_want_sword_attack/rotations/north.png",
+          "north-west": "I_want_sword_attack/rotations/north-west.png",
+          "west": "I_want_sword_attack/rotations/west.png",
+          "south-west": "I_want_sword_attack/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-23T11:46:40.251480"
+}

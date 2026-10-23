@@ -81,6 +81,18 @@ NPCS = {
     "gato": ((1360, 900, 70, 64), None),
 }
 
+# escala extra por modelo, para ficar na proporção da feiticeira (~55 px parada):
+# adultos humanos ~56-60 px (armas e cajados passam disso), crianças e bichos pequenos menores,
+# monstros grandes (ogro, minotauro) continuam maiores que ela
+NPC_SCALE = {
+    "aldea": 0.92, "fazendeiro": 0.9, "anciã": 0.95, "menino": 0.84, "comerciante": 0.84, "ferreiro": 0.86,
+    "curandeira": 0.85, "guarda": 0.87, "anciao": 0.9, "cavaleiro_escudo": 0.88, "lanceiro": 0.84,
+    "guerreiro": 0.85, "arqueira": 0.88, "espadachim": 0.88, "porta_estandarte": 0.82, "ladino": 0.9,
+    "cavaleiro_negro": 0.86, "espirito": 0.8, "goblin": 0.76, "lobo": 0.74, "lich": 0.84, "mumia": 0.9,
+    "bardo": 0.9, "mago_azul": 0.85, "estudioso": 0.86, "alquimista": 0.86, "vidente": 0.9, "funileiro": 0.82,
+    "velho": 0.88,
+}
+
 
 def is_bg(c):
     r, g, b = c[0], c[1], c[2]
@@ -204,6 +216,26 @@ def looks_right(img):
     return sum(skin) / len(skin) > sum(hair) / len(hair)
 
 
+def drop_lone_pixels(surf, min_size=10):
+    """Apaga pixels opacos sem vizinho e pedacinhos soltos (menos de `min_size` px) que sobram da redução."""
+    m = pygame.mask.from_surface(surf, 1)
+    w, h = surf.get_size()
+    out = surf.copy()
+    for comp in m.connected_components(4):
+        if comp.count() < min_size:
+            for y in range(h):
+                for x in range(w):
+                    if comp.get_at((x, y)):
+                        out.set_at((x, y), (0, 0, 0, 0))
+    for y in range(h):
+        for x in range(w):
+            if m.get_at((x, y)) and not any(
+                    m.get_at((x + dx, y + dy)) for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+                    if (dx or dy) and 0 <= x + dx < w and 0 <= y + dy < h):
+                out.set_at((x, y), (0, 0, 0, 0))
+    return out
+
+
 def body_center(surf):
     """x do centro do corpo: média das colunas com pixels nas linhas de baixo (pés e pernas)."""
     w, h = surf.get_size()
@@ -258,9 +290,9 @@ def main():
         img = cut(npc_src, rect)
         if hair:
             img = fix_borrowed_look(img, hair)
-        img = shrink(img, SCALE)
+        img = shrink(img, SCALE * NPC_SCALE.get(name, 1.0))
         # cada NPC mantém as próprias cores; só tira meio-tons de borda
-        img = snap(img, palette_quant(img))
+        img = drop_lone_pixels(snap(img, palette_quant(img)))
         npcs[name] = [pygame.transform.flip(img, True, False)]
     pack(npcs, os.path.join(PERS, "npcs.png"), 128, 96)
     print("ok:", {k: len(v) for k, v in hero.items()}, len(npcs), "NPCs")

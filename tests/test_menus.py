@@ -133,4 +133,26 @@ def test_other_screens():
     check("Sair encerra o jogo", app.running is False)
 
 
-TESTS = [test_main_menu, test_new_game_flow, test_intro_skip, test_continue, test_other_screens]
+def test_mouse_and_tabs():
+    app = _app("mouse.json")
+    st = app.state
+    st.draw(app.screen)
+    hit = st.menu.rects[2]
+    app.input.mouse_pos = (0, 0)
+    _press(app)
+    app.input.mouse_pos = hit.center
+    _press(app)
+    check("mouse em cima seleciona a opção", st.menu.options[st.menu.index][1] == "howto")
+    _press(app, "menu_down")
+    check("mouse parado não desfaz a escolha do teclado", st.menu.options[st.menu.index][1] == "records")
+    st.menu.index = 2
+    _press(app, "menu_confirm")
+    howto = app.state
+    app.input.mouse_pos = howto.tabs[2].center
+    app.input.mouse_clicked = True
+    _press(app)
+    check("clique na aba vai direto para a página", howto.page == 2)
+
+
+TESTS = [test_main_menu, test_new_game_flow, test_intro_skip, test_continue, test_other_screens,
+         test_mouse_and_tabs]

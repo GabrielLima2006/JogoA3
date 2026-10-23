@@ -6,7 +6,7 @@ tira a espada escura original, gira o tronco na cintura, faz o cabelo arrastar a
 e desenha braço e lâmina pixel a pixel em cada pose.
 
 Uso:  python tools/gerar_feiticeira.py
-Saída: assets/img/personagens/feiticeira_acoes.png (quadros de 80x64, pé em (40, 63))
+Saída: assets/img/personagens/feiticeira_acoes.png (quadros de 96x72, pé em (48, 71))
 """
 
 import math
@@ -20,8 +20,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "assets", "img", "personagens", "feiticeira_andando.png")
 OUT = os.path.join(ROOT, "assets", "img", "personagens", "feiticeira_acoes.png")
 
-FW, FH = 80, 64           # quadro de saída
-FOOT = (40, 63)           # onde fica o pé (âncora: última linha do quadro)
+FW, FH = 96, 72           # quadro de saída (folga para a lâmina erguida e para o corpo caído)
+FOOT = (48, 71)           # onde fica o pé (âncora: última linha do quadro)
 SRC_W, SRC_H = 45, 58     # quadro do sprite original
 SRC_FOOT = (21, 57)
 WAIST_Y = 40              # linha da cintura no quadro original
@@ -34,9 +34,13 @@ SKIN = (255, 140, 94)
 SKIN_DK = (224, 94, 43)
 HILT = (77, 47, 30)
 GUARD = (255, 163, 3)
-BLADE = (178, 178, 255)
-BLADE_DK = (158, 160, 250)
-BLADE_HI = (255, 255, 255)
+# a lâmina tem tons quase iguais aos do cabelo, mas não idênticos: assim o elenco.py
+# consegue separar lâmina de cabelo ao trocar as cores dos outros personagens
+BLADE = (176, 180, 255)
+BLADE_DK = (152, 156, 246)
+BLADE_HI = (250, 250, 255)
+HAIR_C = (178, 178, 255)
+HAIR_DK = (158, 160, 250)
 HAIR = {(178, 178, 255), (158, 160, 250), (255, 255, 255), (255, 255, 204)}
 WEAPON = {(47, 24, 80), (81, 55, 63)}
 WEAPON_EDGE = {(166, 75, 10), (67, 21, 0)}
@@ -96,9 +100,9 @@ def trail_hair(src, dx, dy=0, top=36):
         k = (y / top)                       # pontas de baixo arrastam mais
         n = round(dx * (0.4 + 0.6 * k))
         for i in range(1, n + 1):
-            out.set_at((end + i, y), BLADE_DK if i == n else BLADE)
+            out.set_at((end + i, y), HAIR_DK if i == n else HAIR_C)
         if n:
-            out.set_at((end + n + 1, y), (120, 110, 200))
+            out.set_at((end + n + 1, y), (158, 160, 250))
         _ = edge
     if dy:
         moved = pygame.Surface(out.get_size(), pygame.SRCALPHA)
@@ -145,7 +149,7 @@ def draw_arm_and_blade(s, shoulder, angle_deg, blade_len=20, heavy=False, glow=F
     pygame.draw.line(s, BLADE, (gx, gy), (tx, ty), 2)
     pygame.draw.line(s, BLADE_HI, (gx - px * 0.5, gy - py * 0.5), (tx - fx, ty - fy), 1)
     if glow:
-        pygame.draw.circle(s, (230, 230, 255), (round(tx), round(ty)), 2)
+        pygame.draw.circle(s, (232, 232, 255), (round(tx), round(ty)), 2)
     # mão
     pygame.draw.circle(s, SKIN_DK, (round(hx), round(hy) + 1), 2)
     pygame.draw.circle(s, SKIN, (round(hx), round(hy)), 2)

@@ -328,6 +328,26 @@ def test_bench():
     s.pr.toggle_charm("vento")
     s.p.recompute_stats()
     check("Passo de Vento acelera o dash", s.p.dash_speed > 950 and s.p.dash_cooldown_time < 0.45)
+    # tela de amuletos: grade, teclado e equipar com Enter
+    s.pr.toggle_charm("vento")
+    st = BenchState(s.app, s.play)
+    s.app.push(st)
+    from src.amuletos import ORDER
+    st.screen.index = ORDER.index("lamina")
+    s.inp.pressed.add("menu_confirm")
+    st.frame(1 / 60, s.inp)
+    check("Enter na tela de amuletos equipa o selecionado", "lamina" in s.pr.charms_equipped)
+    s.inp.pressed.add("right")
+    st.frame(1 / 60, s.inp)
+    check("setas andam pela grade", st.screen.selected() == ORDER[ORDER.index("lamina") + 1])
+    st.screen.index = ORDER.index("bussola")
+    s.inp.pressed.add("menu_confirm")
+    st.frame(1 / 60, s.inp)
+    check("amuleto não encontrado não equipa", "bussola" not in s.pr.charms_equipped and st.notice_t > 0)
+    st.draw(s.app.screen)
+    s.inp.pressed.add("pause")
+    st.frame(1 / 60, s.inp)
+    check("ESC fecha a tela de amuletos", s.app.state is s.play)
     # morrer volta para o banco
     s.goto("A", 6, 17)
     s.p.hp = 1

@@ -104,32 +104,80 @@ def _crumble(palette):
     return s
 
 
+# recortes do tileset (x, y) de 32x32, escolhidos por tema; veja tools/capturar.py para conferir
+ISLAND_CROPS = {
+    "island": {
+        "top": [(32, 0), (64, 0), (96, 0), (672, 0), (384, 0), (416, 0), (576, 0), (448, 0)],
+        "fill": [(640, 64), (672, 64), (640, 128), (672, 128), (704, 64), (704, 128)],
+        "back": (34, 28, 24),
+    },
+    "ruins": {
+        "top": [(928, 0), (832, 0), (960, 0), (864, 0), (896, 0), (768, 0)],
+        # pedra cinza com algumas pedras de musgo (as mesmas do templo, para ligar as duas áreas)
+        "fill": [(864, 64), (896, 64), (832, 64), (928, 64), (864, 128), (832, 128), (384, 288), (416, 320)],
+        "back": (46, 46, 58),
+    },
+    "temple": {
+        "top": [(32, 256), (64, 256), (96, 256), (128, 256), (256, 256), (288, 256)],
+        "fill": [(224, 320), (256, 320), (288, 320), (256, 288), (288, 288), (224, 288)],
+        "back": (20, 26, 30),
+    },
+}
+
+
+def _backed(crop, back, from_row=0):
+    """Recorte com fundo opaco a partir de `from_row` (fecha furos do tileset sem tirar o ar de cima)."""
+    if crop is None:
+        return None
+    s = pygame.Surface((T, T), pygame.SRCALPHA)
+    s.fill(back, (0, from_row, T, T - from_row))
+    s.blit(crop, (0, 0))
+    return s
+
+
+def _darken(surf, k):
+    d = surf.copy()
+    d.fill((k, k, k, 255), special_flags=pygame.BLEND_RGBA_MULT)
+    return d
+
+
 def _island_tiles(theme):
-    if theme == "island":
-        top = sprites.crop(ISLAND, (384, 0, 32, 32))
-        dirt = sprites.crop(ISLAND, (384, 16, 32, 16))
-        fill = pygame.Surface((T, T), pygame.SRCALPHA)
-        if dirt is not None:
-            fill.blit(dirt, (0, 0))
-            fill.blit(pygame.transform.flip(dirt, True, False), (0, 16))
-        return [top], [fill]
-    if theme == "ruins":
-        return [sprites.crop(ISLAND, (768, 0, 32, 32))], [sprites.crop(ISLAND, (800, 96, 32, 32)),
-                                                          sprites.crop(ISLAND, (864, 160, 32, 32))]
-    # templo
-    return [sprites.crop(ISLAND, (32, 256, 32, 32))], [sprites.crop(ISLAND, (0, 320, 32, 32)),
-                                                       sprites.crop(ISLAND, (224, 288, 32, 32))]
+    spec = ISLAND_CROPS[theme]
+    back = spec["back"]
+    tops = [_backed(sprites.crop(ISLAND, (x, y, T, T)), back, 14) for x, y in spec["top"]]
+    fills = [_backed(sprites.crop(ISLAND, (x, y, T, T)), back) for x, y in spec["fill"]]
+    return tops, fills
+
+
+def pick(group, tx, ty):
+    """Variação do bloco na posição (tx, ty): espalhada por hash, sem listras repetidas."""
+    h = (tx * 73856093 ^ ty * 19349663 ^ 0x5BD1E995) & 0xFFFFFFFF
+    h = (h ^ (h >> 13)) * 0x5BD1E995 & 0xFFFFFFFF
+    return group[(h ^ (h >> 15)) % len(group)]
+
+
+def solid_tile(ts, room, tx, ty):
+    """Bloco sólido certo para a posição: topo (ar em cima), recheio ou fundo (longe da superfície).
+
+    Os blocos a 3 ou mais tiles de qualquer abertura ficam mais escuros, o que dá profundidade
+    às paredes grossas."""
+    def solid(a, b):
+        return room.tile(a, b) in ("#", None, "X")
+    if not solid(tx, ty - 1):
+        return pick(ts["top"], tx, ty)
+    deep = all(solid(tx + dx, ty + dy) for dx in (-2, 0, 2) for dy in (-2, 0, 2))
+    return pick(ts["deep"] if deep else ts["fill"], tx, ty)
 
 
 def tileset(theme):
-    """Dicionário com listas de variações: top, fill, oneway, spike, crumble."""
+    """Dicionário com listas de variações: top, fill, deep, oneway, spike, crumble."""
     if theme in _cache:
         return _cache[theme]
     if theme in WOOD:
         pal = WOOD[theme]
-        tops = [_wood_tile(pal, 100 + i, top=True) for i in range(4)]
+        tops = [_wood_tile(pal, 100 + i, top=True) for i in range(6)]
         fills = [_wood_tile(tuple(_shade(c, -14) for c in pal[:3]) + (pal[3],), 200 + i, vertical=True)
-                 for i in range(4)]
+                 for i in range(6)]
         oneway = _oneway_wood(pal)
         crumble = _crumble(pal)
     else:
@@ -141,7 +189,8 @@ def tileset(theme):
         if plank is not None:
             oneway.blit(plank, (0, 0))
         crumble = _crumble(WOOD["deck"])
-    ts = {"top": tops, "fill": fills, "oneway": oneway, "spike": _spike(theme), "crumble": crumble}
+    deep = [_darken(f, 150) for f in fills]
+    ts = {"top": tops, "fill": fills, "deep": deep, "oneway": oneway, "spike": _spike(theme), "crumble": crumble}
     _cache[theme] = ts
     return ts
 

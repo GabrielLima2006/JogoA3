@@ -216,7 +216,24 @@ def _accessory(s, extra, cx, top, body_top, trim):
 
 
 def corpse():
-    """A capitã caída sobre a mesa."""
+    """A capitã caída: a mesma capitã do elenco, deitada e um pouco apagada.
+    Sem o sprite, usa o desenho antigo feito no código."""
+    def from_model():
+        from . import elenco
+        try:
+            img = elenco.character("capita", "idle", 0.0, -1)
+        except (KeyError, AttributeError):          # sem o papel no elenco: desenho provisório
+            return None
+        r = img.get_bounding_rect()
+        if not r.w:
+            return None
+        body = pygame.transform.rotate(img.subsurface(r).copy(), -90)      # deitada de costas
+        body.fill((170, 160, 175, 255), special_flags=pygame.BLEND_RGBA_MULT)
+        return body
+    model = cached(("corpse_model",), from_model)
+    if model is not None:
+        return model
+
     def build():
         s = _canvas(56, 20)
         pygame.draw.rect(s, (40, 44, 70), (10, 6, 34, 10), border_radius=3)
