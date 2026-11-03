@@ -38,11 +38,13 @@ def test_water_returns_to_checkpoint():
     s.play.riding = None
     s.p.place(30 * T, 21 * T - 4)                      # cai na água do canal
     s.p.vy = 200
+    entry = s.play.room_entry
     for _ in range(int(3.0 / SIM_DT)):
         s.step()
-        if s.play.room.id == "cabine" and s.p.on_ground:
+        if s.play.hazard_timer <= 0 and s.p.hp < s.p.max_hp and s.p.on_ground:
             break
-    check("cair na água volta ao último checkpoint (sem loop)", s.play.room.id == "cabine" and s.p.alive,
+    check("cair na água volta ao chão firme da mesma sala (sem loop)",
+          s.play.room.id == "porao2" and s.p.alive and entry is not None and abs(s.p.cx - entry[0]) < 4,
           s.play.room.id)
     hp = s.p.hp
     s.run(2.0)
@@ -184,6 +186,7 @@ PATHS_DJ = [
     ("Vergas: verga", "cordame2", 6, 15, stands_on("cordame2", 13, 13, 17)),
     ("Vergas: mastro de proa", "cordame2", 16, 13, stands_on("cordame2", 11, 21, 23)),
     ("Vergas: tábuas", "cordame2", 23, 11, stands_on("cordame2", 11, 27, 33)),
+    ("Vergas: tábuas até o pedaço firme", "cordame2", 23, 11, stands_on("cordame2", 11, 32, 33)),
     ("Vergas: corda", "cordame2", 15, 13, stands_on("cordame2", 8, 14, 18)),
     ("Vergas: cesto da carta 2", "cordame2", 15, 8, stands_on("cordame2", 5, 3, 7)),
     ("Vergas: destroço 1", "cordame2", 23, 11, stands_on("cordame2", 16, 25, 26)),
@@ -196,6 +199,8 @@ PATHS_DJ = [
     ("Praia: vala de espinhos", "praia", 12, 18, stands_on("praia", 18, 23, 35)),
     ("Praia: coqueiro (pulo duplo)", "praia", 24, 18, stands_on("praia", 13, 25, 29)),
     ("Praia: penhasco (pulo duplo)", "praia", 33, 18, stands_on("praia", 12, 36, 58)),
+    ("Praia: galho do ninho", "praia", 27, 13, stands_on("praia", 8, 16, 20)),
+    ("Praia: ninho", "praia", 18, 8, stands_on("praia", 5, 7, 11)),
     ("Floresta: 1", "floresta", 4, 37, stands_on("floresta", 34, 6, 11)),
     ("Floresta: 2", "floresta", 9, 34, stands_on("floresta", 31, 14, 19)),
     ("Floresta: 3 (tábuas)", "floresta", 17, 31, stands_on("floresta", 29, 23, 28)),
@@ -216,6 +221,8 @@ PATHS_DJ = [
     ("Ruínas: plataforma alta", "ruinas", 11, 12, stands_on("ruinas", 8, 16, 23)),
     ("Templo: pilar A", "templo", 8, 18, stands_on("templo", 15, 12, 13)),
     ("Templo: pedras soltas", "templo", 13, 15, stands_on("templo", 14, 17, 20)),
+    ("Templo: pilar A à pedra firme", "templo", 13, 15, stands_on("templo", 14, 20, 21)),
+    ("Templo: pedra firme à câmara", "templo", 21, 14, stands_on("templo", 8, 18, 25)),
     ("Templo: pilar B ao C", "templo", 35, 14, stands_on("templo", 15, 40, 41)),
     ("Templo: saída", "templo", 41, 15, stands_on("templo", 18, 47, 58)),
     ("Templo: galeria", "templo", 35, 14, stands_on("templo", 9, 30, 45)),
@@ -261,6 +268,70 @@ def test_gates():
     s = game(("dash", "double_jump"), name="prancha.json")
     conves = s.play.world.rooms["conves"]
     check("prancha para a ilha trancada até o navio atracar", conves.is_solid(70, 16))
+
+
+# Plataformas móveis: (nome, habilidades, sala, índice, ponta, partida, alvo).
+# "ponta" diz onde a plataforma está no começo da tentativa ("x0" ou "x1", parada 0,5 s ali).
+# Partida (coluna, linha) = jogadora em chão firme esperando; None = jogadora em cima da plataforma.
+def _riding(idx):
+    return lambda s: s.play.riding is s.play.movers[idx]
+
+
+MOVER_PATHS = [
+    ("Porão 2: ilha A à plataforma", ("dash",), "porao2", 0, "x0", (14, 18), _riding(0)),
+    ("Porão 2: plataforma às tábuas", ("dash",), "porao2", 0, "x1", None, stands_on("porao2", 16, 30, 35)),
+    ("Porão 2: chão leste ao elevador", ("dash",), "porao2", 1, "x0", (46, 20), _riding(1)),
+    ("Porão 2: elevador à prateleira", ("dash",), "porao2", 1, "x1", None, stands_on("porao2", 10, 51, 57)),
+    ("Cordame: amuleto à plataforma", ("dash", "double_jump"), "cordame1", 0, "x1", (34, 25), _riding(0)),
+    ("Cordame: plataforma à verga leste", ("dash", "double_jump"), "cordame1", 0, "x1", None,
+     stands_on("cordame1", 18, 27, 33)),
+    ("Vergas: pedaço firme à plataforma", ("dash", "double_jump"), "cordame2", 0, "x0", (33, 11), _riding(0)),
+    ("Vergas: plataforma ao lado leste", ("dash", "double_jump"), "cordame2", 0, "x1", None,
+     stands_on("cordame2", 15, 48, 58)),
+    ("Floresta: galho ao elevador", ("dash", "double_jump"), "floresta", 0, "x0", (36, 26), _riding(0)),
+    ("Floresta: elevador ao galho da copa", ("dash", "double_jump"), "floresta", 0, "x1", None,
+     stands_on("floresta", 7, 32, 35)),
+    ("Templo: pedra firme à plataforma", ("dash", "double_jump"), "templo", 0, "x0", (21, 14), _riding(0)),
+    ("Templo: plataforma ao pilar B", ("dash", "double_jump"), "templo", 0, "x1", None,
+     stands_on("templo", 14, 34, 35)),
+]
+
+
+def _mover_goto(s, idx, end):
+    """Troca o goto da simulação: depois de pôr a jogadora no lugar, deixa a plataforma
+    parada na ponta pedida (e, sem partida, põe a jogadora em cima dela)."""
+    original = s.goto
+
+    def goto(room_id, tile_x, floor_row, enemies=False, items=True, on_mover=False):
+        original(room_id, tile_x, floor_row, enemies=enemies, items=items)
+        m = s.play.movers[idx]
+        half = m.period / 2
+        m.t = (half - 0.25) if end == "x1" else (m.period - 0.25)
+        m.x, m.y = m._pos(m.t)
+        m.dx = m.dy = 0.0
+        if on_mover:
+            s.p.place(m.x + m.w / 2, m.y)
+            s.p.vy = 0.0
+            s.play.riding = m
+            s.p.land_on_platform(s.play)
+    return original, goto
+
+
+def test_reach_movers():
+    for name, abilities, room, idx, end, start, target in MOVER_PATHS:
+        s = game(abilities, name="alc_plataformas.json")
+        original, goto = _mover_goto(s, idx, end)
+        if start is None:
+            s.goto = lambda r, x, y, enemies=False, items=True: goto(r, x, y, enemies, items, on_mover=True)
+            # partida qualquer em chão firme: a jogadora é posta em cima da plataforma logo depois
+            tx, row = {"porao2": (5, 20), "cordame1": (16, 36), "cordame2": (5, 15),
+                       "floresta": (4, 37), "templo": (5, 18)}[room]
+        else:
+            s.goto = goto
+            tx, row = start
+        res = try_reach(s, room, tx, row, target)
+        s.goto = original
+        check(f"alcançável (plataforma móvel): {name}", res is not None, res or "nenhuma sequência funcionou")
 
 
 def test_crumble():
@@ -452,4 +523,5 @@ def test_render_all():
 
 
 TESTS = [test_start_abilities, test_water_returns_to_checkpoint, test_structure, test_doors, test_crumble, test_movers, test_items_and_letters, test_secrets, test_dialogs_and_npcs,
-         test_endings, test_bosses, test_render_all, test_gates, test_reach_none, test_reach_dash, test_reach_double]
+         test_endings, test_bosses, test_render_all, test_gates, test_reach_none, test_reach_dash, test_reach_double,
+         test_reach_movers]

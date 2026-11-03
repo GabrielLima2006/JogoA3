@@ -283,15 +283,15 @@ def keycap(surf, label, pos, anchor="midleft", active=True):
     return r
 
 
-def hints(surf, items, center, color=Colors.UI_DIM):
-    """Linha de dicas: [(tecla, ação), ...] centralizada em `center`."""
+def hints(surf, items, center, color=Colors.UI_DIM, align="center"):
+    """Linha de dicas: [(tecla, ação), ...] centralizada em `center` (ou terminando nele, com align="right")."""
     f = font(20)
     widths = []
     for keys, action in items:
         kw = sum(max(22, f.size(k)[0] + 12) + 4 for k in keys.split("|"))
         widths.append(kw + 4 + f.size(action)[0])
     total = sum(widths) + 22 * (len(items) - 1)
-    x = center[0] - total // 2
+    x = center[0] - (total if align == "right" else total // 2)
     y = center[1]
     for (keys, action), wdt in zip(items, widths):
         cx = x
@@ -764,7 +764,7 @@ def draw_hud(surf, player, progress, room_name, room_name_timer, fps=None, muted
     if progress.play_time < 120 and not frozen:
         a = 255 * min(1.0, (120 - progress.play_time) / 4)
         layer = pygame.Surface((Display.WIDTH, 30), pygame.SRCALPHA)
-        hints(layer, [("ESC", "pausa"), ("Tab", "mapa"), ("M", "som")], (Display.WIDTH - 140, 15))
+        hints(layer, [("ESC", "pausa"), ("Tab", "mapa"), ("M", "som")], (Display.WIDTH - 16, 15), align="right")
         layer.set_alpha(int(a * 0.85))
         surf.blit(layer, (0, Display.HEIGHT - 32))
 
@@ -980,8 +980,9 @@ def draw_map(surf, play):
     else:
         text(surf, "Equipe a Bússola para ver onde você está.", 20, (frame.x + 18, frame.bottom - 30), Colors.UI_DIM)
     # legenda
-    lx, ly = frame.right - 128, frame.bottom - 76
-    for i, (col, name) in enumerate([(Colors.ENERGY, "bola de cristal"), (Colors.NPC_SHOP, "loja"),
-                                     (Colors.NPC_SMITH, "ferreiro")]):
+    legend = [(Colors.ENERGY, "bola de cristal"), (Colors.NPC_SHOP, "loja"), (Colors.NPC_SMITH, "ferreiro")]
+    widest = max(font(20).size(name)[0] for _, name in legend)
+    lx, ly = frame.right - 26 - widest - 12, frame.bottom - 80
+    for i, (col, name) in enumerate(legend):
         diamond(surf, (lx, ly + 8 + i * 20), 4, col)
         text(surf, name, 20, (lx + 12, ly + i * 20), Colors.UI_DIM)

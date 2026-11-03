@@ -557,12 +557,16 @@ class HowToPlayState(Screen):
     def _draw_controls(surf, body, dx, a):
         half = (len(CONTROLS_TEXT) + 1) // 2
         col_w = (body.w - 60) // 2
+        f = ui.font(20)
+        # a ação começa na mesma coluna em todas as linhas (depois da tecla mais larga da coluna)
+        key_w = [max((f.size(k)[0] + 12 for k, _ in CONTROLS_TEXT[c * half:(c + 1) * half]), default=0)
+                 for c in range(2)]
         for i, (key, action) in enumerate(CONTROLS_TEXT):
             c, r = divmod(i, half)
             x = body.x + 30 + c * col_w + dx
             y = body.y + 34 + r * 44
-            kr = ui.keycap(surf, key, (x, y), "midleft")
-            ui.text(surf, action, 20, (max(kr.right + 12, x + 124), y), Colors.UI_TEXT, "midleft")
+            ui.keycap(surf, key, (x, y), "midleft")
+            ui.text(surf, action, 20, (x + key_w[c] + 14, y), Colors.UI_TEXT, "midleft")
 
 
 class RecordsState(Screen):
@@ -680,10 +684,15 @@ class CreditsState(Screen):
         super().__init__(app)
         self.back = back
         self.scroll = 0.0
-        self.total = sum(_credit_row(size, col) for _, size, col in CREDITS)
+        # o texto já começa no topo do painel; só rola o que não cabe
+        view = self.BOX.h - 20 - 48
+        self.total = max(0, sum(_credit_row(size, col) for _, size, col in CREDITS) - view)
+
+    BOX = pygame.Rect(110, 104, W - 220, H - 160)
+    WAIT = 1.6  # segundos parado antes de começar a subir sozinho
 
     def frame(self, dt, inp):
-        speed = self.SPEED
+        speed = self.SPEED if self.t > self.WAIT else 0.0
         if inp.is_held("down"):
             speed = self.SPEED * 6
         elif inp.is_held("up"):
@@ -698,12 +707,12 @@ class CreditsState(Screen):
     def draw(self, surf):
         draw_sea_background(surf, self.t)
         ui.dim(surf, 150)
-        box = pygame.Rect(110, 104, W - 220, H - 160)
+        box = self.BOX
         ui.panel(surf, box, alpha=228)
         top, bottom = box.y + 10, box.bottom - 10
         clip = surf.get_clip()
         surf.set_clip(pygame.Rect(box.x + 8, top, box.w - 16, bottom - top))
-        y = bottom - 30 - self.scroll
+        y = top + 24 - self.scroll
         for msg, size, col in CREDITS:
             h = _credit_row(size, col)
             if msg and top - 60 < y < bottom + 10:

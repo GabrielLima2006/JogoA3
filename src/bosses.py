@@ -13,7 +13,7 @@ import random
 import pygame
 
 from . import pixelart, sprites
-from .config import Physics as PH
+from .config import Boss as BC, Physics as PH
 from .creatures import Rat, TideSlime
 from .enemies import Enemy, approach, wall_ahead
 from .physics import move_and_collide, rects_overlap
@@ -35,6 +35,7 @@ class Boss(Enemy):
         self.anim_t = 0.0
         self.airborne = False
         self.invulnerable = False
+        self.pace = 1.0          # ritmo da dificuldade (multiplica a velocidade dos ataques)
 
     @property
     def awake(self):
@@ -108,7 +109,7 @@ class Bomb:
         self.alive = False
         ctx.effects.sprite("explosao", self.x, self.y - 10, fps=20, scale=2)
         ctx.effects.add_shake(7)
-        ctx.audio.play("heavy_hit")
+        ctx.audio.play("explosion")
         if player.alive and math.hypot(player.cx - self.x, player.cy - self.y) < self.RADIUS:
             player.take_hit(1, self.x, ctx)
 
@@ -125,7 +126,7 @@ class Lightning:
 
     def __init__(self, x, floor_y, warn=0.8):
         self.x, self.floor_y = x, floor_y
-        self.warn = warn
+        self.warn = self.warn0 = warn
         self.strike = 0.35
         self.alive = True
         self.hit_done = False
@@ -148,7 +149,7 @@ class Lightning:
 
     def draw(self, surf, cam_x, cam_y, time):
         if self.warn > 0:
-            k = 1 - self.warn / 0.8
+            k = 1 - self.warn / self.warn0
             r = pygame.Rect(0, 0, 44, 8)
             r.midbottom = (int(self.x - cam_x), int(self.floor_y - cam_y))
             col = (200, 120, 255) if int(time * 20) % 2 else (255, 255, 255)
@@ -287,6 +288,10 @@ class CannonShot:
     def draw(self, surf, cam_x, cam_y, time):
         x, y = int(self.x - cam_x), int(self.floor_y - cam_y)
         col = (255, 80, 80) if int(time * 16) % 2 else (255, 220, 120)
+        # área real da explosão marcada no chão, para saber até onde correr
+        area = pygame.Rect(0, 0, Bomb.RADIUS * 2, 10)
+        area.center = (x, y - 3)
+        pygame.draw.ellipse(surf, col, area, 1)
         r = 14 + int(6 * max(0.0, self.warn))
         pygame.draw.line(surf, col, (x - r, y - 4), (x + r, y - 4), 3)
         pygame.draw.line(surf, col, (x - 8, y - 12), (x + 8, y + 4), 3)
@@ -301,7 +306,7 @@ class RatKing(Boss):
     name = "Tico"
     title = "Rei dos Ratos"
     color = (150, 140, 146)
-    max_hp = 70
+    max_hp = BC.HP_RAT_KING
 
     def __init__(self, foot_x, foot_y):
         super().__init__(foot_x, foot_y, 60, 34)
@@ -309,7 +314,7 @@ class RatKing(Boss):
         self.floor_y = foot_y
 
     def think(self, dt, room, player, ctx):
-        sp = 1.3 if self.phase2 else 1.0
+        sp = (1.3 if self.phase2 else 1.0) * self.pace
         dx = player.cx - self.cx
         st = self.state
         if st == "sleep":
@@ -398,26 +403,8 @@ class RatKing(Boss):
             phase = (self.x * 0.03) % 1.0 if moving else (self.anim_t * 0.8) % 1.0
             img = pixelart.rat(phase, -1, scale=1, cap=True, glow=self.awake)
         stride = math.sin(self.anim_t * 13)
-        bob = abs(stride) * 3 if moving else (1 if (self.anim_t * 1.5) % 1.0 > 0.5 else 0)
+        bob = round(abs(stride) * 2) if moving else (1 if (self.anim_t * 1.5) % 1.0 > 0.5 else 0)
         v = sprites.variant(img, self.direction > 0, self.flash > 0 or self.telegraphing(), 2)
-        sx, sy, angle = 1.0, self.squash, 0
-        if self.state == "leap_tele":
-            sx, sy = 1.12, 0.68
-        elif self.state == "leap":
-            sx, sy = (0.9, 1.13) if self.vy < 0 else (1.08, 0.92)
-            angle = -self.direction * 4
-        elif self.state == "charge_tele":
-            sx, sy = 1.1, 0.88
-        elif self.state == "charge":
-            sx, sy, angle = 1.12, 0.9, -self.direction * 5
-        elif moving:
-            sx, sy = 1.0 + abs(stride) * 0.04, 1.0 - abs(stride) * 0.05
-        w = max(1, int(v.get_width() * sx))
-        h = max(1, int(v.get_height() * sy))
-        if (w, h) != v.get_size():
-            v = pygame.transform.scale(v, (w, h))
-        if angle:
-            v = pygame.transform.rotate(v, angle)
         surf.blit(v, v.get_rect(midbottom=(round(self.cx - cam_x), round(self.bottom - cam_y + 2 - bob))))
         if self.state == "stunned":
             self._stars(surf, cam_x, cam_y)
@@ -439,7 +426,7 @@ class RedKnight(Boss):
     name = "Aldric"
     title = "Cavaleiro Rubro"
     color = (230, 40, 100)
-    max_hp = 110
+    max_hp = BC.HP_RED_KNIGHT
 
     def __init__(self, foot_x, foot_y):
         super().__init__(foot_x, foot_y, 46, 104)
@@ -448,7 +435,7 @@ class RedKnight(Boss):
         self.slashes_left = 0
 
     def think(self, dt, room, player, ctx):
-        sp = 1.35 if self.powered else 1.0
+        sp = (1.35 if self.powered else 1.0) * self.pace
         dx = player.cx - self.cx
         st = self.state
         if st == "sleep":
@@ -608,7 +595,7 @@ class PirateSister(Boss):
     name = "Selka"
     title = "Canhoneira da Tempestade"
     color = (190, 50, 60)
-    max_hp = 120
+    max_hp = BC.HP_PIRATE_SISTER
 
     def __init__(self, foot_x, foot_y):
         super().__init__(foot_x, foot_y, 36, 80)
@@ -616,9 +603,21 @@ class PirateSister(Boss):
         self.shot_timer = 0.0
         self.lunges_left = 0
         self.lunge_dir = 1
+        self.hops = 0            # pulinhos para trás seguidos
+
+    def _cornered(self, room, direction, reach=56):
+        """Há parede logo atrás (dentro de `reach` px) para onde ela recuaria?"""
+        ty0, ty1 = int(self.top // 32), int((self.bottom - 1) // 32)
+        for off in (1, reach / 2, reach):
+            x = self.right + off if direction > 0 else self.left - off
+            if x < 0 or x >= room.width:
+                return True
+            if any(room.is_solid(int(x // 32), ty, True) for ty in range(ty0, ty1 + 1)):
+                return True
+        return False
 
     def think(self, dt, room, player, ctx):
-        sp = 1.25 if self.phase2 else 1.0
+        sp = (1.25 if self.phase2 else 1.0) * self.pace
         dx = player.cx - self.cx
         st = self.state
         if st == "sleep":
@@ -626,8 +625,16 @@ class PirateSister(Boss):
             return
         if st == "idle":
             self.direction = 1 if dx > 0 else -1
-            # mantém distância média: recua se o jogador chega muito perto
+            # mantém distância média: recua se o jogador chega muito perto. Encurralada ou depois
+            # de recuar algumas vezes, parte para cima (investida com aviso, depois fica exposta)
             if abs(dx) < 110 and self.on_ground:
+                if self.hops >= BC.SISTER_MAX_HOPS or self._cornered(room, -self.direction):
+                    self.hops = 0
+                    self.state = "lunge_tele"
+                    self.timer = 0.38 / sp
+                    self.lunges_left = 1
+                    return
+                self.hops += 1
                 self.vy = -700
                 self.vx = -self.direction * 300
                 self.state = "hop"
@@ -635,6 +642,7 @@ class PirateSister(Boss):
             self.vx = approach(self.vx, self.direction * 70 if abs(dx) > 300 else 0.0, 900 * dt)
             self.timer -= dt * sp
             if self.timer <= 0 and self.on_ground:
+                self.hops = 0
                 pick = self.choose(["pistol", "lunge", "cannon"], [3, 3 if abs(dx) < 420 else 1, 2])
                 self.state = pick + "_tele"
                 self.timer = {"pistol": 0.45, "lunge": 0.38, "cannon": 0.5}[pick] / sp
@@ -712,6 +720,7 @@ class PirateSister(Boss):
                 self.timer = random.uniform(1.0, 1.3)
 
     def draw(self, surf, cam_x, cam_y):
+        self.alpha = getattr(self, "alpha", 255)
         st = self.state
         img = sprites.image("personagens", "selka.png")
         if img is None:
@@ -726,34 +735,36 @@ class PirateSister(Boss):
             img = pixelart.human("irma", pose, ph, self.direction)
             v = sprites.variant(img, False, self.flash > 0 or self.telegraphing(), 2)
         else:
-            # PixelLab east já olha à direita; alterna corrida, salto e preparação pelo estado.
-            v = sprites.variant(img, self.direction < 0, self.flash > 0 or self.telegraphing())
-            stride = math.sin(self.anim_t * 15)
-            if st == "hop" or not self.on_ground:
-                sx, sy = 0.94, 1.10 if self.vy < 0 else 0.94
-                angle = -self.direction * (5 if self.vy < 0 else 8)
-                bob = 0
-            elif st in ("lunge_tele", "pistol_tele", "cannon_tele"):
-                sx, sy, angle, bob = 1.06, 0.9, -self.direction * 4, 0
-            elif st == "lunge":
-                sx, sy, angle, bob = 1.1, 0.88, -self.direction * 13, abs(stride)
-            elif st == "pistol":
-                sx, sy, angle, bob = 1.04, 0.96, -self.direction * 6, 0
-            elif abs(self.vx) > 30:
-                sx, sy, angle, bob = 1.0 + abs(stride) * 0.03, 1.0 - abs(stride) * 0.07, stride * 3, abs(stride) * 2
+            # PixelLab east já olha à direita. Folha de tools/animar_pose.py: respira parada,
+            # anda com passada e se inclina no bote; sem a folha, usa a pose parada.
+            white = self.flash > 0 or self.telegraphing()
+            if st in ("lunge", "lunge_tele", "pistol", "pistol_tele", "cannon_tele"):
+                pose, ph = "attack", (0.0 if st.endswith("_tele") else 0.5)
+            elif abs(self.vx) > 30 and self.on_ground:
+                pose, ph = "walk", self.anim_t * 2.2
             else:
-                sx, sy, angle, bob = 1.0, 1.0 + 0.018 * math.sin(self.anim_t * 3), 0, 0
-            size = (max(1, round(v.get_width() * sx)), max(1, round(v.get_height() * sy)))
-            if size != v.get_size():
-                v = pygame.transform.scale(v, size)
-            if angle:
-                v = pygame.transform.rotate(v, angle)
-            surf.blit(v, v.get_rect(midbottom=(round(self.cx - cam_x), round(self.bottom - cam_y + 2 + bob))))
-            if st == "lunge" and int(self.anim_t * 28) % 2 == 0:
-                x = round(self.cx - cam_x + self.direction * 20)
-                y = round(self.cy - cam_y)
-                pygame.draw.line(surf, (255, 236, 210), (x, y - 9), (x + self.direction * 23, y + 3), 3)
-                pygame.draw.line(surf, (209, 91, 100), (x, y - 12), (x + self.direction * 20, y), 1)
+                pose, ph = "idle", self.anim_t * 0.8
+            if st == "cannon_tele":                      # aviso "!!" antes do canhonaço
+                aviso = sprites.effect("aviso_duplo")
+                if aviso:
+                    fr = aviso[int(self.anim_t * 20) % len(aviso)]
+                    surf.blit(fr, fr.get_rect(midbottom=(round(self.cx - cam_x), round(self.top - cam_y - 6))))
+            quadro, pe = sprites.pose_anim("selka", pose, ph)
+            if quadro is not None and self.alpha >= 255:
+                sprites.blit_anchor(surf, quadro, self.cx - cam_x, self.bottom - cam_y + 1, pe,
+                                    flip=self.direction < 0, white=white, scale=2)
+            else:
+                v = sprites.variant(img, self.direction < 0, white, 2)
+                if self.alpha < 255:
+                    v = v.copy()
+                    v.set_alpha(self.alpha)
+                surf.blit(v, v.get_rect(midbottom=(round(self.cx - cam_x), round(self.bottom - cam_y + 2))))
+            if st == "lunge":
+                frames = sprites.grid("efeitos/corte_h.png", 48, 48)
+                if frames:
+                    slash = sprites.variant(frames[int(self.anim_t * 18) % len(frames)], self.direction < 0)
+                    surf.blit(slash, slash.get_rect(center=(round(self.cx - cam_x + self.direction * 22),
+                                                            round(self.cy - cam_y))))
             return
         surf.blit(v, v.get_rect(midbottom=(round(self.cx - cam_x), round(self.bottom - cam_y + 2))))
 
@@ -766,7 +777,7 @@ class Sorcerer(Boss):
     name = "Caelum"
     title = "Feiticeiro da Maré"
     color = (120, 220, 210)
-    max_hp = 160
+    max_hp = BC.HP_SORCERER
     gravity = False
 
     def __init__(self, foot_x, foot_y):
@@ -776,16 +787,33 @@ class Sorcerer(Boss):
         self.anchor_i = 1
         self.alpha = 255
         self.vy = 0.0
+        self.attacks = 0         # ataques desde o último descanso
+        self.rest_x = 0.0
 
     def setup(self, room):
         w = room.width
         base = self.floor_y - 150
         self.anchors = [(w * 0.22, base), (w * 0.5, base - 70), (w * 0.78, base)]
 
+    def _rest_spot(self, room):
+        """x mais próximo onde a coluna do corpo até o chão está livre (sem plataformas)."""
+        T = 32
+        top = int((self.floor_y - BC.SORCERER_REST_HEIGHT - self.h / 2 - 40) // T)
+        bottom = int((self.floor_y - 1) // T)
+        best = None
+        for tx in range(1, room.width // T - 2):
+            cols = (tx, tx + 1)
+            if all(not room.is_solid(c, ty) and not room.is_oneway(c, ty)
+                   for c in cols for ty in range(top, bottom + 1)):
+                x = (tx + 1) * T
+                if best is None or abs(x - self.cx) < abs(best - self.cx):
+                    best = x
+        return best if best is not None else self.cx
+
     def think(self, dt, room, player, ctx):
         if not self.anchors:
             self.setup(room)
-        sp = 1.3 if self.phase2 else 1.0
+        sp = (1.3 if self.phase2 else 1.0) * self.pace
         dx = player.cx - self.cx
         self.direction = 1 if dx > 0 else -1
         st = self.state
@@ -793,20 +821,41 @@ class Sorcerer(Boss):
             return
         ax, ay = self.anchors[self.anchor_i]
         bob = math.sin(self.anim_t * 2.2) * 10
+        if st == "rest":
+            # cansado: vai a um vão livre e desce até perto do chão (janela para bater sem pular)
+            ax, bob = self.rest_x, 0.0
+            ay = self.floor_y - BC.SORCERER_REST_HEIGHT if abs(ax - self.cx) < 12 else self.cy
         if st not in ("tele_out",):
-            self.vx = (ax - self.cx) * 3
-            self.vy = (ay + bob - self.cy) * 3
+            k = 6 if st == "rest" else 3
+            self.vx = (ax - self.cx) * k
+            self.vy = (ay + bob - self.cy) * k
+        if st == "rest":
+            self.timer -= dt
+            if self.timer <= 0:
+                self.state = "idle"
+                self.attacks = 0
+                self.timer = 0.6
+                ctx.effects.sprite("fumaca_caveira", self.cx, self.cy, fps=16, scale=2)
+            return
         if st == "idle":
             self.timer -= dt * sp
             if self.timer <= 0:
                 decoys = sum(1 for e in ctx.enemies if isinstance(e, Illusion) and e.alive)
                 flooding = any(isinstance(h, Flood) for h in ctx.hazards)
+                if self.attacks >= BC.SORCERER_ATTACKS_BEFORE_REST and not flooding and not decoys:
+                    self.state = "rest"
+                    self.rest_x = self._rest_spot(room)
+                    self.timer = BC.SORCERER_REST_TIME
+                    ctx.audio.play("land")
+                    return
                 opts, w = ["skulls", "lightning", "teleport", "illusion"], [3, 3, 2, 0 if decoys else 3]
                 if self.phase2:
                     opts += ["wave", "summon", "tide"]
                     w += [2, 1 if sum(1 for e in ctx.enemies if isinstance(e, TideSlime)) < 2 else 0,
                           0 if flooding else 2]
                 pick = self.choose(opts, w)
+                if pick != "teleport":
+                    self.attacks += 1
                 if pick == "teleport":
                     self.state = "tele_out"
                     self.timer = 0.35
@@ -903,26 +952,19 @@ class Sorcerer(Boss):
             img = pixelart.sorcerer(pose, (self.anim_t * 0.7) % 1.0, self.direction)
             img = sprites.variant(img, False, self.flash > 0 or self.telegraphing())
         else:
-            # A vista east já olha à direita. O feiticeiro prepara o corpo antes de conjurar.
-            img = sprites.variant(img, self.direction < 0, self.flash > 0 or self.telegraphing())
-            casting = self.state.endswith("_tele")
-            moving = abs(self.vx) + abs(self.vy) > 70
-            pulse = math.sin(self.anim_t * (18 if casting else 8))
-            if casting:
-                sx, sy = 1.04 + 0.035 * pulse, 0.94 - 0.025 * pulse
-                angle = -self.direction * (5 + 2 * pulse)
-            elif self.state == "tele_out":
-                sx, sy, angle = 0.94, 1.06, self.direction * 8 * (1 - self.alpha / 255)
-            elif moving:
-                sx, sy = 0.98, 1.04
-                angle = -self.direction * max(-5, min(5, self.vx / 90))
+            # A vista east já olha à direita. Respira flutuando e se inclina ao conjurar.
+            conjura = self.state.endswith("_tele")
+            quadro, pe = sprites.pose_anim("caelum", "attack" if conjura else "idle",
+                                           0.5 if conjura else self.anim_t * 0.7)
+            if quadro is not None:
+                # o arquivo original tem 2 px livres abaixo do pé; o quadro tem 1
+                base = pygame.Surface((quadro.get_width(), quadro.get_height() + 1), pygame.SRCALPHA)
+                base.blit(quadro, (0, 0))
+                img = base
+                escala = 2
             else:
-                sx, sy, angle = 1.0, 1.0 + 0.025 * math.sin(self.anim_t * 3), 0
-            size = (max(1, round(img.get_width() * sx)), max(1, round(img.get_height() * sy)))
-            if size != img.get_size():
-                img = pygame.transform.scale(img, size)
-            if angle:
-                img = pygame.transform.rotate(img, angle)
+                escala = 1
+            img = sprites.variant(img, self.direction < 0, self.flash > 0 or self.telegraphing(), escala)
         if self.alpha < 255:
             img = img.copy()
             img.set_alpha(self.alpha)
@@ -932,10 +974,16 @@ class Sorcerer(Boss):
         k = 0.5 + 0.5 * math.sin(self.anim_t * 5)
         pygame.draw.circle(surf, (int(90 + 120 * k), 220, 230), (round(self.cx - cam_x + self.direction * 20),
                                                                  round(self.cy - cam_y + 4)), 4)
-        if self.state.endswith("_tele"):
+        carga = sprites.effect("carga") if self.state.endswith("_tele") else None
+        if carga:
+            fr = carga[int(self.anim_t * 18) % len(carga)]
+            surf.blit(fr, fr.get_rect(center=(round(self.cx - cam_x + self.direction * 20), round(self.cy - cam_y + 4))))
+        elif self.state.endswith("_tele"):
             radius = 8 + int(3 * (0.5 + 0.5 * math.sin(self.anim_t * 24)))
             pygame.draw.circle(surf, (160, 255, 247), (round(self.cx - cam_x + self.direction * 20),
                                                         round(self.cy - cam_y + 4)), radius, 1)
+        if self.state == "rest":
+            self._stars(surf, cam_x, cam_y)
         shadow = pygame.Rect(0, 0, 50, 8)
         shadow.center = (round(self.cx - cam_x), round(self.floor_y - cam_y - 2))
         pygame.draw.ellipse(surf, (20, 60, 70), shadow)
@@ -978,14 +1026,6 @@ class Illusion(Enemy):
             img = sprites.variant(img, False, self.flash > 0).copy()
         else:
             img = sprites.variant(img, self.direction < 0, self.flash > 0).copy()
-            casting = self.cool < 0.35
-            pulse = math.sin(self.t * 20)
-            sx, sy = (1.04 + 0.03 * pulse, 0.94) if casting else (1.0, 1.0)
-            size = (max(1, round(img.get_width() * sx)), max(1, round(img.get_height() * sy)))
-            if size != img.get_size():
-                img = pygame.transform.scale(img, size)
-            if casting:
-                img = pygame.transform.rotate(img, -self.direction * 5)
         img.set_alpha(200 + int(40 * math.sin(self.t * 9)))
         lift = math.sin(self.t * 2.5) * 3
         surf.blit(img, img.get_rect(midbottom=(round(self.cx - cam_x), round(self.bottom - cam_y + 4 + lift))))

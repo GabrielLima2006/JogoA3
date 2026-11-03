@@ -5,6 +5,9 @@ hit, heavy_hit, hurt, death, enemy_death, shoot, impact, checkpoint,
 ui_move, ui_select, heal, block, coin, item, buy, boss, step, skid
 
 Também nesta pasta, ainda sem uso no código (entram ao pôr o nome em SFX_NAMES):
-break_wood (caixote quebrando), explosion, ability (habilidade nova), door (porta/parede quebrando)
+break_wood (caixote quebrando), explosion, ability (habilidade nova), door (porta/parede quebrando),
+health_up (coração extra), slime_hit e slime_death (gosma), ground_slam (chefe batendo no chão),
+door_crash (portão da arena), ui_woosh (abrir tela por cima).
+Música de chefe: ../musicas/boss_01.ogg (Metroidvania Forge, ch_06, convertida de .wav).
 
 Arquivos ausentes são ignorados; o jogo roda normalmente sem som.

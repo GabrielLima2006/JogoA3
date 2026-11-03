@@ -28,8 +28,10 @@ _static = {}
 # céus em camadas (Craftpix, "New free backgrounds"): nome do arquivo, escurecimento (noite)
 SKY_PACKS = {
     "noite": 0.72, "tempestade": 0.8, "roxo": 0.6, "cinza": 0.62,
+    "porsol": 0.8, "crepusculo": 0.62,      # pacotes 2 (fundo 2) e 4 (fundo 2); camadas 4 e 5 fundidas
 }
-SKY_OF_ROOM = {"cordame1": "tempestade", "cordame2": "tempestade", "gavea": "tempestade", "ruinas": "cinza"}
+SKY_OF_ROOM = {"cordame1": "tempestade", "cordame2": "tempestade", "gavea": "tempestade", "ruinas": "cinza",
+               "praia": "porsol", "floresta": "crepusculo"}
 SKY_OF_THEME = {"deck": "noite", "island": "roxo", "ruins": "cinza"}
 SKY_PARALLAX = (0.0, 0.015, 0.035, 0.06)
 

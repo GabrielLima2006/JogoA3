@@ -24,11 +24,11 @@ class Game:
                 "o": "a", "feiticeiro": "feiticeira", "passageiro": "passageira", "bom": "boa"},
     }
     DIFFICULTIES = {
-        "facil": {"label": "Fácil", "hp_bonus": 2, "enemy_hp": 0.75,
+        "facil": {"label": "Fácil", "hp_bonus": 2, "enemy_hp": 0.75, "boss_pace": 0.85,
                   "desc": "+2 corações. Inimigos e chefes com menos vida. Para curtir a história."},
-        "normal": {"label": "Normal", "hp_bonus": 0, "enemy_hp": 1.0,
+        "normal": {"label": "Normal", "hp_bonus": 0, "enemy_hp": 1.0, "boss_pace": 1.0,
                    "desc": "O desafio pensado para o jogo."},
-        "dificil": {"label": "Difícil", "hp_bonus": -1, "enemy_hp": 1.35,
+        "dificil": {"label": "Difícil", "hp_bonus": -1, "enemy_hp": 1.35, "boss_pace": 1.1,
                     "desc": "1 coração a menos. Inimigos e chefes bem mais resistentes."},
     }
 
@@ -257,6 +257,25 @@ class Boss:
     SHOCKWAVE_SPEED = 300.0
     PHASE2_HP = 0.5                # abaixo desta fração fica mais agressivo
     PHASE2_SPEED = 1.25
+
+    # chefes do capítulo 1 (vida no Normal; a dificuldade multiplica por enemy_hp).
+    # Com o golpe rápido (2 de dano) dá uns 24 / 38 / 42 / 50 golpes.
+    HP_RAT_KING = 48
+    HP_RED_KNIGHT = 76
+    HP_PIRATE_SISTER = 84
+    HP_SORCERER = 100
+    # Selka: quantos pulinhos para trás seguidos antes de partir para cima de quem cola nela
+    SISTER_MAX_HOPS = 2
+    # Caelum: depois de tantos ataques desce perto do chão, cansado (janela de punição)
+    SORCERER_ATTACKS_BEFORE_REST = 3
+    SORCERER_REST_TIME = 2.2
+    SORCERER_REST_HEIGHT = 56      # altura do centro dele acima do chão durante o descanso
+
+
+class Doors:
+    # porta no teto: sem direção apertada, a jogadora é levada até a beirada do buraco
+    CEILING_NUDGE_TIME = 0.45
+    CEILING_NUDGE_SPEED = 0.8     # fração de Player.RUN_SPEED
 
 
 class Energy:

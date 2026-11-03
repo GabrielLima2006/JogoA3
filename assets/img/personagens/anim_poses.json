@@ -1,0 +1,226 @@
+{
+ "lobo": {
+  "frame": [
+   70,
+   46
+  ],
+  "anchor": [
+   35,
+   45
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "inimigo_lobo.png"
+ },
+ "goblin": {
+  "frame": [
+   29,
+   54
+  ],
+  "anchor": [
+   14,
+   53
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "inimigo_goblin.png"
+ },
+ "comerciante": {
+  "frame": [
+   36,
+   59
+  ],
+  "anchor": [
+   18,
+   58
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "npc_comerciante.png"
+ },
+ "ferreira": {
+  "frame": [
+   38,
+   59
+  ],
+  "anchor": [
+   19,
+   58
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "npc_ferreira.png"
+ },
+ "curandeira": {
+  "frame": [
+   29,
+   58
+  ],
+  "anchor": [
+   14,
+   57
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "npc_curandeira.png"
+ },
+ "pescador": {
+  "frame": [
+   33,
+   59
+  ],
+  "anchor": [
+   16,
+   58
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "npc_pescador.png"
+ },
+ "estudioso": {
+  "frame": [
+   30,
+   59
+  ],
+  "anchor": [
+   15,
+   58
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "npc_estudioso.png"
+ },
+ "bardo": {
+  "frame": [
+   30,
+   58
+  ],
+  "anchor": [
+   15,
+   57
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "npc_bardo.png"
+ },
+ "aldea": {
+  "frame": [
+   33,
+   57
+  ],
+  "anchor": [
+   16,
+   56
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "npc_aldea.png"
+ },
+ "anciao": {
+  "frame": [
+   28,
+   55
+  ],
+  "anchor": [
+   14,
+   54
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "npc_anciao.png"
+ },
+ "ancia": {
+  "frame": [
+   29,
+   54
+  ],
+  "anchor": [
+   14,
+   53
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "npc_ancia.png"
+ },
+ "grumete": {
+  "frame": [
+   27,
+   49
+  ],
+  "anchor": [
+   13,
+   48
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "npc_grumete.png"
+ },
+ "selka": {
+  "frame": [
+   39,
+   64
+  ],
+  "anchor": [
+   19,
+   63
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "selka.png"
+ },
+ "caelum": {
+  "frame": [
+   53,
+   61
+  ],
+  "anchor": [
+   26,
+   60
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "caelum.png"
+ }
+}

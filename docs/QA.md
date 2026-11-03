@@ -8,6 +8,32 @@ Rodada de teste exploratório de 22–23/10/2026, feita sobre a pasta de trabalh
 
 ---
 
+## Situação na rodada 3 (03/11)
+
+Rodado sobre o commit `305a156` mais as mudanças ainda sem commit das frentes. Todos os scripts de `docs/qa/scripts/` de novo; `qa_chefes.py` com 1 semente.
+
+| Item | Situação |
+|---|---|
+| 0. Crash do `MODEL_OF` | **Corrigido** (está nos commits). Convés desenha sem erro. |
+| 1. Selka não ataca de perto | **Continua.** Nas 3 dificuldades os únicos estados foram `sleep`, `idle` e `hop`; dano levado 3 em cada luta, 0 "mortes". |
+| 2. Volta à bola de cristal de outra sala | **Parcial.** Bola nova no pé da Floresta resolve lá. `_respawn_at_safe` agora volta sempre à bola de propósito (comentário no código). Sem bola usada, canal do Porão 2 e vala da Praia ainda mandam à **Cabine**. |
+| 3. Chefes com muitos golpes | **Continua** (26–108 golpes). Caelum: 115–164 s e 12–16 "mortes" do bot; os outros 15–37 s. |
+| 4. Textos sobrepostos na tela de morte | **Continua** (y=210 e y=222 em `DeathState.draw`). |
+| 5. Página 2/3 do diário | **Parcial.** O título cabe, mas encosta nas bordas da caixa, e o corpo ainda é uma linha só (`ui.text`, sem quebra). |
+| 6. "loja da Vila" | **Corrigido.** |
+| 7. Títulos por cima do nome da sala | **Corrigido** (o HUD esconde o nome com o jogo parado). |
+| 8. Caixa de controles da pausa sobre o rodapé | **Corrigido** (a dica do HUD some na pausa). |
+| 9. Lobo da Floresta se mata nos espinhos | **Corrigido** (tronco segura o lobo: vivo após 8 s, 0 moedas soltas). |
+| 10. Portas no teto sem direção | **Continua** nas duas: `conves:3 -> cordame1` e `porao1:1 -> conves` com pulo reto terminam na sala de origem. |
+| 11. Fontes de "FIM" e "FINAL VERDADEIRO" | **Corrigido** (os dois na fonte de título). |
+
+Problemas novos:
+- **12. Pausa: menu encosta no título "PAUSADO"** — **detalhe.** "Continuar" fica colado embaixo do título e "Sair do jogo" quase toca os painéis de inventário e controles. Captura: `docs/qa/tela_pausa.png`. Quem corrige: gameplay (`PauseState.draw` em `src/states.py`; a interface já sugeriu valores em `docs/PENDENCIAS.md`).
+- Script `qa_perigos.py`: o caso "cair pelo fundo do Cordame 1" não roda mais (a posição antiga não tem chão depois do redesenho). Agora aparece como "não testado"; não é defeito do jogo.
+- Ao gravar capturas dentro do OneDrive, às vezes `pygame.image.save` falha com "Couldn't open" (arquivo preso pela sincronização). Rodar de novo resolve.
+
+Funcionou: 24 passagens sem prender e sem dano; nenhum inimigo começa em parede nas 13 salas; 8 amuletos mudam o atributo certo; pausa → voltar à bola, salvar/carregar, cura com F, morte e bolsa (33 moedas recuperadas).
+
 ## Situação na rodada 2 (23/10, cerca de 12h)
 
 Rodado de novo sobre o commit `75085bb` mais as mudanças ainda sem commit em `src/pixelart.py` e `src/ui.py`.

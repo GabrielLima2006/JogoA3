@@ -135,3 +135,34 @@ class Anim:
 
 def pick(frames, indices):
     return [frames[i] for i in indices if 0 <= i < len(frames)]
+
+
+_POSES_META = None
+
+
+def pose_anim(name, pose, phase):
+    """Quadro animado gerado por tools/animar_pose.py a partir de uma pose parada `east`.
+
+    `pose` é "idle", "walk" ou "attack"; `phase` vai de 0 a 1 no ciclo. O quadro olha para a
+    direita. Retorna (quadro, âncora do pé) ou (None, None) se o personagem não tiver folha."""
+    global _POSES_META
+    if _POSES_META is None:
+        import json
+        try:
+            with open(asset("img", "personagens", "anim_poses.json"), encoding="utf-8") as f:
+                _POSES_META = json.load(f)
+        except OSError:
+            _POSES_META = {}
+    meta = _POSES_META.get(name)
+    if meta is None:
+        return None, None
+    fw, fh = meta["frame"]
+    frames = grid(f"personagens/anim_{name}.png", fw, fh)
+    if not frames:
+        return None, None
+    order = ("idle", "walk", "attack")
+    row = order.index(pose) if pose in order else 0
+    cols = max(meta["frames"].values())
+    n = meta["frames"][order[row]]
+    i = min(n - 1, int((phase % 1.0) * n))
+    return frames[row * cols + i], tuple(meta["anchor"])

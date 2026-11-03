@@ -154,5 +154,24 @@ def test_mouse_and_tabs():
     check("clique na aba vai direto para a página", howto.page == 2)
 
 
+def test_credits_and_hints():
+    app = _app("creditos.json")
+    st = CreditsState(app, back=app.state)
+    app.state = st
+    _press(app, frames=60)
+    check("créditos esperam um instante antes de subir", st.scroll == 0.0, str(st.scroll))
+    _press(app, frames=60)
+    check("depois os créditos sobem sozinhos", st.scroll > 0.0)
+    st.scroll = st.total
+    _press(app, frames=30)
+    check("rolagem para no fim do texto", st.scroll == st.total)
+    import pygame
+    from src import ui
+    layer = pygame.Surface((960, 30), pygame.SRCALPHA)
+    ui.hints(layer, [("ESC", "pausa"), ("Tab", "mapa"), ("M", "som")], (944, 15), align="right")
+    right = layer.get_bounding_rect().right
+    check("dica alinhada à direita não passa da margem", 930 <= right <= 946, str(right))
+
+
 TESTS = [test_main_menu, test_new_game_flow, test_intro_skip, test_continue, test_other_screens,
-         test_mouse_and_tabs]
+         test_mouse_and_tabs, test_credits_and_hints]

@@ -187,7 +187,7 @@ class Player(Body):
             self._gravity(dt, inp)
 
         if self.attack is not None and not self.dashing:
-            self._attack_motion()
+            self._attack_motion(ctx)
 
         # --- facing ---
         if move_x and self.attack is None and not self.dashing:
@@ -415,12 +415,15 @@ class Player(Body):
             self.facing = aim[0]
         self.attack = Attack(spec, self.facing, aim)
         self.attack_buffer = None
-        ctx.audio.play("attack_" + spec.name)
+        # golpe forte: som de carga no preparo e o golpe em si quando a lâmina sai
+        ctx.audio.play("heavy_charge" if spec.name == "heavy" else "attack_" + spec.name)
 
-    def _attack_motion(self):
+    def _attack_motion(self, ctx=None):
         atk = self.attack
         if atk.phase == "active" and not atk.lunged:
             atk.lunged = True
+            if atk.spec.name == "heavy" and ctx is not None:
+                ctx.audio.play("attack_heavy")
             if atk.spec.lunge and self.on_ground and atk.aim[1] == 0:
                 self.vx = atk.facing * atk.spec.lunge
 

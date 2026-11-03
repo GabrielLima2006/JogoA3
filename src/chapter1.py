@@ -77,7 +77,7 @@ def room_porao1():
     g.put(3, 26, "*").put(50, 26, "*")
     g.put(8, 26, "j").put(38, 26, "g")
     g.put(9, 6, "k").put(12, 6, "k").put(7, 19, "k")
-    g.put(36, 19, "g").put(47, 19, "g").put(51, 19, "k")
+    g.put(38, 19, "g").put(47, 19, "g").put(51, 19, "k")    # o rato fica longe do pouso do buraco
     return g.rows()
 
 
@@ -99,7 +99,7 @@ def room_porao2():
     g.rect(12, 3, 12, 5).rect(12, 6, 12, 7, "X")
     g.put(4, 7, "*").put(55, 9, "*").put(39, 16, "*")
     g.put(4, 19, "B")
-    g.put(25, 7, "g").put(25, 12, "f")
+    g.put(25, 7, "g").put(46, 13, "f")       # a gaivota espera no chão leste, não sobre o canal
     g.put(58, 19, "g").put(60, 19, "k").put(48, 19, "j")
     return g.rows()
 
@@ -152,14 +152,14 @@ def room_cordame2():
     # rota do meio: verga, topo do mastro de proa, tábuas e a plataforma que vai e volta
     g.hline(13, 17, 13, "-")
     g.rect(21, 11, 23, 18)
-    g.hline(27, 33, 11, "C")
+    g.hline(27, 31, 11, "C").hline(32, 33, 11, "-")    # tábuas e um pedaço firme para esperar a plataforma
     # rota baixa, rente ao mar: destroços boiando (o amuleto do vento)
     g.rect(25, 16, 26, 17).rect(30, 16, 31, 17).rect(35, 16, 36, 17).rect(39, 16, 41, 17)
     # rota alta: corda e o cesto escondido no alto, à esquerda (carta 2)
     g.hline(14, 18, 8, "-").hline(3, 7, 5, "-")
     g.put(4, 4, "*").put(40, 15, "*")
     g.put(3, 14, "B").put(54, 14, "t")
-    g.put(30, 7, "f").put(43, 14, "f")
+    g.put(16, 4, "f").put(43, 14, "f")       # gaivota guarda a rota alta, não as tábuas
     return g.rows()
 
 
@@ -188,6 +188,9 @@ def room_praia():
     g.hline(25, 29, 13, "-")                  # copa do coqueiro: 5 acima (pulo duplo)
     # gruta dentro do penhasco, atrás da rocha rachada
     g.clear(37, 15, 53, 17).rect(36, 16, 36, 17, "X")
+    # ninho no alto (opcional): do coqueiro, galhos até caixas esquecidas por contrabandistas
+    g.hline(16, 20, 8, "-").hline(7, 11, 5, "-")
+    g.put(8, 4, "k").put(10, 4, "k")
     g.put(27, 12, "*").put(51, 17, "*")
     g.put(4, 17, "B").put(45, 17, "k")
     g.put(10, 17, "j").put(31, 17, "g").put(33, 17, "k")
@@ -237,7 +240,8 @@ def room_templo():
     g.hline(10, 46, 17, "^")
     g.rect(46, 17, 46, 17)                    # meio-fio: quem anda no chão leste não cai nos espinhos
     # travessia: pilares, pedras soltas e a plataforma que vai e volta
-    g.rect(12, 15, 13, 17).hline(17, 20, 14, "C")
+    g.rect(12, 15, 13, 17).hline(17, 19, 14, "C")
+    g.rect(20, 14, 21, 14)                    # pedra firme: espera a plataforma sem a pedra ceder
     g.rect(34, 14, 35, 17).rect(40, 15, 41, 17)
     # galeria alta do lich e a câmara selada (amuleto)
     g.hline(30, 45, 9, "-").hline(18, 25, 8, "-")

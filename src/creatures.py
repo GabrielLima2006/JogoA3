@@ -91,15 +91,35 @@ def draw_model(surf, name, x, foot_y, t, facing, moving=False, white=False, lean
 
         # O ataque aparece como efeito separado; o corpo permanece pixel-perfect.
         if state in ("bash", "lunge", "charge", "slash", "pistol") or lean != 0:
-            frames = sprites.grid("efeitos/corte_h.png", 48, 48)
+            magia = name in ("diabrete", "espirito", "lich")
+            frames = sprites.effect("brilho") if magia else sprites.grid("efeitos/corte_h.png", 48, 48)
             if frames:
-                slash = frames[int(t * 18) % len(frames)]
-                slash = sprites.variant(slash, facing < 0)
-                surf.blit(slash, slash.get_rect(center=(round(x + facing * 24),
-                                                        round(foot_y - frame.get_height() * frame_scale * 0.58))))
+                efeito = sprites.variant(frames[int(t * 18) % len(frames)], facing < 0)
+                bounds = frame.get_bounding_rect()
+                cy = foot_y - ((frame.get_height() - 1) - (bounds.top + bounds.bottom) / 2) * frame_scale
+                surf.blit(efeito, efeito.get_rect(center=(round(x + facing * (bounds.width * frame_scale / 2 + 8)),
+                                                          round(cy))))
 
     # Só estas duas criaturas ainda usam os retratos laterais recém-importados.
     # Os modelos sombreados da folha da equipe são melhores para os demais inimigos.
+    if name in ("lobo", "goblin"):
+        # Folha de tools/animar_pose.py: passada, respiração e bote a partir da vista east.
+        pose = "attack" if lean else ("walk" if moving and not airborne else "idle")
+        speed = {"attack": 5.0, "walk": 1.8 if name == "lobo" else 1.4, "idle": 0.8}[pose]
+        quadro, pe = sprites.pose_anim(name, pose, t * speed)
+        if quadro is not None:
+            v = quadro
+            if alpha < 255:
+                v = quadro.copy()
+                v.set_alpha(alpha)
+            lift = round(math.sin(t * 2.5) * float_amp)
+            sprites.blit_anchor(surf, v, x, foot_y + lift, pe, flip=facing < 0, white=white, scale=scale)
+            if lean and name == "goblin":            # porretada: mesmo corte dos outros inimigos
+                frames = sprites.grid("efeitos/corte_h.png", 48, 48)
+                if frames:
+                    slash = sprites.variant(frames[int(t * 18) % len(frames)], facing < 0)
+                    surf.blit(slash, slash.get_rect(center=(round(x + facing * 22), round(foot_y - 30))))
+            return
     art = sprites.image("personagens", f"inimigo_{name}.png") if name in ("lobo", "goblin") else None
     if art is not None:
         # As vistas east usadas nestes arquivos já olham para a direita.
@@ -133,7 +153,10 @@ def draw_model(surf, name, x, foot_y, t, facing, moving=False, white=False, lean
     if name in WALK_SHEETS and moving:
         frames = sprites.grid(WALK_SHEETS[name], 128, 96)
         if frames:
-            img = frames[int(t * 10) % len(frames)]
+            if airborne and name in ("ladino", "cavaleiro_escudo"):
+                img = frames[1 if vy < 0 else 3]
+            elif moving:
+                img = frames[int(t * 10) % len(frames)]
     flip = facing > 0                      # os modelos olham para a esquerda
     pose_and_blit(img, flip, scale)
 
@@ -147,7 +170,7 @@ class _ModelMixin:
         state = getattr(self, "state", "")
         if getattr(self, "telegraph", 0) > 0:
             state = "skulls_tele"
-        lean = 10 if state in ("windup", "bash", "chase", "lunge", "charge") else 0
+        lean = 10 if state in ("windup", "bash", "lunge", "charge") else 0
         draw_model(surf, self.model, self.cx - cam_x, self.bottom - cam_y, t, self.direction,
                    abs(self.vx) > 20, self.flash > 0, lean, self.float_amp,
                    state=state, vy=getattr(self, "vy", 0.0), airborne=not getattr(self, "on_ground", True))

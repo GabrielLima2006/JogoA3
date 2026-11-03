@@ -591,9 +591,126 @@ def test_map_and_screens():
     check("todas as salas e telas desenham sem erro", True)
 
 
+# ---------------------------------------------------------------------------
+# Capítulo 1: portas no teto, volta dos perigos e chefes justos
+# ---------------------------------------------------------------------------
+
+def _story(abilities=("dash", "double_jump"), name="gameplay.json", difficulty="normal"):
+    pr = Progress()
+    pr.chapter = 1
+    pr.abilities = set(abilities)
+    pr.difficulty = difficulty
+    pr.flags = {"atracado"}
+    return Sim(progress=pr, save_name=name)
+
+
+def test_ceiling_door_nudge():
+    for rid, digit, target in (("porao1", "1", "conves"), ("conves", "3", "cordame1")):
+        s = _story(name="porta_teto.json")
+        room = s.play.world.rooms[rid]
+        s.play.load_room(room)
+        s.play.enemies, s.play.items, s.play.boss = [], [], None
+        door = room.doors[digit]
+        p = s.p
+        p.reset_state()
+        p.x = (door.lo + door.hi + 1) / 2 * T - p.w / 2
+        p.y, p.vy = 4.0, -700.0
+        arrived = s.wait_until(lambda: s.play.room.id == target, 1.5)
+        s.wait_until(lambda: s.p.on_ground, 2.5)
+        s.run(0.5)
+        check(f"porta no teto {rid} -> {target}: pulando reto, fica de pé lá em cima",
+              arrived and s.play.room.id == target and s.p.on_ground, f"sala={s.play.room.id}")
+
+
+def test_hazard_returns_in_room():
+    s = _story(name="perigo_sala.json")
+    s.pr.bench = None
+    s.goto("porao2", 14, 18)
+    entry = s.play.room_entry
+    check("guarda o primeiro chão firme da sala", entry is not None and abs(entry[0] - (14 * T + T / 2)) < 4,
+          str(entry))
+    s.play.riding = None
+    s.p.place(30 * T, 21 * T - 4)                  # água do canal
+    s.p.vy = 200
+    s.wait_until(lambda: s.play.hazard_timer > 0, 2.0)
+    s.wait_until(lambda: s.play.hazard_timer <= 0, 2.0)
+    s.step()
+    check("perigo devolve à entrada da mesma sala", s.play.room.id == "porao2" and abs(s.p.cx - entry[0]) < 4,
+          f"{s.play.room.id} x={s.p.cx:.0f}")
+
+
+def test_boss_tuning():
+    from src.bosses import PirateSister, RatKing, RedKnight, Sorcerer
+    from src.config import Boss as BC, Game
+    check("vida dos chefes no Normal vem do config",
+          (RatKing.max_hp, RedKnight.max_hp, PirateSister.max_hp, Sorcerer.max_hp)
+          == (BC.HP_RAT_KING, BC.HP_RED_KNIGHT, BC.HP_PIRATE_SISTER, BC.HP_SORCERER))
+    hits = [BC.HP_RAT_KING / 2, BC.HP_RED_KNIGHT / 2, BC.HP_PIRATE_SISTER / 2, BC.HP_SORCERER / 2]
+    check("chefes vencem com 20 a 55 golpes rápidos no Normal", all(20 <= h <= 55 for h in hits), str(hits))
+    check("chefes crescem em vida do 1º ao 4º", hits == sorted(hits))
+    paces = [Game.DIFFICULTIES[d]["boss_pace"] for d in ("facil", "normal", "dificil")]
+    check("ritmo dos chefes cresce com a dificuldade", paces == sorted(paces) and paces[1] == 1.0, str(paces))
+    for diff in ("facil", "dificil"):
+        s = _story(name=f"ritmo_{diff}.json", difficulty=diff)
+        s.goto("toca", 6, 15, enemies=True)
+        boss = s.play.boss
+        check(f"chefe recebe o ritmo do {diff}", boss.pace == Game.DIFFICULTIES[diff]["boss_pace"])
+
+
+def test_selka_fights_up_close():
+    random.seed(3)
+    s = _story(name="selka_perto.json")
+    s.goto("ruinas", 6, 17, enemies=True)
+    boss = s.play.boss
+    s.p.invuln = 99
+    s.wait_until(lambda: boss.awake, 4.0, held={"right"})
+    seen = set()
+    for _ in range(int(10 / SIM_DT)):
+        # a jogadora gruda nela e bate sem parar
+        held = {"right"} if s.p.cx < boss.cx - 40 else ({"left"} if s.p.cx > boss.cx + 40 else set())
+        s.step(held, {"attack_quick"} if int(s.t * 10) % 3 == 0 else set())
+        s.p.invuln = 99
+        seen.add(boss.state)
+        if "lunge" in seen:
+            break
+    check("Selka parte para a investida quando a jogadora cola nela", "lunge" in seen, str(sorted(seen)))
+    check("Selka não pula para trás mais que o limite seguido", boss.hops <= BC_MAX_HOPS())
+
+
+def BC_MAX_HOPS():
+    from src.config import Boss as BC
+    return BC.SISTER_MAX_HOPS
+
+
+def test_caelum_rests():
+    random.seed(4)
+    s = _story(name="caelum_descanso.json")
+    s.goto("altar", 6, 19, enemies=True)
+    boss = s.play.boss
+    s.p.invuln = 99
+    s.wait_until(lambda: boss.awake, 4.0, held={"right"})
+    lowest = None
+    for _ in range(int(40 / SIM_DT)):
+        s.step()
+        s.p.invuln = 99
+        s.play.hazards = [h for h in s.play.hazards if type(h).__name__ != "Flood"]
+        for e in s.play.enemies:                     # ilusões somem (como se a jogadora acertasse)
+            if type(e).__name__ == "Illusion":
+                e.alive = False
+        if boss.state == "rest":
+            lowest = boss.bottom if lowest is None else max(lowest, boss.bottom)
+            if lowest > boss.floor_y - 40:
+                break
+    check("Caelum desce cansado depois de alguns ataques", lowest is not None)
+    check("no descanso dá para acertar sem pular",
+          lowest is not None and lowest > boss.floor_y - 40, f"base={lowest} chão={boss.floor_y}")
+
+
 TESTS = [
     test_world_structure, test_all_doors, test_new_game_start, test_ability_pickup, test_coins_and_bag,
     test_energy_and_heal, test_bench, test_shop, test_breakable_secret, test_shield, test_flier_and_jumper,
     test_boss, test_save_and_continue, test_map_and_screens,
     test_gates, test_reach_without_abilities, test_reach_with_dash, test_reach_with_double_jump,
+    test_ceiling_door_nudge, test_hazard_returns_in_room, test_boss_tuning, test_selka_fights_up_close,
+    test_caelum_rests,
 ]

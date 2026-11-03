@@ -1,5 +1,33 @@
 # Pendências por área
 
+## Gameplay
+
+Feito (`src/states.py`, `src/bosses.py`, `src/config.py`, `src/player.py`, `src/audio.py`, testes):
+- QA 2: espinhos e água voltam ao **primeiro chão firme da sala atual** (perto da porta de entrada), nunca
+  tábua que desaba nem plataforma móvel. Bola de cristal só se ela estiver na própria sala ou se a sala
+  ainda não teve chão firme. `tests/test_ship.py` (`test_water_returns_to_checkpoint`) ajustado para isso.
+- QA 10: porta no teto (`N`) sem direção apertada leva a jogadora até a beirada do buraco
+  (`Doors.CEILING_NUDGE_*` em `config.py`). Testado em Porão 1 -> Convés e Convés -> Cordame.
+- QA 1: Selka recua no máximo 2 pulinhos seguidos (`Boss.SISTER_MAX_HOPS`); encurralada ou depois disso,
+  investe com aviso e fica exposta na recuperação.
+- QA 3: vida dos chefes no `config.py` (`Boss.HP_*`): 48 / 76 / 84 / 100 (24 / 38 / 42 / 50 golpes
+  rápidos no Normal). Caelum desce cansado (estrelinhas) a cada 3 ataques por 2,2 s, num vão sem plataforma,
+  ao alcance do golpe sem pular. Ritmo por dificuldade (`boss_pace`: 0,85 / 1,0 / 1,1): avisos mais longos
+  no Fácil. Dano continua 1 coração por golpe em todos os chefes (a dificuldade muda vida e corações).
+- Avisos: o canhonaço marca no chão a área real da explosão; aviso do raio usa a própria duração.
+- Interface em `states.py`: pausa com as posições sugeridas; `MessageState` com `ui.panel`, texto quebrado,
+  caixa larga e `ui.hints` (QA 5); `DialogState` com `ui.panel`; tela de morte com a bolsa 30 px abaixo
+  (QA 4); "FINAL VERDADEIRO" em título que cabe na tela (QA 11).
+- Sons: `heavy_charge` no preparo do golpe forte (o `attack_heavy` sai no golpe), `break_wood` na parede
+  rachada, `explosion` nas bombas, `ability` ao pegar habilidade, `door` quando o portão da arena fecha.
+
+Pendente / para outras frentes:
+- Arte: retrato da Capitã na caixa de diálogo continua pequeno (`objects.draw_portrait` não tem arte para
+  ela e cai no `draw_character`). `objects.draw_character` 3 px acima do chão continua (arquivo da arte).
+- Arte: mexi só duas linhas de desenho em `bosses.py` (estrelinhas do Caelum no descanso e elipse da área no
+  `CannonShot.draw`); podem trocar por arte própria.
+- Jogar as lutas de verdade para afinar: a vida nova dos chefes ainda não foi medida com o bot do QA.
+
 ## Interface
 
 Feito (`src/ui.py`, `src/menus.py`, `tests/test_menus.py`):
@@ -14,6 +42,12 @@ Feito (`src/ui.py`, `src/menus.py`, `tests/test_menus.py`):
 - QA 6: "loja da Vila" virou "loja do convés" (mapa e inventário).
 - QA 7 e 8: com a partida congelada (pausa, mapa, loja, ferreiro, amuletos, diálogo) o HUD esconde o nome
   da sala e a dica ESC/Tab/M; detecta pelo tempo de jogo parado há mais de 0,12 s.
+- Revisão de legibilidade em 960x540 (03/11): menu, dificuldade, intro, como jogar, recordes, créditos,
+  HUD, mapa e barra de chefe conferidos. Corrigido: colunas do "Como jogar > Controles" alinhadas
+  (antes cada ação começava num x diferente); dica ESC/Tab/M do HUD presa à margem direita
+  (`ui.hints(..., align="right")`); legenda do mapa calculada pela largura do texto (encostava na
+  moldura); créditos já abrem com o painel cheio e só sobem depois de 1,6 s (antes ficavam ~10 s vazios).
+  Teste novo `test_credits_and_hints`.
 
 Pendente (depende de `src/states.py`, que é da área de gameplay):
 - Pausa: menu encosta no título "PAUSADO". Sugestão: título y=40 size=44; menu center_y=190, spacing=36;
@@ -22,6 +56,14 @@ Pendente (depende de `src/states.py`, que é da área de gameplay):
   `ui.hints(...)`. Retrato da caixa de diálogo sai quase vazio.
 - QA 4 (morte: texto da bolsa 30 px abaixo), QA 5 (MessageState: quebrar o corpo com `ui.wrap_text`
   e alargar a caixa) e QA 11 (EndingState: "FINAL VERDADEIRO" com `title=True`, igual ao "FIM").
+- Loja/ferreiro (`ShopState`/`ListState`): a descrição do mapa diz "(M ou Tab)", mas M é o som; trocar
+  por "(Tab)". A tela não tem painel: o texto fica solto sobre o jogo e o "[W] Loja" aparece por trás.
+  Sugestão: `ui.panel(surf, (140, 84, 680, 300))` atrás da lista e `ui.hints(...)` no rodapé no lugar de
+  "W/S navegar - Enter escolher - ESC sair".
+- Pausa: com o menu em `center_y=172` o "Continuar" (y=72) encosta no "PAUSADO" (y=34). Conferido de novo
+  em 03/11; a sugestão acima continua valendo.
+- Créditos mostram o texto provisório "[Nome do integrante - RA] (editar em src/menus.py, lista CREDITS)":
+  falta o Gabriel mandar os nomes e RAs da equipe para pôr em `CREDITS` (`src/menus.py`).
 - Ideias de polimento ainda não feitas: nome da sala ao passar o mouse no mapa; tela de resultados
   com painel (ResultsState mora em `states.py`).
 - Detalhes e capturas antes/depois: nota `interface.md` nas notas de trabalho da interface.
@@ -44,10 +86,21 @@ Feito:
     mesmo com a múmia e o cavaleiro do chão leste;
   - nº 10 (Convés -> Cordame): resolvido pelo redesenho, há uma plataforma de pouso sobre a abertura.
 
+Feito (03/11, rodada de ajuste, sem commit):
+- QA nº 10 conferido: com o empurrão lateral do gameplay, pular reto pelas duas escotilhas chega em pé.
+- Porão 1: rato do piso de cima saiu de 36 para 38 (não fica mais em cima do pouso do buraco).
+- Porão 2: gaivota saiu de cima do canal (plataforma móvel + tábuas) para o chão leste (46, 13).
+- Vergas: tábuas 27-31 que cedem + pedaço firme 32-33 para esperar a plataforma móvel sem cair no mar;
+  gaivota saiu de cima das tábuas para a rota alta (guarda a carta 2).
+- Praia: céu vazio ganhou um caminho opcional: do coqueiro, galho (16-20, linha 8) e ninho (7-11, linha 5)
+  com duas caixas de moedas.
+- Templo: pedras soltas 17-19 + pedra firme 20-21 para esperar a plataforma sobre os espinhos.
+- `tests/test_ship.py`: alcances novos (ninho, pedaço firme, pedra firme, câmara) e `test_reach_movers`
+  (12 saltos de/para plataformas móveis no Porão 2, Cordame, Vergas, Floresta e Templo, que antes não
+  tinham teste).
+
 Pendente:
-- QA nº 10 (Porão 1 -> Convés): pular reto pela escotilha ainda faz cair de volta. Uma plataforma de mão
-  única sobre a escotilha resolveria, mas aí descer ao porão exigiria apertar S, e isso não é ensinado.
-  Sugestão para gameplay: empurrão lateral ao chegar por uma porta `N`.
+- Parado por limite de uso. Falta jogar as salas de verdade (dificuldade humana) e conferir as capturas.
 - QA nº 2, parte de gameplay: voltar ao último chão seguro da mesma sala em vez da bola de outra sala.
 - Jogar as salas de verdade para ajustar a dificuldade (posição de inimigos, largura das tábuas).
 - `WALKERS` (`src/background.py`): nenhuma posição precisa mudar.
@@ -74,3 +127,34 @@ Pendente:
   (`elenco.py`, sem `"base": "heroi"`) e a capitã caída agora deita de costas (`pixelart.corpse`, rotação -90).
   **Falta conferir em jogo** (parei por limite de uso: 5 h em 99%). Se ainda estiver feio: tirar os chapéus dos papéis
   ou usar o desenho provisório até chegarem os sprites do PixelLab.
+
+### Arte (3/11, sem commit)
+
+Feito:
+- `tools/animar_pose.py`: folhas `anim_<nome>.png` (parado, andando, ataque) para lobo, goblin, os 10 NPCs PixelLab,
+  Selka e Caelum, ligadas em `creatures.py`, `elenco.py` e no `draw` de `bosses.py`. NPCs na altura da protagonista.
+- Céus `porsol` (praia) e `crepusculo` (floresta); efeitos novos (`tools/importar_efeitos.py`): morte_chefe, absorver,
+  impacto_roxo, impacto_critico, defesa, pressa, carga (Caelum), aviso_duplo (Selka).
+- Sons health_up, slime_hit, slime_death, ground_slam, door_crash, ui_woosh e música `boss_01.ogg`.
+- `docs/PERSONAGENS.md` e `assets/CREDITOS.md` atualizados.
+
+Pendente:
+- Gameplay: ligar os sons novos em `SFX_NAMES`/`audio.play`, `boss_01` nas lutas e os efeitos novos nos eventos.
+- PixelLab recusou o token (401): ciclos desenhados à mão para Selka e Caelum ficariam melhores.
+- Suíte completa rodada no fim da sessão de arte; conferir o resultado antes do commit.
+
+## Integração e testes
+
+Feito (03/11):
+- Rodada 3 de QA com todos os scripts de `docs/qa/scripts/` (detalhes em `docs/QA.md`). Corrigidos desde a
+  rodada 2: crash do `MODEL_OF`, "loja da Vila", nome da sala e dica do HUD por cima das telas, lobo nos
+  espinhos, fontes dos finais.
+- `qa_perigos.py`: caso do Cordame 1 marcado como "não testado" (sala redesenhada).
+- Suíte completa: 436/436.
+
+Pendente (por frente):
+- Gameplay: Selka só pula para trás quando a jogadora fica colada (QA 1); chefes com 26–108 golpes e Caelum
+  bem mais longo (QA 3); texto da bolsa sobre o da morte (QA 4); corpo do diário sem quebra de linha (QA 5);
+  menu da pausa colado no título (QA 12); pulo reto pelas portas do teto volta à sala de baixo (QA 10).
+- Fases: sem bola usada, cair no canal do Porão 2 ou na vala da Praia volta à Cabine (QA 2).
+- QA: posição nova para o teste "cair pelo fundo do Cordame 1"; rota inteira numa só partida ainda não foi jogada.

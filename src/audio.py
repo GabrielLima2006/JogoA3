@@ -17,6 +17,7 @@ SFX_NAMES = (
     "heavy_charge", "hit", "heavy_hit", "hurt", "death", "enemy_death",
     "shoot", "impact", "checkpoint", "ui_move", "ui_select",
     "heal", "block", "coin", "item", "buy", "boss", "step", "skid",
+    "break_wood", "explosion", "ability", "door",
 )
 
 AUDIO_DIR = asset("sons", "efeitos")

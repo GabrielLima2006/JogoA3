@@ -14,7 +14,7 @@ from .movers import Mover
 from .physics import move_and_collide, tile_span
 from .camera import Camera
 from .combat import ProjectileSystem, resolve_player_attack
-from .config import Audio as AudioCfg, Boss as BossCfg, Colors, Display, Effects as FX, Enemies as EN, Game, Player as PCfg, World
+from .config import Audio as AudioCfg, Boss as BossCfg, Colors, Display, Doors as DoorCfg, Effects as FX, Enemies as EN, Game, Player as PCfg, World
 from .effects import EffectSystem
 from .enemies import spawn_enemies
 from .objects import Bench, Character, CoinBag, ItemPickup, NPC, Speaker, draw_character, draw_portrait, spawn_coins
@@ -71,6 +71,8 @@ class PlayState(State):
         self.riding = None              # plataforma móvel em que o jogador está
         self.mover_ignore = 0.0
         self.pending_after_boss = None  # (segundos, dados do chefe) para as falas pós-luta
+        self.room_entry = None          # primeiro chão firme da sala atual (volta dos perigos)
+        self.door_nudge = None          # (x alvo, direção, tempo) ao subir por uma porta no teto
         self.load_room(room)
         self.camera.snap(self.player, self.room)
 
@@ -108,6 +110,8 @@ class PlayState(State):
         self.hazards = []
         self.movers = [Mover(m) for m in room.movers]
         self.riding = None
+        self.room_entry = None
+        self.door_nudge = None
         self.crumble_timers = {}
         self.items = []
         self.interactables = []
@@ -146,7 +150,8 @@ class PlayState(State):
     def _spawn_enemies(self, room):
         if self.story is None:
             return spawn_enemies(room, room.boss_defeated)
-        mult = Game.DIFFICULTIES.get(self.progress.difficulty, {}).get("enemy_hp", 1.0)
+        diff = Game.DIFFICULTIES.get(self.progress.difficulty, {})
+        mult = diff.get("enemy_hp", 1.0)
         out = []
         for spawn in room.spawns:
             kind, x, y = spawn[0], spawn[1], spawn[2]
@@ -159,6 +164,8 @@ class PlayState(State):
         for e in out:
             if e.max_hp > 1:
                 e.max_hp = e.hp = max(1, round(e.max_hp * mult))
+            if e.is_boss:
+                e.pace = diff.get("boss_pace", 1.0)   # ritmo dos ataques (avisos mais longos no Fácil)
         return out
 
     def spawn_enemy(self, enemy):
@@ -225,7 +232,35 @@ class PlayState(State):
             else:
                 p.y = 1.0
         self.load_room(new_room)
+        if side == "N":
+            self.door_nudge = self._nudge_off_hole(nd)
         self.camera.snap(p, self.room)
+
+    def _nudge_off_hole(self, door):
+        """Ao subir por um buraco no chão, escolhe a beirada mais próxima para onde a jogadora
+        é levada se não segurar nenhuma direção (senão ela cairia de volta pelo buraco)."""
+        p = self.player
+        room = self.room
+        rows = range(max(0, room.rows_count - 6), room.rows_count)
+        options = []
+        for tx, d in ((door.lo - 1, -1), (door.hi + 1, 1)):
+            if any(room.is_solid(tx, ty) or room.is_oneway(tx, ty) for ty in rows):
+                target = (door.lo * T - p.w - 4) if d < 0 else ((door.hi + 1) * T + 4)
+                options.append((abs(target - p.x), target, d))
+        if not options:
+            return None
+        _, target, d = min(options)
+        return (target, d, DoorCfg.CEILING_NUDGE_TIME)
+
+    def _apply_door_nudge(self, inp, dt):
+        p = self.player
+        target, d, t = self.door_nudge
+        t -= dt
+        if t <= 0 or inp.axis_x() != 0 or p.dashing or (d > 0 and p.x >= target) or (d < 0 and p.x <= target):
+            self.door_nudge = None
+            return
+        p.vx = d * PCfg.RUN_SPEED * DoorCfg.CEILING_NUDGE_SPEED
+        self.door_nudge = (target, d, t)
 
     # --- loop ---
     def frame(self, dt, inp):
@@ -292,6 +327,8 @@ class PlayState(State):
                 self.mover_ignore = 0.25
         self.mover_ignore = max(0.0, self.mover_ignore - dt)
         prev_bottom = p.bottom
+        if self.door_nudge is not None:
+            self._apply_door_nudge(inp, dt)
         p.update(dt, inp, self.room, self)
         self._land_on_movers(prev_bottom)
         self._update_crumble(dt)
@@ -393,6 +430,7 @@ class PlayState(State):
             room.fight_active = True
             self.effects.add_shake(6)
             self.audio.play("boss")
+            self.audio.play("door")          # o portão da arena fecha
             self.audio.play_music(AudioCfg.MUSIC["boss"])
             info = self._boss_info(room)
             if info is not None:
@@ -462,7 +500,7 @@ class PlayState(State):
         self.progress.broken.add(f"{self.room.id}:{tx}:{ty}")
         self.effects.burst(tx * T + T / 2, ty * T + T / 2, 16, self.room.palette[3], speed=(80, 280), gravity=700)
         self.effects.add_shake(4)
-        self.audio.play("impact")
+        self.audio.play("break_wood")
         self.save()
 
     # --- coleta / interação ---
@@ -511,7 +549,7 @@ class PlayState(State):
         if self.player.max_hp > old_max:
             self.player.hp = self.player.max_hp
         self.effects.burst(item.x, item.y - 20, 24, Colors.ITEM, speed=(60, 260), gravity=-50)
-        self.audio.play("item")
+        self.audio.play("ability" if item.kind == "ability" else "item")
         self.save()
         if msg:
             self.app.push(MessageState(self.app, self, *msg))
@@ -614,11 +652,15 @@ class PlayState(State):
         self.hazard_timer = PCfg.HAZARD_FREEZE
 
     def _respawn_at_safe(self):
-        """Depois de cair em água ou espinhos, volta sempre ao último checkpoint (bola de cristal).
-        Voltar ao "último chão firme" podia cair numa tábua ou plataforma que já não estava lá e
-        prender a jogadora num loop de quedas."""
+        """Depois de cair em água ou espinhos, volta ao primeiro chão firme da sala atual (perto da
+        porta por onde ela entrou). Esse ponto nunca é tábua que desaba nem plataforma móvel, então
+        não há loop de quedas. Se a sala tem a bola de cristal usada, ou se ainda não houve chão
+        firme nela, volta à bola de cristal."""
         room, x, y = self._spawn_point()
         p = self.player
+        if room is not self.room and self.room_entry is not None:
+            room = self.room
+            x, y = self.room_entry
         if room is not self.room:
             p.place(x, y)
             self.load_room(room)
@@ -635,11 +677,13 @@ class PlayState(State):
         p = self.player
         if not p.on_ground or p.hurt_lock > 0 or p.dashing or not is_supported(p, self.room):
             return
-        if self.room.fight_active:
+        if self.room.fight_active or self.riding is not None:
             return
         ty = int((p.bottom - 1) // T)
         for tx in range(int(p.left // T) - 1, int(p.right // T) + 2):
             if self.room.is_spike(tx, ty) or self.room.is_spike(tx, ty + 1):
+                return
+            if self.room.tile(tx, ty + 1) == CRUMBLE:
                 return
         # exige um pouco de chão além dos pés, para não reaparecer na beirada
         ty_floor = int(p.bottom // T)
@@ -648,6 +692,8 @@ class PlayState(State):
             if not (self.room.is_solid(tx, ty_floor) or self.room.is_oneway(tx, ty_floor)):
                 return
         self.last_safe = (self.room.id, p.cx, p.bottom)
+        if self.room_entry is None:
+            self.room_entry = (p.cx, p.bottom)
 
     # --- morte ---
     def on_player_death(self):
@@ -868,7 +914,7 @@ class PauseState(Overlay):
         restart = "Confirmar? (apaga o save)" if self.confirm_restart else "Reiniciar jogo"
         self.menu = ui.Menu([("Continuar", "resume"), ("Voltar à bola de cristal", "bench"), (som, "sound"),
                              (restart, "restart"), ("Menu inicial", "menu"), ("Sair do jogo", "quit")],
-                            center_y=172, spacing=40, size=34)
+                            center_y=190, spacing=36, size=34)
         self.menu.index = index
 
     def frame(self, dt, inp):
@@ -900,10 +946,10 @@ class PauseState(Overlay):
     def draw(self, surf):
         self.play.draw(surf)
         ui.dim(surf, 190)
-        ui.text(surf, "PAUSADO", 48, (Display.WIDTH // 2, 34), Colors.UI_TEXT, "center", title=True)
+        ui.text(surf, "PAUSADO", 44, (Display.WIDTH // 2, 40), Colors.UI_TEXT, "center", title=True)
         self.menu.draw(surf)
-        ui.draw_inventory(surf, self.play.progress, self.play.player, 40, 318)
-        ui.draw_controls(surf, 470, 300, title=False, compact=True)
+        ui.draw_inventory(surf, self.play.progress, self.play.player, 40, 330)
+        ui.draw_controls(surf, 480, 318, title=False, compact=True)
 
 
 class MapState(Overlay):
@@ -946,15 +992,24 @@ class MessageState(Overlay):
     def draw(self, surf):
         self.play.draw(surf)
         ui.dim(surf, 150)
-        box = pygame.Rect(0, 0, 640, 170)
+        # caixa larga; o corpo é quebrado em linhas e a altura acompanha o texto
+        width = 780
+        inner = width - 80
+        title_size = 42
+        while title_size > 26 and ui.font(title_size, True).size(self.title)[0] > inner:
+            title_size -= 2
+        lines = ui.wrap_lines(self.body, 26, inner)
+        step = max(26, ui.line_height(26) - 2) + 4
+        box = pygame.Rect(0, 0, width, 120 + len(lines) * step + 30)
         box.center = (Display.WIDTH // 2, Display.HEIGHT // 2)
-        pygame.draw.rect(surf, (20, 22, 34), box, border_radius=10)
-        pygame.draw.rect(surf, Colors.ITEM, box, 2, border_radius=10)
-        ui.text(surf, self.title, 42, (box.centerx, box.y + 46), Colors.ITEM, "center", title=True)
-        ui.text(surf, self.body, 26, (box.centerx, box.y + 96), Colors.UI_TEXT, "center")
+        ui.panel(surf, box, trim=Colors.ITEM)
+        ui.text(surf, self.title, title_size, (box.centerx, box.y + 46), Colors.ITEM, "center", title=True)
+        y = box.y + 86
+        for line in lines:
+            ui.text(surf, line, 26, (box.centerx, y), Colors.UI_TEXT, "midtop")
+            y += step
         if self.t > 0.45:
-            ui.text(surf, "Enter / Espaço / clique para continuar", 20, (box.centerx, box.bottom - 22),
-                    Colors.UI_DIM, "center")
+            ui.hints(surf, [("Enter|Espaço", "continuar")], (box.centerx, box.bottom - 24))
 
 
 class ListState(Overlay):
@@ -1191,7 +1246,7 @@ class DeathState(Overlay):
         bag = self.play.progress.bag
         if bag:
             ui.text(surf, f"{bag[3]} moedas ficaram para trás. Volte para buscá-las.", 26,
-                    (Display.WIDTH // 2, 222), Colors.COIN, "center")
+                    (Display.WIDTH // 2, 252), Colors.COIN, "center")
         self.menu.draw(surf)
 
 
@@ -1241,12 +1296,9 @@ class DialogState(Overlay):
         self.play.draw(surf)
         W, H = Display.WIDTH, Display.HEIGHT
         box = pygame.Rect(30, H - 176, W - 60, 156)
-        shade = pygame.Surface(box.size, pygame.SRCALPHA)
-        shade.fill((12, 12, 20, 235))
-        surf.blit(shade, box)
-        pygame.draw.rect(surf, (150, 120, 80), box, 2, border_radius=8)
+        ui.panel(surf, box, alpha=235)
         portrait = pygame.Rect(box.x + 14, box.y + 14, 120, box.h - 28)
-        pygame.draw.rect(surf, (28, 26, 36), portrait, border_radius=6)
+        ui.panel(surf, portrait, studs=False, alpha=255)
         ch = self.character
         if not draw_portrait(surf, ch.style, portrait, self.t):
             draw_character(surf, ch.style, ch.color, ch.h, portrait.centerx, portrait.bottom - 8, self.t,
@@ -1255,7 +1307,7 @@ class DialogState(Overlay):
         shown = self.lines[self.index][:int(self.typed)]
         ui.wrap_text(surf, shown, 26, portrait.right + 18, box.y + 50, box.right - portrait.right - 40)
         if self._full():
-            ui.text(surf, "Enter / W / clique", 18, (box.right - 14, box.bottom - 22), Colors.UI_DIM, "topright")
+            ui.hints(surf, [("Enter|W", "avançar")], (box.right - 90, box.bottom - 18))
         ui.text(surf, f"{self.index + 1}/{len(self.lines)}", 18, (box.right - 14, box.y + 12), Colors.UI_DIM,
                 "topright")
 
@@ -1335,7 +1387,10 @@ class EndingState(Overlay):
         line = self.lines[self.index]
         final = self.index == len(self.lines) - 1
         if final:
-            ui.text(surf, line, 64, (W // 2, H // 2 - 20), (255, 214, 140), "center", title=True)
+            size = 64
+            while size > 36 and ui.font(size, True).size(line)[0] > W - 80:
+                size -= 4
+            ui.text(surf, line, size, (W // 2, H // 2 - 20), (255, 214, 140), "center", title=True)
         else:
             ui.wrap_text(surf, line[:int(self.typed)], 28, 110, H // 2 - 40, W - 220)
         ui.text(surf, "Enter / clique para continuar", 20, (W // 2, H - 30), Colors.UI_DIM, "center")

@@ -360,6 +360,17 @@ def character(style, pose="idle", phase=0.0, facing=1):
         "px_anciao": "anciao", "px_ancia": "ancia", "px_aldea": "aldea", "px_grumete": "grumete",
     }
     if style in pixel_lab:
+        # Folha animada (parado/andando/ataque) feita por tools/animar_pose.py, já na altura
+        # combinada com a protagonista. Sem ela, cai na pose parada reduzida.
+        quadro, pe = sprites.pose_anim(pixel_lab[style], "walk" if pose in ("walk", "run") else
+                                       ("attack" if pose == "attack" else "idle"), phase)
+        if quadro is not None:
+            out = pygame.Surface(CANVAS, pygame.SRCALPHA)
+            if facing < 0:
+                quadro = pygame.transform.flip(quadro, True, False)
+                pe = (quadro.get_width() - 1 - pe[0], pe[1])
+            out.blit(quadro, (FOOT[0] - pe[0], FOOT[1] - pe[1]))
+            return out
         src = sprites.image("personagens", f"npc_{pixel_lab[style]}.png")
         if src is not None:
             out = pygame.Surface(CANVAS, pygame.SRCALPHA)
