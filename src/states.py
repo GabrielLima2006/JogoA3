@@ -17,7 +17,7 @@ from .combat import ProjectileSystem, resolve_player_attack
 from .config import Audio as AudioCfg, Boss as BossCfg, Colors, Display, Effects as FX, Enemies as EN, Game, Player as PCfg, World
 from .effects import EffectSystem
 from .enemies import spawn_enemies
-from .objects import Bench, Character, CoinBag, ItemPickup, NPC, Speaker, draw_character, spawn_coins
+from .objects import Bench, Character, CoinBag, ItemPickup, NPC, Speaker, draw_character, draw_portrait, spawn_coins
 from .physics import is_supported, rects_overlap
 from .player import Player
 from .progress import CHARMS, SHOP_STOCK, Progress
@@ -583,7 +583,7 @@ class PlayState(State):
         self.progress.bench = (self.room.id, bench.x, bench.y)
         self.last_safe = self.progress.bench
         # descansar traz os inimigos da sala de volta
-        self.enemies = spawn_enemies(self.room, self.room.boss_defeated)
+        self.enemies = self._spawn_enemies(self.room)   # mesmas criaturas da sala (não os blocos genéricos)
         self.boss = next((e for e in self.enemies if e.is_boss), None)
         self.projectiles.clear()
         self.effects.ring(bench.x, bench.y - 16, 60, 0.5, Colors.ENERGY, 3)
@@ -1248,8 +1248,9 @@ class DialogState(Overlay):
         portrait = pygame.Rect(box.x + 14, box.y + 14, 120, box.h - 28)
         pygame.draw.rect(surf, (28, 26, 36), portrait, border_radius=6)
         ch = self.character
-        draw_character(surf, ch.style, ch.color, ch.h, portrait.centerx, portrait.bottom - 8, self.t,
-                       scale=1.4 if ch.style == "corpo" else 2.1)
+        if not draw_portrait(surf, ch.style, portrait, self.t):
+            draw_character(surf, ch.style, ch.color, ch.h, portrait.centerx, portrait.bottom - 8, self.t,
+                           scale=1.4 if ch.style == "corpo" else 2.1)
         ui.text(surf, ch.data["name"], 28, (portrait.right + 18, box.y + 14), (240, 200, 130), title=True)
         shown = self.lines[self.index][:int(self.typed)]
         ui.wrap_text(surf, shown, 26, portrait.right + 18, box.y + 50, box.right - portrait.right - 40)

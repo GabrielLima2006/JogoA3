@@ -390,19 +390,34 @@ class RatKing(Boss):
         moving = abs(self.vx) > 30
         if self.state in self.ATTACK_STATES:
             img = sprites.image("chefes", "rei_rato_ataque.png")
-        elif moving and int(self.x * 0.06) % 2:
+        elif moving and int(self.anim_t * 12) % 2:
             img = sprites.image("chefes", "rei_rato_andando.png")
         else:
             img = sprites.image("chefes", "rei_rato_parado.png")
         if img is None:
             phase = (self.x * 0.03) % 1.0 if moving else (self.anim_t * 0.8) % 1.0
             img = pixelart.rat(phase, -1, scale=1, cap=True, glow=self.awake)
-        bob = abs(math.sin(self.x * 0.05)) * 3 if moving else (1 if (self.anim_t * 1.5) % 1.0 > 0.5 else 0)
+        stride = math.sin(self.anim_t * 13)
+        bob = abs(stride) * 3 if moving else (1 if (self.anim_t * 1.5) % 1.0 > 0.5 else 0)
         v = sprites.variant(img, self.direction > 0, self.flash > 0 or self.telegraphing(), 2)
-        w = int(v.get_width() * (2 - self.squash))
-        h = int(v.get_height() * self.squash)
+        sx, sy, angle = 1.0, self.squash, 0
+        if self.state == "leap_tele":
+            sx, sy = 1.12, 0.68
+        elif self.state == "leap":
+            sx, sy = (0.9, 1.13) if self.vy < 0 else (1.08, 0.92)
+            angle = -self.direction * 4
+        elif self.state == "charge_tele":
+            sx, sy = 1.1, 0.88
+        elif self.state == "charge":
+            sx, sy, angle = 1.12, 0.9, -self.direction * 5
+        elif moving:
+            sx, sy = 1.0 + abs(stride) * 0.04, 1.0 - abs(stride) * 0.05
+        w = max(1, int(v.get_width() * sx))
+        h = max(1, int(v.get_height() * sy))
         if (w, h) != v.get_size():
             v = pygame.transform.scale(v, (w, h))
+        if angle:
+            v = pygame.transform.rotate(v, angle)
         surf.blit(v, v.get_rect(midbottom=(round(self.cx - cam_x), round(self.bottom - cam_y + 2 - bob))))
         if self.state == "stunned":
             self._stars(surf, cam_x, cam_y)
@@ -552,10 +567,28 @@ class RedKnight(Boss):
         return "idle", self.anim_t
 
     def draw(self, surf, cam_x, cam_y):
+        name, t = self.anim()
+        pose = {"slash": "ataque", "leap": "ataque", "run": "andando", "jump": "andando", "fall": "andando"}.get(name, "parado")
+        art = sprites.image("chefes", f"aldric_{pose}.png")
+        if art is not None:
+            # arte nova (vista "east", olha para a direita), 2x; respira parado, balança andando
+            bob = 0
+            if pose == "andando":
+                bob = abs(math.sin(self.anim_t * 10)) * 3
+            elif pose == "parado":
+                bob = math.sin(self.anim_t * 2.5) * 1.5
+            tint = (255, 150, 160, 255) if (self.powered or name == "transform") and not self.flash else None
+            white = self.flash > 0 or self.telegraphing()
+            v = sprites.variant(art, self.direction < 0, white, 2, tint)
+            r = art.get_bounding_rect()
+            foot_y = (r.bottom) * 2
+            surf.blit(v, v.get_rect(midbottom=(round(self.cx - cam_x), round(self.bottom - cam_y - bob + v.get_height() - foot_y))))
+            if self.powered and int(self.anim_t * 10) % 2 == 0:
+                pygame.draw.circle(surf, (255, 60, 90), (int(self.cx - cam_x), int(self.top - cam_y + 10)), 3)
+            return
         frames = sprites.grid(KNIGHT, 80, 80)
         if not frames:
             return super().draw(surf, cam_x, cam_y)
-        name, t = self.anim()
         idxs, fps = K_ANIMS[name]
         i = idxs[min(len(idxs) - 1, int(t * fps))] if name in ("transform", "slash") else idxs[int(t * fps) % len(idxs)]
         frame = frames[i]
@@ -680,17 +713,48 @@ class PirateSister(Boss):
 
     def draw(self, surf, cam_x, cam_y):
         st = self.state
-        if st in ("pistol", "pistol_tele"):
-            pose, ph = "shoot", 0
-        elif st in ("lunge", "lunge_tele"):
-            pose, ph = "attack", 0.0 if st == "lunge_tele" else 0.7
-        elif abs(self.vx) > 30:
-            pose, ph = "walk", (self.x * 0.02) % 1.0
+        img = sprites.image("personagens", "selka.png")
+        if img is None:
+            if st in ("pistol", "pistol_tele"):
+                pose, ph = "shoot", 0
+            elif st in ("lunge", "lunge_tele"):
+                pose, ph = "attack", 0.0 if st == "lunge_tele" else 0.7
+            elif abs(self.vx) > 30:
+                pose, ph = "walk", (self.anim_t * 2.0) % 1.0
+            else:
+                pose, ph = "idle", (self.anim_t * 0.8) % 1.0
+            img = pixelart.human("irma", pose, ph, self.direction)
+            v = sprites.variant(img, False, self.flash > 0 or self.telegraphing(), 2)
         else:
-            pose, ph = "idle", (self.anim_t * 0.8) % 1.0
-        img = pixelart.human("irma", pose, ph, self.direction)
-        white = self.flash > 0 or self.telegraphing()
-        v = sprites.variant(img, False, white, 2)
+            # PixelLab east já olha à direita; alterna corrida, salto e preparação pelo estado.
+            v = sprites.variant(img, self.direction < 0, self.flash > 0 or self.telegraphing())
+            stride = math.sin(self.anim_t * 15)
+            if st == "hop" or not self.on_ground:
+                sx, sy = 0.94, 1.10 if self.vy < 0 else 0.94
+                angle = -self.direction * (5 if self.vy < 0 else 8)
+                bob = 0
+            elif st in ("lunge_tele", "pistol_tele", "cannon_tele"):
+                sx, sy, angle, bob = 1.06, 0.9, -self.direction * 4, 0
+            elif st == "lunge":
+                sx, sy, angle, bob = 1.1, 0.88, -self.direction * 13, abs(stride)
+            elif st == "pistol":
+                sx, sy, angle, bob = 1.04, 0.96, -self.direction * 6, 0
+            elif abs(self.vx) > 30:
+                sx, sy, angle, bob = 1.0 + abs(stride) * 0.03, 1.0 - abs(stride) * 0.07, stride * 3, abs(stride) * 2
+            else:
+                sx, sy, angle, bob = 1.0, 1.0 + 0.018 * math.sin(self.anim_t * 3), 0, 0
+            size = (max(1, round(v.get_width() * sx)), max(1, round(v.get_height() * sy)))
+            if size != v.get_size():
+                v = pygame.transform.scale(v, size)
+            if angle:
+                v = pygame.transform.rotate(v, angle)
+            surf.blit(v, v.get_rect(midbottom=(round(self.cx - cam_x), round(self.bottom - cam_y + 2 + bob))))
+            if st == "lunge" and int(self.anim_t * 28) % 2 == 0:
+                x = round(self.cx - cam_x + self.direction * 20)
+                y = round(self.cy - cam_y)
+                pygame.draw.line(surf, (255, 236, 210), (x, y - 9), (x + self.direction * 23, y + 3), 3)
+                pygame.draw.line(surf, (209, 91, 100), (x, y - 12), (x + self.direction * 20, y), 1)
+            return
         surf.blit(v, v.get_rect(midbottom=(round(self.cx - cam_x), round(self.bottom - cam_y + 2))))
 
 
@@ -833,9 +897,32 @@ class Sorcerer(Boss):
                     e.vanish(ctx)
 
     def draw(self, surf, cam_x, cam_y):
-        pose = "cast" if self.state.endswith("_tele") else ("hurt" if self.flash > 0 else "idle")
-        img = pixelart.sorcerer(pose, (self.anim_t * 0.7) % 1.0, self.direction)
-        img = sprites.variant(img, False, self.flash > 0 or self.telegraphing())
+        img = sprites.image("personagens", "caelum.png")
+        if img is None:
+            pose = "cast" if self.state.endswith("_tele") else ("hurt" if self.flash > 0 else "idle")
+            img = pixelart.sorcerer(pose, (self.anim_t * 0.7) % 1.0, self.direction)
+            img = sprites.variant(img, False, self.flash > 0 or self.telegraphing())
+        else:
+            # A vista east já olha à direita. O feiticeiro prepara o corpo antes de conjurar.
+            img = sprites.variant(img, self.direction < 0, self.flash > 0 or self.telegraphing())
+            casting = self.state.endswith("_tele")
+            moving = abs(self.vx) + abs(self.vy) > 70
+            pulse = math.sin(self.anim_t * (18 if casting else 8))
+            if casting:
+                sx, sy = 1.04 + 0.035 * pulse, 0.94 - 0.025 * pulse
+                angle = -self.direction * (5 + 2 * pulse)
+            elif self.state == "tele_out":
+                sx, sy, angle = 0.94, 1.06, self.direction * 8 * (1 - self.alpha / 255)
+            elif moving:
+                sx, sy = 0.98, 1.04
+                angle = -self.direction * max(-5, min(5, self.vx / 90))
+            else:
+                sx, sy, angle = 1.0, 1.0 + 0.025 * math.sin(self.anim_t * 3), 0
+            size = (max(1, round(img.get_width() * sx)), max(1, round(img.get_height() * sy)))
+            if size != img.get_size():
+                img = pygame.transform.scale(img, size)
+            if angle:
+                img = pygame.transform.rotate(img, angle)
         if self.alpha < 255:
             img = img.copy()
             img.set_alpha(self.alpha)
@@ -845,6 +932,10 @@ class Sorcerer(Boss):
         k = 0.5 + 0.5 * math.sin(self.anim_t * 5)
         pygame.draw.circle(surf, (int(90 + 120 * k), 220, 230), (round(self.cx - cam_x + self.direction * 20),
                                                                  round(self.cy - cam_y + 4)), 4)
+        if self.state.endswith("_tele"):
+            radius = 8 + int(3 * (0.5 + 0.5 * math.sin(self.anim_t * 24)))
+            pygame.draw.circle(surf, (160, 255, 247), (round(self.cx - cam_x + self.direction * 20),
+                                                        round(self.cy - cam_y + 4)), radius, 1)
         shadow = pygame.Rect(0, 0, 50, 8)
         shadow.center = (round(self.cx - cam_x), round(self.floor_y - cam_y - 2))
         pygame.draw.ellipse(surf, (20, 60, 70), shadow)
@@ -881,8 +972,20 @@ class Illusion(Enemy):
         ctx.effects.sprite("fumaca_caveira", self.cx, self.cy, fps=18, scale=2)
 
     def draw(self, surf, cam_x, cam_y):
-        img = pixelart.sorcerer("idle", (self.t * 0.7) % 1.0, self.direction)
-        img = sprites.variant(img, False, self.flash > 0).copy()
+        img = sprites.image("personagens", "caelum.png")
+        if img is None:
+            img = pixelart.sorcerer("idle", (self.t * 0.7) % 1.0, self.direction)
+            img = sprites.variant(img, False, self.flash > 0).copy()
+        else:
+            img = sprites.variant(img, self.direction < 0, self.flash > 0).copy()
+            casting = self.cool < 0.35
+            pulse = math.sin(self.t * 20)
+            sx, sy = (1.04 + 0.03 * pulse, 0.94) if casting else (1.0, 1.0)
+            size = (max(1, round(img.get_width() * sx)), max(1, round(img.get_height() * sy)))
+            if size != img.get_size():
+                img = pygame.transform.scale(img, size)
+            if casting:
+                img = pygame.transform.rotate(img, -self.direction * 5)
         img.set_alpha(200 + int(40 * math.sin(self.t * 9)))
         lift = math.sin(self.t * 2.5) * 3
         surf.blit(img, img.get_rect(midbottom=(round(self.cx - cam_x), round(self.bottom - cam_y + 4 + lift))))

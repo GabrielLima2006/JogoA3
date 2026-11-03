@@ -242,6 +242,37 @@ class Character(Interactable):
         draw_character(surf, self.style, self.color, self.h, self.x - cam_x, self.y - cam_y, time)
 
 
+# arte de cada personagem para o retrato do diálogo (a mesma usada em cena)
+PORTRAITS = {
+    "amigo": ("personagens", "caelum.png"), "feiticeiro": ("personagens", "caelum.png"),
+    "irma": ("personagens", "selka.png"), "capita": ("personagens", "maren.png"),
+    "corpo": ("personagens", "maren.png"), "grumete": ("personagens", "npc_grumete.png"),
+    "rato": ("chefes", "rei_rato_parado.png"), "imediato": ("chefes", "aldric_parado.png"),
+    "cozinheira": ("personagens", "npc_comerciante.png"), "mercador": ("personagens", "npc_ferreira.png"),
+}
+
+
+def draw_portrait(surf, style, box, time=0.0):
+    """Retrato do diálogo: a arte do personagem ampliada em escala inteira, centrada na moldura.
+    Retorna False se não houver arte (aí o chamador usa o desenho antigo)."""
+    from . import sprites
+    ref = PORTRAITS.get(style)
+    art = sprites.image(*ref) if ref else None
+    if art is None:
+        return False
+    r = art.get_bounding_rect()
+    if r.w == 0:
+        return False
+    if style != "corpo":                                        # busto: cabeça e tronco
+        r = pygame.Rect(r.x, r.y, r.w, max(8, round(r.h * 0.55)))
+    art = art.subsurface(r)
+    k = max(1, min((box.w - 12) // r.w, (box.h - 12) // r.h))
+    img = pygame.transform.scale(art, (r.w * k, r.h * k))
+    bob = round(math.sin(time * 2) * 1)
+    surf.blit(img, img.get_rect(midbottom=(box.centerx, box.bottom - 6 + bob)))
+    return True
+
+
 def draw_character(surf, style, color, height, x, foot_y, time=0.0, scale=1.0):
     """Personagens em pixel art (também usados no retrato do diálogo)."""
     img = None

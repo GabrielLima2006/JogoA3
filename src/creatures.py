@@ -57,6 +57,11 @@ AS_CAST = {"comerciante": "mercador", "ferreiro": "ferreiro", "ladino": "capanga
            "estudioso": "amigo", "velho": "pescador", "anciã": "aldea", "menino": "grumete"}
 AS_SKELETON = {"mumia": "amarelo", "cavaleiro_negro": "branco"}
 SKELETON_ANCHOR = (46, 63)          # pé no quadro 96x64 (o esqueleto olha para a direita)
+WALK_SHEETS = {
+    "diabrete": "personagens/diabrete_andando.png",
+    "ladino": "personagens/ladino_andando.png",
+    "cavaleiro_escudo": "personagens/cavaleiro_escudo_andando.png",
+}
 
 
 def _skeleton_frame(color, t, moving, lean):
@@ -69,12 +74,47 @@ def _skeleton_frame(color, t, moving, lean):
 
 
 def draw_model(surf, name, x, foot_y, t, facing, moving=False, white=False, lean=0.0, float_amp=0.0, scale=1.0,
-               alpha=255):
-    """Desenha um modelo parado com vida: respira, balança ao andar, inclina ao atacar, flutua."""
-    if name in AS_CAST:
+               alpha=255, state="", vy=0.0, airborne=False):
+    """Desenha os quadros sem deformar o pixel art; movimento vem do corpo e dos efeitos."""
+    def pose_and_blit(frame, flip=False, frame_scale=1.0):
+        # Ampliar ou girar a folha inteira deslocava partes finas e borrava contornos.
+        # Mantemos a grade original e ancoramos pelo pé, inclusive ao espelhar.
+        # O espelhamento fica para blit_anchor, que também corrige a âncora.
+        v = sprites.variant(frame, False, white, frame_scale)
+        if alpha < 255:
+            v = v.copy()
+            v.set_alpha(alpha)
+        bob = (round(abs(math.sin(t * 12)) * 2) if moving else 0) if not airborne else 0
+        lift = round(math.sin(t * 2.5) * float_amp)
+        sprites.blit_anchor(surf, v, x, foot_y - bob + lift,
+                            (v.get_width() // 2, v.get_height() - 1), flip=flip)
+
+        # O ataque aparece como efeito separado; o corpo permanece pixel-perfect.
+        if state in ("bash", "lunge", "charge", "slash", "pistol") or lean != 0:
+            frames = sprites.grid("efeitos/corte_h.png", 48, 48)
+            if frames:
+                slash = frames[int(t * 18) % len(frames)]
+                slash = sprites.variant(slash, facing < 0)
+                surf.blit(slash, slash.get_rect(center=(round(x + facing * 24),
+                                                        round(foot_y - frame.get_height() * frame_scale * 0.58))))
+
+    # Só estas duas criaturas ainda usam os retratos laterais recém-importados.
+    # Os modelos sombreados da folha da equipe são melhores para os demais inimigos.
+    art = sprites.image("personagens", f"inimigo_{name}.png") if name in ("lobo", "goblin") else None
+    if art is not None:
+        # As vistas east usadas nestes arquivos já olham para a direita.
+        pose_and_blit(art, facing < 0, scale)
+        return
+    if name in AS_CAST and name not in ("ladino", "cavaleiro_escudo"):
         from . import elenco
         pose = "attack" if lean else ("walk" if moving else "idle")
-        img = elenco.character(AS_CAST[name], pose, (t * (1.6 if moving else 0.5)) % 1.0, facing)
+        arte_propria = {
+            "comerciante": "px_comerciante", "ferreiro": "px_ferreira", "aldea": "px_aldea",
+            "curandeira": "px_curandeira", "fazendeiro": "px_pescador", "bardo": "px_bardo",
+            "estudioso": "px_estudioso", "velho": "px_anciao", "anciã": "px_ancia", "menino": "px_grumete",
+        }
+        estilo = arte_propria.get(name, AS_CAST[name])
+        img = elenco.character(estilo, pose, (t * (1.6 if moving else 0.5)) % 1.0, facing)
         v = sprites.variant(img, False, white, scale)
         if alpha < 255:
             v = v.copy()
@@ -90,28 +130,12 @@ def draw_model(surf, name, x, foot_y, t, facing, moving=False, white=False, lean
     img, (ax, ay) = npc_frame(name)
     if img is None:
         return
+    if name in WALK_SHEETS and moving:
+        frames = sprites.grid(WALK_SHEETS[name], 128, 96)
+        if frames:
+            img = frames[int(t * 10) % len(frames)]
     flip = facing > 0                      # os modelos olham para a esquerda
-    v = sprites.variant(img, flip, white)
-    if moving:
-        sy = 1.0 + 0.05 * math.sin(t * 16)
-        bob = abs(math.sin(t * 8)) * 2
-    else:
-        sy = 1.0 + 0.025 * math.sin(t * 3)
-        bob = 0
-    lift = math.sin(t * 2.5) * float_amp
-    if scale != 1.0:
-        v = pygame.transform.scale(v, (round(v.get_width() * scale), round(v.get_height() * scale)))
-        ay = (ay + 1) * scale - 1
-    w, h = v.get_size()
-    if abs(sy - 1) > 0.01:
-        v = pygame.transform.scale(v, (w, max(1, round(h * sy))))
-    if alpha < 255:
-        v = v.copy()
-        v.set_alpha(alpha)
-    if lean:
-        v = pygame.transform.rotate(v, -lean * facing)
-    r = v.get_rect(midbottom=(round(x), round(foot_y - bob + lift + (h - ay - 1) * sy)))
-    surf.blit(v, r)
+    pose_and_blit(img, flip, scale)
 
 
 class _ModelMixin:
@@ -120,10 +144,14 @@ class _ModelMixin:
 
     def draw(self, surf, cam_x, cam_y):
         t = pygame.time.get_ticks() / 1000.0 + (self.x % 97) * 0.1
-        lean = 10 if getattr(self, "state", "") in ("windup", "bash", "chase", "lunge") else 0
+        state = getattr(self, "state", "")
+        if getattr(self, "telegraph", 0) > 0:
+            state = "skulls_tele"
+        lean = 10 if state in ("windup", "bash", "chase", "lunge", "charge") else 0
         draw_model(surf, self.model, self.cx - cam_x, self.bottom - cam_y, t, self.direction,
-                   abs(self.vx) > 20, self.flash > 0, lean, self.float_amp)
-        if getattr(self, "state", "") == "alert":
+                   abs(self.vx) > 20, self.flash > 0, lean, self.float_amp,
+                   state=state, vy=getattr(self, "vy", 0.0), airborne=not getattr(self, "on_ground", True))
+        if state == "alert":
             fr = sprites.effect("alerta")
             if fr:
                 a = fr[int(self.timer * 20) % len(fr)]

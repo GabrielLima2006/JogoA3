@@ -353,6 +353,24 @@ def character(style, pose="idle", phase=0.0, facing=1):
     """Quadro do personagem `style` (olhando para `facing`), com o pé em FOOT no quadro 96x80.
 
     Base "feiticeira" (padrão) ou "heroi" (espadachim), as duas de pacotes da internet."""
+    # Artes próprias geradas para os figurantes; mantêm o contrato de quadro do elenco.
+    pixel_lab = {
+        "px_comerciante": "comerciante", "px_ferreira": "ferreira", "px_curandeira": "curandeira",
+        "px_pescador": "pescador", "px_estudioso": "estudioso", "px_bardo": "bardo",
+        "px_anciao": "anciao", "px_ancia": "ancia", "px_aldea": "aldea", "px_grumete": "grumete",
+    }
+    if style in pixel_lab:
+        src = sprites.image("personagens", f"npc_{pixel_lab[style]}.png")
+        if src is not None:
+            out = pygame.Surface(CANVAS, pygame.SRCALPHA)
+            w, h = src.get_size()
+            scale = min(58 / max(1, w), 62 / max(1, h))
+            body = pygame.transform.scale(src, (max(1, round(w * scale)), max(1, round(h * scale))))
+            # A vista `east` do PixelLab já olha para a direita.
+            if facing < 0:
+                body = pygame.transform.flip(body, True, False)
+            out.blit(body, body.get_rect(midbottom=FOOT))
+            return out
     q = round(phase * 24) / 24
     key = (style, pose, q, facing)
     img = _cache.get(key)

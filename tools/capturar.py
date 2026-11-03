@@ -88,14 +88,29 @@ def galeria(out_dir):
         if fr:
             sprites.blit_anchor(s, fr[0], x, y, (38, 79), flip=facing < 0, scale=2)
     def irma(s, x, y, facing):
-        v = sprites.variant(pixelart.human("irma", "idle", 0.0, facing), False, False, 2)
+        img = sprites.image("personagens", "selka.png")
+        if img is None:
+            img = pixelart.human("irma", "idle", 0.0, facing)
+            v = sprites.variant(img, False, False, 2)
+        else:
+            v = sprites.variant(img, facing > 0)
         s.blit(v, v.get_rect(midbottom=(x, y + 2)))
     def mago(s, x, y, facing):
-        img = pixelart.sorcerer("idle", 0.0, facing)
+        img = sprites.image("personagens", "caelum.png")
+        if img is None:
+            img = pixelart.sorcerer("idle", 0.0, facing)
+        else:
+            img = sprites.variant(img, facing > 0)
         s.blit(img, img.get_rect(midbottom=(x, y + 4)))
+    def capita(s, x, y, facing):
+        img = pixelart.corpse()
+        s.blit(img, img.get_rect(midbottom=(x, y)))
+    def amigo(s, x, y, facing):
+        img = pixelart.human("amigo", "idle", 0.0, facing)
+        s.blit(img, img.get_rect(midbottom=(x, y + 2)))
     for n, f in (("rato", rat), ("gaivota", gull), ("slime", slime), ("canhao", cannon), ("caixa", crate),
                  ("CHEFE rei_rato", rei), ("CHEFE cavaleiro", knight), ("CHEFE irma", irma),
-                 ("CHEFE feiticeiro", mago)):
+                 ("CHEFE feiticeiro", mago), ("NPC Maren", capita), ("NPC Caelum", amigo)):
         entries.append((n, f))
 
     cols = 8

@@ -17,6 +17,8 @@ Só os arquivos usados foram copiados para esta pasta (renomeados em português)
 | pixelfood | Ghostpixxells | [CONFIRMAR link] | [CONFIRMAR licença] | `img/itens/*.png` |
 | Tiny Texture Pack 1 e 2 | Screaming Brain Studios | [CONFIRMAR link] | CC0 (domínio público) | `img/fundos/madeira_escura.png` |
 | Alagard (fonte) | Hewett Tsoi | [CONFIRMAR link] | [CONFIRMAR licença] | `fonts/alagard.ttf` |
+| Personagens PixelLab: Selka, Capitã Maren e Caelum | PixelLab / Gabriel Lima | https://pixellab.ai/ | Termos de serviço: https://pixellab.ai/termsofservice — [CONFIRMAR permissão de redistribuição e atribuição] | `img/personagens/selka.png`, `maren.png`, `caelum.png` |
+| NPCs e criaturas PixelLab: comerciante, ferreira, curandeira, pescador, estudioso, bardo, ancião, anciã, aldeã, grumete, lobo e goblin | PixelLab / Gabriel Lima | https://pixellab.ai/ | Termos de serviço: https://pixellab.ai/termsofservice — [CONFIRMAR permissão de redistribuição e atribuição] | `img/personagens/npc_*.png`, `inimigo_lobo.png`, `inimigo_goblin.png`; fontes em `assets/fontes/pixellab/` |
 
 ## Feito pela equipe
 
@@ -27,8 +29,9 @@ Só os arquivos usados foram copiados para esta pasta (renomeados em português)
   `img/chefes/rei_rato_{parado,andando,ataque}.png` (vista "south-west"). [CONFIRMAR com o grupo a
   descrição para a seção "Uso de IA" e os termos do PixelLab.]
 - Modelos de NPCs/criaturas da folha da equipe (`assets/fontes/npcs_modelos.webp` → `img/personagens/npcs.png`,
-  por `tools/importar_modelos.py`): a pedido do Gabriel, **só os monstros** ainda usam (lobo, goblin,
-  diabrete, espírito, lich) até chegarem as artes originais. [CONFIRMAR com o grupo como foram feitos.]
+  por `tools/importar_modelos.py`): usados nos inimigos diabrete, espírito, lich, ladino e cavaleiro do escudo,
+  além de reserva para outros modelos. Os ciclos em `img/personagens/{diabrete,ladino,cavaleiro_escudo}_andando.png`
+  foram articulados a partir dos respectivos modelos dessa folha. [CONFIRMAR com o grupo como foram feitos.]
 - Elenco humano: recoloração por região das bases da feiticeira (pacote "sample") e do espadachim
   (Metroidvania Forge) com acessórios desenhados por código (`src/elenco.py`).
 - Feiticeiro da Maré, ratos, gaivotas, canhões e caixotes: desenhados por código em `src/pixelart.py`.

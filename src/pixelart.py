@@ -72,8 +72,20 @@ OUTLINE_SOFT = (34, 20, 44)
 
 def human(style, pose="idle", phase=0.0, facing=1):
     """Humano feito a partir do sprite da protagonista (ver elenco.py). pose: idle, walk, attack, shoot, hurt.
-    Quadro 80x64 com o pé 3 px acima da borda de baixo, centralizado."""
+    Quadro 96x80 com o pé 3 px acima da borda de baixo, centralizado."""
     from . import elenco
+    if style == "amigo":
+        def caelum_frame():
+            from . import sprites
+            source = sprites.image("personagens", "caelum.png")
+            if source is None:
+                return None
+            canvas = _canvas(96, 80)
+            canvas.blit(source, (16, 14))
+            return canvas
+        img = cached(("pixellab_amigo",), caelum_frame)
+        if img is not None:
+            return pygame.transform.flip(img, True, False) if facing > 0 else img
     if style in elenco.CAST:
         return elenco.character(style, pose, phase, facing)
     q = round(phase * 8) / 8
@@ -219,9 +231,11 @@ def corpse():
     """A capitã caída: a mesma capitã do elenco, deitada e um pouco apagada.
     Sem o sprite, usa o desenho antigo feito no código."""
     def from_model():
-        from . import elenco
+        from . import elenco, sprites
         try:
-            img = elenco.character("capita", "idle", 0.0, -1)
+            img = sprites.image("personagens", "maren.png")
+            if img is None:
+                img = elenco.character("capita", "idle", 0.0, -1)
         except (KeyError, AttributeError):          # sem o papel no elenco: desenho provisório
             return None
         r = img.get_bounding_rect()

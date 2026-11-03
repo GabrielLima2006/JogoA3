@@ -1,0 +1,36 @@
+{
+  "group_id": "25ea4a1a-7e18-4c9c-879a-ea42aa45814b",
+  "states": [
+    {
+      "character": {
+        "id": "903f8995-5aa3-4195-bf64-76a90bdb49b5",
+        "name": "Strong attack",
+        "prompt": "Cavaleiro Rubro: homem alto em armadura vermelha pesada, capa rasgada pelo vento, espada larga. Poses: golpe, salto, e uma vers\u00e3o \u201cfase 2\u201d com a armadura rachada soltando vapor vermelho.",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "custom",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-23T12:40:48.585736+00:00"
+      },
+      "folder": "Strong_attack",
+      "frames": {
+        "rotations": {
+          "south": "Strong_attack/rotations/south.png",
+          "south-east": "Strong_attack/rotations/south-east.png",
+          "east": "Strong_attack/rotations/east.png",
+          "north-east": "Strong_attack/rotations/north-east.png",
+          "north": "Strong_attack/rotations/north.png",
+          "north-west": "Strong_attack/rotations/north-west.png",
+          "west": "Strong_attack/rotations/west.png",
+          "south-west": "Strong_attack/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-23T12:46:59.867297"
+}
