@@ -45,6 +45,9 @@ POSES = {
     # chefes: tamanho original (1x), só ganham o movimento
     "selka": ("selka.png", 62, 0.58, 5, False),
     "caelum": ("caelum.png", 59, 0.72, 0, False),
+    # criaturas mágicas da folha da equipe: flutuam (sem passada) e conjuram no ataque
+    "espirito": ("npcs.png#18", 50, 0.55, 0, False, True),
+    "lich": ("npcs.png#22", 73, 0.55, 0, False, True),
 }
 FRAMES = {"idle": 4, "walk": 6, "attack": 3}
 PAD = 6                                   # folga lateral para a passada e o ataque
@@ -158,8 +161,32 @@ def respirar(body, hip):
     return out
 
 
-def gerar(nome, arquivo, altura, quadril, passada, quadrupede):
-    src = pygame.image.load(os.path.join(DEST, arquivo)).convert_alpha()
+def carregar(arquivo):
+    """Arquivo em assets/img/personagens. "npcs.png#<linha>" recorta o modelo da folha da equipe
+    (quadros de 128x96 olhando para a esquerda) e o vira para a direita, como as vistas east."""
+    if "#" in arquivo:
+        nome, linha = arquivo.split("#")
+        folha = pygame.image.load(os.path.join(DEST, nome)).convert_alpha()
+        quadro = folha.subsurface((0, int(linha) * 96, 128, 96)).copy()
+        return pygame.transform.flip(quadro, True, False)
+    return pygame.image.load(os.path.join(DEST, arquivo)).convert_alpha()
+
+
+def conjurar(base, hip):
+    """Ataque mágico (espírito, lich): recolhe, carrega com brilho roxo e lança para a frente."""
+    w, h = base.get_size()
+    recolhe = pygame.Surface((w, h), pygame.SRCALPHA)
+    recolhe.blit(inclinar(base, hip, -3), (0, -1))
+    carrega = pygame.Surface((w, h), pygame.SRCALPHA)
+    carrega.blit(inclinar(base, hip, -5), (0, -2))
+    brilho = carrega.copy()
+    brilho.fill((48, 24, 72, 0), special_flags=pygame.BLEND_RGB_ADD)
+    lanca = inclinar(base, hip, 6)
+    return [recolhe, brilho, lanca]
+
+
+def gerar(nome, arquivo, altura, quadril, passada, quadrupede, magico=False):
+    src = carregar(arquivo)
     src = src.subsurface(src.get_bounding_rect()).copy()
     body = reduzir(src, altura)
     bw, bh = body.get_size()
@@ -180,13 +207,15 @@ def gerar(nome, arquivo, altura, quadril, passada, quadrupede):
             up.blit(q, (0, -1))
             q = up
         linhas["walk"].append(q)
-    for avanco in (2, 5, 3):
+    for avanco in (() if magico else (2, 5, 3)):
         q = inclinar(base, hip, avanco)
         if quadrupede:                            # bote: o corpo todo avança e abaixa a cabeça
             q2 = pygame.Surface((fw, fh), pygame.SRCALPHA)
             q2.blit(cisalhar(base, hip, -2, True, 1), (avanco // 2, 0))
             q = inclinar(q2, hip, avanco // 2)
         linhas["attack"].append(q)
+    if magico:
+        linhas["attack"] = conjurar(base, hip)
 
     cols = max(FRAMES.values())
     sheet = pygame.Surface((fw * cols, fh * 3), pygame.SRCALPHA)

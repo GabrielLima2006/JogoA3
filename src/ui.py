@@ -908,8 +908,13 @@ def draw_inventory(surf, progress, player, x, y):
 # Mapa
 # ---------------------------------------------------------------------------
 
+# salas desenhadas no último draw_map: [(retângulo na tela, nome)] (usado pelo hover do mouse)
+map_rooms = []
+
+
 def draw_map(surf, play):
     progress = play.progress
+    map_rooms.clear()
     t = _now()
     frame = pygame.Rect(24, 64, Display.WIDTH - 48, Display.HEIGHT - 112)
     text(surf, "Mapa", 44, (Display.WIDTH // 2, 34), Colors.UI_TEXT, "center", title=True)
@@ -950,6 +955,7 @@ def draw_map(surf, play):
         rx, ry = to_screen(room.origin_tx, room.origin_ty)
         rect = pygame.Rect(round(rx), round(ry), round(room.cols * scale), round(room.rows_count * scale))
         current = room is play.room
+        map_rooms.append((rect.copy(), room.name))
         pygame.draw.rect(surf, INK, rect.inflate(4, 4))
         pygame.draw.rect(surf, (44, 52, 78) if current else (30, 35, 52), rect)
         edge = room.palette[3]
@@ -986,3 +992,28 @@ def draw_map(surf, play):
     for i, (col, name) in enumerate(legend):
         diamond(surf, (lx, ly + 8 + i * 20), 4, col)
         text(surf, name, 20, (lx + 12, ly + i * 20), Colors.UI_DIM)
+
+
+def map_room_at(pos):
+    """Nome da sala do mapa sob `pos` (ou None)."""
+    for rect, name in reversed(map_rooms):
+        if rect.collidepoint(pos):
+            return name
+    return None
+
+
+def draw_map_hover(surf, mouse_pos):
+    """Contorno e etiqueta com o nome da sala sob o mouse. Chamar depois de `draw_map` (ou do cache dele)."""
+    name = map_room_at(mouse_pos)
+    if name is None:
+        return None
+    rect = next(r for r, n in reversed(map_rooms) if n == name)
+    pygame.draw.rect(surf, SELECTED, rect.inflate(2, 2), 1)
+    f = font(20)
+    tw, th = f.size(name)
+    tip = pygame.Rect(0, 0, tw + 20, th + 12)
+    tip.midbottom = (mouse_pos[0], mouse_pos[1] - 10)
+    tip.clamp_ip(pygame.Rect(28, 68, Display.WIDTH - 56, Display.HEIGHT - 120))
+    panel(surf, tip, alpha=240, studs=False)
+    text(surf, name, 20, tip.center, SELECTED, "center")
+    return tip

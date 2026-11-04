@@ -334,6 +334,29 @@ def test_reach_movers():
         check(f"alcançável (plataforma móvel): {name}", res is not None, res or "nenhuma sequência funcionou")
 
 
+# Pousos estreitos logo depois de buraco, água ou tábuas: (sala, linha do chão, coluna inicial, final).
+# Nenhum inimigo começa neles, para a jogadora não cair em cima de um (ou levar empurrão para o perigo).
+NARROW_LANDINGS = [
+    ("porao1", 20, 34, 40),      # depois do buraco do piso
+    ("porao2", 8, 23, 28),       # viga logo depois das tábuas do teto
+    ("porao2", 16, 30, 35),      # tábuas depois da plataforma móvel
+    ("cordame1", 30, 32, 37),    # leste 2
+    ("floresta", 31, 14, 19),    # galho 2
+    ("templo", 14, 20, 21),      # pedra firme sobre os espinhos
+]
+
+
+def test_fair_landings():
+    rows = {d["id"]: d["rows"] for d in chapter1.ROOM_DEFS}
+    bad = []
+    for room, row, c0, c1 in NARROW_LANDINGS:
+        for y in range(max(0, row - 3), row):
+            for x in range(c0 - 1, c1 + 2):
+                if rows[room][y][x] in "gcjsf":
+                    bad.append(f"{room} ({x},{y})")
+    check("nenhum inimigo começa num pouso estreito depois de perigo", not bad, ", ".join(bad))
+
+
 def test_crumble():
     s = game(name="tabua.json")
     s.goto("porao1", 12, 27)
@@ -522,6 +545,6 @@ def test_render_all():
     check("todas as salas desenham com a protagonista", True)
 
 
-TESTS = [test_start_abilities, test_water_returns_to_checkpoint, test_structure, test_doors, test_crumble, test_movers, test_items_and_letters, test_secrets, test_dialogs_and_npcs,
+TESTS = [test_start_abilities, test_water_returns_to_checkpoint, test_structure, test_doors, test_crumble, test_movers, test_items_and_letters, test_secrets, test_fair_landings, test_dialogs_and_npcs,
          test_endings, test_bosses, test_render_all, test_gates, test_reach_none, test_reach_dash, test_reach_double,
          test_reach_movers]

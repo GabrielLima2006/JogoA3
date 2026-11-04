@@ -27,6 +27,8 @@ Pendente / para outras frentes:
 - Arte: mexi só duas linhas de desenho em `bosses.py` (estrelinhas do Caelum no descanso e elipse da área no
   `CannonShot.draw`); podem trocar por arte própria.
 - Jogar as lutas de verdade para afinar: a vida nova dos chefes ainda não foi medida com o bot do QA.
+- Decisão do Gabriel (03/11): manter vida dos chefes, Selka, descanso do Caelum, ritmo por dificuldade,
+  volta ao chão firme da sala e empurrão da porta do teto.
 
 ## Interface
 
@@ -64,8 +66,11 @@ Pendente (depende de `src/states.py`, que é da área de gameplay):
   em 03/11; a sugestão acima continua valendo.
 - Créditos mostram o texto provisório "[Nome do integrante - RA] (editar em src/menus.py, lista CREDITS)":
   falta o Gabriel mandar os nomes e RAs da equipe para pôr em `CREDITS` (`src/menus.py`).
-- Ideias de polimento ainda não feitas: nome da sala ao passar o mouse no mapa; tela de resultados
-  com painel (ResultsState mora em `states.py`).
+- Nome da sala ao passar o mouse no mapa: pronto do lado da interface (`ui.draw_map` guarda as salas em
+  `ui.map_rooms`; `ui.draw_map_hover(surf, mouse_pos)` desenha contorno e etiqueta; teste `test_map_hover`).
+  Falta só a Gameplay chamar em `MapState.draw`, depois do `blit` do cache e também logo após criar o
+  cache: `ui.draw_map_hover(surf, self.app.input.mouse_pos)` (o cache continua valendo; o hover é por cima).
+- Ideia de polimento ainda não feita: tela de resultados com painel (ResultsState mora em `states.py`).
 - Detalhes e capturas antes/depois: nota `interface.md` nas notas de trabalho da interface.
 
 ## Level design
@@ -99,8 +104,18 @@ Feito (03/11, rodada de ajuste, sem commit):
   (12 saltos de/para plataformas móveis no Porão 2, Cordame, Vergas, Floresta e Templo, que antes não
   tinham teste).
 
+Feito (04/11, dificuldade, sem commit): medidos os inimigos perto de cada pouso dos testes de alcance.
+- Porão 1: rato do chão entre o buraco e os caixotes (7 tiles) foi para 26 (longe também do alçapão).
+- Porão 2: rato do teto saiu da viga logo depois das tábuas (25 -> 16, viga firme); gosma 48 -> 54.
+- Cordame: gaivota saiu de cima do pouso leste 2 (34,28 -> 36,21).
+- Vergas: canhão 54 -> 56: com alcance de 440 px, agora pega só o fim da plataforma móvel, não ela toda.
+- Floresta: gosma saiu do galho 2 (6 tiles, chegada por pulo) para o caminho longo (27, 21).
+- Tábuas: larguras conferidas (3 a 6 tiles; correndo cada tile leva ~0,1 s e cede em 0,45 s): sem mudança.
+- `test_fair_landings`: nenhum inimigo começa em pouso estreito logo depois de buraco, água ou tábuas.
+
 Pendente:
-- Parado por limite de uso. Falta jogar as salas de verdade (dificuldade humana) e conferir as capturas.
+- Falta jogar as salas de verdade (dificuldade humana) e conferir as capturas. Templo (saída com múmia e
+  cavaleiro) ficou como está: área final, chão largo depois do meio-fio.
 - QA nº 2, parte de gameplay: voltar ao último chão seguro da mesma sala em vez da bola de outra sala.
 - Jogar as salas de verdade para ajustar a dificuldade (posição de inimigos, largura das tábuas).
 - `WALKERS` (`src/background.py`): nenhuma posição precisa mudar.
@@ -117,7 +132,8 @@ Feito (23/10, sem commit):
 - `tools/capturar.py`: galeria de personagens e salas inteiras sem janela.
 
 Pendente:
-- Monstros ainda em `npcs.png` (lobo, goblin, diabrete, espírito, lich): trocar quando o Gabriel mandar os originais (pasta `Personagens gerados por mim`).
+- Animações de combate: completar as folhas usando as artes de referência em `Personagens gerados por mim`;
+  os ciclos provisórios do diabrete, ladino e cavaleiro do escudo foram rejeitados e removidos do jogo.
 - Gameplay: tocar `heavy_charge` na carga do golpe forte; pôr `break_wood`, `explosion`, `ability`, `door` em `SFX_NAMES` e usar.
 - Imagens sem uso: `efeitos/moedas`, `fantasma_roxo`, `veneno`, `corte_h/v`, `onda_roxa`; `objetos/poeira`, `porta`, `teclas`, `moldura_vida`; `itens/queijo, rosquinha, sanduiche, sushi`.
 - `objects.draw_character` desenha o elenco 3 px acima do chão (falta `+ 3` no `midbottom`; arquivo de gameplay).
@@ -138,10 +154,44 @@ Feito:
 - Sons health_up, slime_hit, slime_death, ground_slam, door_crash, ui_woosh e música `boss_01.ogg`.
 - `docs/PERSONAGENS.md` e `assets/CREDITOS.md` atualizados.
 
+Feito (retomada 3/11):
+- Convés conferido (captura `arte_capturas/conves_npcs_corrigido.png` na pasta de notas): NPCs PixelLab no chão e na escala certa.
+  Corrigido: personagens de conversa flutuavam 3 px (`objects.draw_character` agora desconta a folga do quadro do elenco)
+  e Caelum no Convés estava parado e virado para o lado errado (agora usa `anim_caelum`, respira e olha para a esquerda).
+- Espírito e lich: conjuração própria (`anim_espirito.png`, `anim_lich.png`, ligada em `creatures.draw_model`).
+- Capitã Maren caída: pose própria de deitada de costas desenhada pixel a pixel com a paleta dela
+  (`tools/desenhar_maren_caida.py` -> `maren_caida.png`, 63x16), usada por `pixelart.corpse()` no lugar do sprite em pé
+  girado. Chapéu caído ao lado, gola branca, braço no peito, botas para cima; apoiada no chão do Convés
+  (captura `arte_capturas/conves_maren_caida.png`). PixelLab segue recusando o token (401).
+- Banca do comerciante do Convés: barril e caixote-balcão do Forge com mercadoria pequena apoiada (frasco de geleia do
+  Pixel Food, pão reduzido, mapa enrolado, peixe seco e rolo de corda desenhados à mão), à esquerda do comerciante, que
+  olha para ela (`tools/montar_banca.py` -> `objetos/banca_comerciante.png`, `objects.NPC.draw`). Captura
+  `arte_capturas/conves_banca_comerciante.png`.
+
 Pendente:
 - Gameplay: ligar os sons novos em `SFX_NAMES`/`audio.play`, `boss_01` nas lutas e os efeitos novos nos eventos.
-- PixelLab recusou o token (401): ciclos desenhados à mão para Selka e Caelum ficariam melhores.
-- Suíte completa rodada no fim da sessão de arte; conferir o resultado antes do commit.
+- Ações por personagem para completar e integrar:
+  - Inimigos terrestres: lobo (corrida, salto/queda e mordida), goblin (caminhada, salto/queda e porretada),
+    ladino (caminhada, salto/queda e golpe de adaga) e cavaleiro do escudo (caminhada, guarda, investida,
+    golpe e quebra da guarda).
+  - Inimigos voadores/mágicos: diabrete (voo, mergulho e ataque), espírito (flutuação, conjuração e ataque),
+    lich (preparo, lançamento de magia e recuperação). Múmia e cavaleiro negro já têm folhas do pacote;
+    só substituir se a conferência mostrar defeitos.
+  - Chefes: preservar as animações de caminhada e pulo já existentes para Tico e Aldric; conferir os ataques
+    e só preencher uma ação se estiver realmente faltando. Selka: caminhada, pulinho/pouso, bote, pistola e
+    canhão. Caelum: flutuação, teleporte, conjuração e recuperação.
+  - Fazer o inventário de todo inimigo sem sequência própria além dos nomes acima; verificar se o golpe muda
+    de pose, e não só mostra um efeito sobre o corpo parado. Reaproveitar a ação de Caelum nas ilusões.
+    NPCs como Maren ficam fora desta tarefa.
+  - Preservar a aparência e a escala das artes de referência, fundo transparente, âncora estável no pé e quadros
+    próprios para cada ação. Conferir os dois sentidos, atualizar `CREDITOS.md` e salvar os novos arquivos nas
+    subpastas correspondentes de `Personagens gerados por mim`. NPCs não são prioridade.
+  - Revisar as folhas provisórias de lobo e goblin; não reutilizar os ciclos recusados de diabrete, ladino e
+    cavaleiro do escudo.
+  - Rat, gaivota e slime já têm movimento/quadros no jogo; canhão e caixa são estáticos por função. Múmia e
+    cavaleiro negro já têm folhas animadas do pacote. Conferir essas artes, mas não gerar substituições sem defeito.
+- Suíte (3/11): 433/436. `test_render_all` caía em `PirateSister.alpha`; já corrigido no `draw` (render passa).
+  As outras duas falhas são de volta ao checkpoint (`volta ao último checkpoint`, água do porao2): área de gameplay.
 
 ## Integração e testes
 

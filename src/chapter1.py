@@ -77,7 +77,7 @@ def room_porao1():
     g.put(3, 26, "*").put(50, 26, "*")
     g.put(8, 26, "j").put(38, 26, "g")
     g.put(9, 6, "k").put(12, 6, "k").put(7, 19, "k")
-    g.put(38, 19, "g").put(47, 19, "g").put(51, 19, "k")    # o rato fica longe do pouso do buraco
+    g.put(26, 19, "g").put(47, 19, "g").put(51, 19, "k")    # nenhum rato no chão estreito entre o buraco e os caixotes
     return g.rows()
 
 
@@ -99,8 +99,8 @@ def room_porao2():
     g.rect(12, 3, 12, 5).rect(12, 6, 12, 7, "X")
     g.put(4, 7, "*").put(55, 9, "*").put(39, 16, "*")
     g.put(4, 19, "B")
-    g.put(25, 7, "g").put(46, 13, "f")       # a gaivota espera no chão leste, não sobre o canal
-    g.put(58, 19, "g").put(60, 19, "k").put(48, 19, "j")
+    g.put(16, 7, "g").put(46, 13, "f")       # rato na viga firme (não logo depois das tábuas); gaivota no chão leste
+    g.put(58, 19, "g").put(60, 19, "k").put(54, 19, "j")      # gosma longe do pouso da ilha B
     return g.rows()
 
 
@@ -139,7 +139,7 @@ def room_cordame1():
     g.rect(31, 4, 38, 4)
     g.put(20, 24, "*").put(36, 24, "*")
     g.put(24, 12, "g")
-    g.put(34, 28, "f").put(26, 21, "f").put(13, 11, "f")
+    g.put(36, 21, "f").put(26, 21, "f").put(13, 11, "f")      # gaivota acima do amuleto, não do pouso leste 2
     return g.rows()
 
 
@@ -158,7 +158,7 @@ def room_cordame2():
     # rota alta: corda e o cesto escondido no alto, à esquerda (carta 2)
     g.hline(14, 18, 8, "-").hline(3, 7, 5, "-")
     g.put(4, 4, "*").put(40, 15, "*")
-    g.put(3, 14, "B").put(54, 14, "t")
+    g.put(3, 14, "B").put(56, 14, "t")       # canhão no fundo: alcança só o fim da plataforma móvel
     g.put(16, 4, "f").put(43, 14, "f")       # gaivota guarda a rota alta, não as tábuas
     return g.rows()
 
@@ -215,7 +215,7 @@ def room_floresta():
     g.hline(22, 26, 3, "-")                   # copa alta (fragmento)
     g.rect(38, 6, 46, 6)
     g.put(24, 2, "*").put(4, 12, "*").put(45, 31, "*")
-    g.put(16, 30, "j").put(30, 16, "f").put(12, 22, "f")
+    g.put(27, 21, "j").put(30, 16, "f").put(12, 22, "f")      # gosma no caminho longo, não no galho 2
     g.put(3, 36, "B").put(9, 36, "j").put(14, 36, "g")
     return g.rows()
 

@@ -222,5 +222,37 @@
    "attack": 3
   },
   "source": "caelum.png"
+ },
+ "espirito": {
+  "frame": [
+   38,
+   52
+  ],
+  "anchor": [
+   19,
+   51
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "npcs.png#18"
+ },
+ "lich": {
+  "frame": [
+   68,
+   75
+  ],
+  "anchor": [
+   34,
+   74
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "npcs.png#22"
  }
 }

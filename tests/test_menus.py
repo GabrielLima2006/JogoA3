@@ -173,5 +173,24 @@ def test_credits_and_hints():
     check("dica alinhada à direita não passa da margem", 930 <= right <= 946, str(right))
 
 
+def test_map_hover():
+    from helpers import Sim
+    from src import ui
+    pr = Progress()
+    pr.chapter = 1
+    pr.has_map = True
+    pr.visited |= {"cabine", "conves", "porao1"}
+    s = Sim(progress=pr, save_name="mapa_hover.json")
+    s.goto("conves", 12, 18)
+    ui.draw_map(s.app.screen, s.play)
+    names = sorted(n for _, n in ui.map_rooms)
+    check("mapa guarda só as salas visitadas", len(ui.map_rooms) == 3, str(names))
+    rect, name = ui.map_rooms[0]
+    check("mouse sobre a sala acha o nome", ui.map_room_at(rect.center) == name, name)
+    check("fora das salas não acha nada", ui.map_room_at((2, 2)) is None)
+    tip = ui.draw_map_hover(s.app.screen, rect.center)
+    check("etiqueta do nome fica dentro da tela", tip is not None and s.app.screen.get_rect().contains(tip))
+
+
 TESTS = [test_main_menu, test_new_game_flow, test_intro_skip, test_continue, test_other_screens,
-         test_mouse_and_tabs, test_credits_and_hints]
+         test_mouse_and_tabs, test_credits_and_hints, test_map_hover]

@@ -8,15 +8,15 @@ Conferido em 3 de novembro de 2026. As artes novas foram salvas também na pasta
 | Personagem | Situação |
 |---|---|
 | Nyra, protagonista | Completa para jogar; o jogo gera corrida, pulo, dash, dano e demais ações. |
-| Tico, Rei dos Ratos | Completo; tem idle, caminhada, salto e ataque, e já é usado pelo chefe. |
-| Aldric, Cavaleiro Rubro | Completo; seus arquivos ficam em `Personagens gerados por mim/Cavaleiro Rubro` e incluem idle, caminhada e ataque forte. |
-| Selka, Canhoneira da Tempestade | Arte PixelLab integrada ao chefe, com folha `anim_selka.png`: respira parada, anda com passada e se inclina no bote, na pistola e no sinal do canhão (com aviso "!!"). Um ciclo desenhado à mão no PixelLab ainda ficaria melhor. |
-| Capitã Maren | Arte PixelLab integrada à cena da capitã caída; sem animação, adequada ao papel atual. |
-| Caelum, Feiticeiro da Maré | Arte PixelLab integrada ao NPC, chefe e ilusões. No chefe, respira flutuando e se inclina ao conjurar (`anim_caelum.png`), com o efeito `carga` na mão. Não anda (flutua). |
+| Tico, Rei dos Ratos | Já tem caminhada e pulo; preservar essas animações e só preencher alguma ação que a revisão confirmar ausente. |
+| Aldric, Cavaleiro Rubro | Já tem caminhada e pulo nos arquivos em `Personagens gerados por mim/Cavaleiro Rubro`; preservar essas animações e só preencher alguma ação que a revisão confirmar ausente. |
+| Selka, Canhoneira da Tempestade | `anim_selka.png` tem repouso, caminhada e ataque; faltam salto/pouso e ações separadas para bote, pistola e canhão. |
+| Capitã Maren | Arte PixelLab em pé (`maren.png`, retrato do diálogo). Caída no Convés: pose própria deitada de costas, desenhada à mão sobre a paleta dela (`maren_caida.png`, `tools/desenhar_maren_caida.py`). |
+| Caelum, Feiticeiro da Maré | `anim_caelum.png` tem repouso e conjuração. Como chefe flutuante, faltam ciclos próprios de voo, teleporte e ataque mágico. |
 | Comerciantes, ferreira, curandeira, pescador, estudioso, bardo, ancião, anciã, aldeã e grumete | Sprite próprio PixelLab com folha `anim_<nome>.png`: respiração parada (4 quadros), caminhada (6) e ataque (3). Alturas acertadas pela protagonista (60 px): adultos 55–57, idosos 52–53, grumete 47. |
-| Lobo e goblin | Sprites laterais próprios com folha animada (passada, respiração e bote/porretada). Lobo reduzido para 44 px de altura, goblin 52 px. |
-| Diabrete, ladino e cavaleiro do escudo | Modelos da folha da equipe com ciclo de caminhada de quatro quadros. Saltos usam o deslocamento vertical do jogo; o golpe usa o efeito de corte separado. |
-| Espírito e lich | Modelos da folha da equipe; ainda sem ciclos próprios de ataque. |
+| Lobo e goblin | Sprites laterais próprios com folhas provisórias de passada, respiração e ataque; conferir a qualidade e refazer se necessário. Lobo reduzido para 44 px de altura, goblin 52 px. |
+| Diabrete, ladino e cavaleiro do escudo | Modelos da folha da equipe. Os ciclos provisórios de caminhada foram rejeitados e retirados do jogo; faltam animações próprias de caminhada, salto/queda e ataque. |
+| Espírito e lich | Modelos da folha da equipe com conjuração própria (`anim_espirito.png`, `anim_lich.png`): recolhem, carregam com brilho roxo e lançam para a frente. Lich conjura no aviso do tiro; espírito carrega no alerta e lança ao perseguir. Flutuação continua pelo balanço do jogo. |
 | Múmia e cavaleiro negro | Continuam usando as animações próprias do pacote Skeletons Free Pack. |
 
 ## Artes novas
@@ -43,23 +43,15 @@ Diabrete, espírito, lich, ladino e cavaleiro do escudo usam os modelos sombread
 | Lobo da Ilha | `assets/img/personagens/inimigo_lobo.png` | `783d2f66-0797-4f24-a734-d62a09334809` |
 | Goblin da Ilha | `assets/img/personagens/inimigo_goblin.png` | `581b02e2-e107-4086-bd4c-09114624dda6` |
 
-As imagens foram conferidas na galeria. Os chefes Tico e Aldric já usam sequências de quadros;
-Selka, Caelum e os inimigos restantes recebem poses de caminhada, salto e ataque pelo desenho
-do jogo, sem alteração de física ou comportamento.
+As imagens foram conferidas na galeria. A tabela acima marca quais ações ainda precisam de quadros
+próprios. As animações não devem alterar física nem comportamento dos inimigos e chefes.
 
-## Animação a partir de uma pose (3 de novembro de 2026)
+## Estado das folhas provisórias
 
-O token do PixelLab foi recusado (erro 401), então não deu para gerar ciclos novos lá. Quem só tinha
-a pose `east` ganhou movimento por `tools/animar_pose.py`:
+`tools/animar_pose.py` criou folhas provisórias para lobo, goblin, NPCs, Selka e Caelum. Elas não
+substituem as ações específicas listadas na tabela. Os NPCs não são prioridade nesta revisão.
 
-- A pose é reduzida escolhendo a cor dominante de cada bloco (o contorno não some, como acontecia
-  com a redução por 0,63 que os NPCs usavam e deixava todos menores que a protagonista).
-- Caminhada: a perna da frente gira para a frente a partir do quadril e uma cópia mais escura faz a
-  perna de trás; o corpo sobe 1 px quando as pernas se cruzam. Tudo em pixels inteiros, sem borrar.
-- Parado: o tronco desce 1 px nos quadros do meio (respiração). Ataque: o tronco se inclina.
-- Saída: `assets/img/personagens/anim_<nome>.png` e `anim_poses.json`; leitura por `sprites.pose_anim`.
-  Para trocar a altura ou o quadril de alguém, mudar a tabela `POSES` e rodar a ferramenta de novo.
-
-As artes `east` de diabrete, espírito, lich, ladino e cavaleiro do escudo, que estão na pasta do Gabriel,
-continuam fora do jogo de propósito: o traço delas é mais "cartum" e destoa dos outros inimigos. Se o
-Gabriel preferir, basta incluí-las na tabela `POSES` e trocar o modelo em `src/creatures.py`.
+Os ciclos de caminhada do diabrete, ladino e cavaleiro do escudo foram rejeitados pelo Gabriel e
+removidos do jogo. Os arquivos de rascunho ainda estão nas pastas externas desses personagens;
+não devem ser usados como versão final. Criar folhas novas a partir das artes de referência guardadas
+em `Personagens gerados por mim`, com caminhada, salto/queda e ataque legíveis em quadros separados.

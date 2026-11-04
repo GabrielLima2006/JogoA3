@@ -180,12 +180,14 @@ class NPC(Interactable):
         x, y = self.x - cam_x, self.y - cam_y
         from .creatures import draw_model
         if self.kind != "smith":
-            crate = pixelart.crate()
-            surf.blit(crate, crate.get_rect(midbottom=(int(x + 26), int(y))))
-            for i, name in enumerate(("pao", "peixe")):
-                food = sprites.image("itens", name + ".png")
-                if food is not None:
-                    surf.blit(food, food.get_rect(midbottom=(int(x + 20 + i * 14), int(y - 24))))
+            # banca (tools/montar_banca.py): barril e caixote-balcão com mercadoria pequena,
+            # à esquerda do comerciante, que fica de lado olhando para ela
+            banca = sprites.image("objetos", "banca_comerciante.png")
+            if banca is not None:
+                surf.blit(banca, banca.get_rect(bottomright=(int(x - 12), int(y))))
+            else:
+                crate = pixelart.crate()
+                surf.blit(crate, crate.get_rect(midbottom=(int(x - 30), int(y))))
         # comerciante (mochila de poções) e ferreiro (já vem com a bigorna)
         draw_model(surf, "comerciante" if self.kind == "shop" else "ferreiro", x, y, time, -1)
         return
@@ -288,7 +290,9 @@ def draw_character(surf, style, color, height, x, foot_y, time=0.0, scale=1.0):
         k = max(1, int(round(scale)))
         if k != 1:
             img = pygame.transform.scale(img, (img.get_width() * k, img.get_height() * k))
-        surf.blit(img, img.get_rect(midbottom=(int(x), int(foot_y))))
+        # quadros do elenco (pixelart.human) têm 3 px livres abaixo do pé
+        folga = 3 * k if style in pixelart.STYLES else 0
+        surf.blit(img, img.get_rect(midbottom=(int(x), int(foot_y) + folga)))
         return
     s = scale
     if style == "corpo":

@@ -75,6 +75,18 @@ def human(style, pose="idle", phase=0.0, facing=1):
     Quadro 96x80 com o pé 3 px acima da borda de baixo, centralizado."""
     from . import elenco
     if style == "amigo":
+        # Caelum respirando (folha de tools/animar_pose.py); a vista east olha para a direita.
+        from . import sprites
+        quadro, pe = sprites.pose_anim("caelum", "attack" if pose in ("attack", "cast") else "idle", phase)
+        if quadro is not None:
+            q = round(phase * 8) / 8
+            def caelum_anim():
+                fr, ancora = sprites.pose_anim("caelum", "attack" if pose in ("attack", "cast") else "idle", q)
+                canvas = _canvas(96, 80)
+                canvas.blit(fr, (48 - ancora[0], 77 - ancora[1]))
+                return pygame.transform.flip(canvas, True, False) if facing < 0 else canvas
+            return cached(("pixellab_amigo_anim", pose, q, facing), caelum_anim)
+
         def caelum_frame():
             from . import sprites
             source = sprites.image("personagens", "caelum.png")
@@ -232,6 +244,10 @@ def corpse():
     Sem o sprite, usa o desenho antigo feito no código."""
     def from_model():
         from . import elenco, sprites
+        # pose própria de deitada de costas (tools/desenhar_maren_caida.py), sem girar o sprite em pé
+        caida = sprites.image("personagens", "maren_caida.png")
+        if caida is not None:
+            return caida
         try:
             img = sprites.image("personagens", "maren.png")
             if img is None:

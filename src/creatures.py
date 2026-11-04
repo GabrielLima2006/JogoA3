@@ -57,13 +57,6 @@ AS_CAST = {"comerciante": "mercador", "ferreiro": "ferreiro", "ladino": "capanga
            "estudioso": "amigo", "velho": "pescador", "anciã": "aldea", "menino": "grumete"}
 AS_SKELETON = {"mumia": "amarelo", "cavaleiro_negro": "branco"}
 SKELETON_ANCHOR = (46, 63)          # pé no quadro 96x64 (o esqueleto olha para a direita)
-WALK_SHEETS = {
-    "diabrete": "personagens/diabrete_andando.png",
-    "ladino": "personagens/ladino_andando.png",
-    "cavaleiro_escudo": "personagens/cavaleiro_escudo_andando.png",
-}
-
-
 def _skeleton_frame(color, t, moving, lean):
     """Quadro do esqueleto (Skeletons Free Pack): parado, andando ou atacando."""
     kind = "ataque" if lean else ("andando" if moving else "parado")
@@ -120,6 +113,26 @@ def draw_model(surf, name, x, foot_y, t, facing, moving=False, white=False, lean
                     slash = sprites.variant(frames[int(t * 18) % len(frames)], facing < 0)
                     surf.blit(slash, slash.get_rect(center=(round(x + facing * 22), round(foot_y - 30))))
             return
+    if name in ("espirito", "lich"):
+        # Conjuração (tools/animar_pose.py): recolhe, carrega com brilho e lança para a frente.
+        # Lich: alterna recolher/carregar no aviso do tiro. Espírito: carrega no alerta, lança ao perseguir.
+        if state == "skulls_tele":
+            pose, ph = "attack", (int(t * 8) % 2 + 0.5) / 3
+        elif state == "alert":
+            pose, ph = "attack", 1.5 / 3
+        elif state == "chase" or lean:
+            pose, ph = "attack", 2.5 / 3
+        else:
+            pose, ph = "idle", t * 0.8
+        quadro, pe = sprites.pose_anim(name, pose, ph)
+        if quadro is not None:
+            v = quadro
+            if alpha < 255:
+                v = quadro.copy()
+                v.set_alpha(alpha)
+            lift = round(math.sin(t * 2.5) * float_amp)
+            sprites.blit_anchor(surf, v, x, foot_y + lift, pe, flip=facing < 0, white=white, scale=scale)
+            return
     art = sprites.image("personagens", f"inimigo_{name}.png") if name in ("lobo", "goblin") else None
     if art is not None:
         # As vistas east usadas nestes arquivos já olham para a direita.
@@ -150,13 +163,6 @@ def draw_model(surf, name, x, foot_y, t, facing, moving=False, white=False, lean
     img, (ax, ay) = npc_frame(name)
     if img is None:
         return
-    if name in WALK_SHEETS and moving:
-        frames = sprites.grid(WALK_SHEETS[name], 128, 96)
-        if frames:
-            if airborne and name in ("ladino", "cavaleiro_escudo"):
-                img = frames[1 if vy < 0 else 3]
-            elif moving:
-                img = frames[int(t * 10) % len(frames)]
     flip = facing > 0                      # os modelos olham para a esquerda
     pose_and_blit(img, flip, scale)
 

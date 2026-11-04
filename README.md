@@ -171,7 +171,9 @@ foram usadas e como o grupo revisou o resultado.]
 | | |
 |---|---|
 | ![Menu](docs/screenshots/menu.png) | ![Porão](docs/screenshots/porao.png) |
-| ![Chefe: Cavaleiro Rubro](docs/screenshots/chefe_cavaleiro.png) | ![Templo da Maré](docs/screenshots/templo.png) |
+| ![Chefe: Aldric, na Gávea](docs/screenshots/chefe_aldric.png) | ![Templo da Maré](docs/screenshots/templo.png) |
+| ![Floresta](docs/screenshots/floresta.png) | ![Ruínas de Velmora](docs/screenshots/ruinas.png) |
+| ![Mapa](docs/screenshots/mapa.png) | ![Pausa e inventário](docs/screenshots/pausa.png) |
 
 ## Gerar o executável
 
