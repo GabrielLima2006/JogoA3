@@ -269,6 +269,14 @@ Pendente:
 Feito (06/11):
 - Suíte completa: 494/494 (inimigos mais desafiadores, figurantes reduzidos, capitã caída, cenários).
 - Commit em `main`, executável novo em `dist\onefile\MareDeMentiras.exe` e release `v1.2` no GitHub.
+- `src/audio.py` e `src/combat.py` (sons e efeitos de acerto por inimigo) mudaram durante a suíte e entraram
+  no mesmo commit; testes de combate passaram (76/76) depois, mas a suíte completa não foi refeita com eles.
+- Instalador (`tools/instalador.iss`, Inno Setup, pt-BR, sem pedir administrador, em
+  `%LOCALAPPDATA%\Programs`): atalho no Menu Iniciar, atalho opcional na Área de Trabalho, desinstalador em
+  "Aplicativos instalados", ícone `tools/icone.ico`. Instalado, o save vai para `%APPDATA%\MareDeMentiras`
+  (`src/paths.py`); o portátil segue salvando ao lado do .exe. Testado em modo silencioso: instalar, rodar
+  oculto, salvar e desinstalar. `MareDeMentiras-Setup.exe` anexado à release `v1.2`.
+- `Jogar.bat` checa Python e pygame-ce e instala o `requirements.txt` se faltar.
 
 Feito (03/11):
 - Rodada 3 de QA com todos os scripts de `docs/qa/scripts/` (detalhes em `docs/QA.md`). Corrigidos desde a

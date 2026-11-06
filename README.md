@@ -4,11 +4,19 @@ Metroidvania 2D de ação em pixel art, feito em Python com pygame-ce.
 
 ![Convés do navio](docs/screenshots/conves.png)
 
-## ▶ Baixar e jogar (Windows)
+## ▶ Como jogar (Windows)
 
-Baixe **MareDeMentiras.exe** em [Releases](https://github.com/GabrielLima2006/JogoA3/releases/latest)
-e dê dois cliques. Não precisa instalar nada. Se o Windows avisar "O Windows protegeu o computador",
-clique em **Mais informações** e depois em **Executar assim mesmo** (o executável não é assinado).
+1. Baixe **MareDeMentiras-Setup.exe** em [Releases](https://github.com/GabrielLima2006/JogoA3/releases/latest).
+2. Abra o instalador e siga os passos. Não precisa instalar Python nem nada: o jogo já vem pronto.
+   Ele fica no Menu Iniciar (e na Área de Trabalho, se você marcar) e pode ser removido em
+   "Aplicativos instalados".
+3. Se o Windows avisar "O Windows protegeu o computador", clique em **Mais informações** e depois em
+   **Executar assim mesmo** (o instalador não é assinado).
+
+Prefere não instalar? Na mesma página há o **MareDeMentiras.exe** portátil: é só dar dois cliques.
+
+Quem for mexer no código pode rodar pelo `Jogar.bat` (precisa do Python 3.12; ele instala o
+pygame-ce na primeira vez).
 
 ## 1. Identificação
 
@@ -175,16 +183,17 @@ foram usadas e como o grupo revisou o resultado.]
 | ![Floresta](docs/screenshots/floresta.png) | ![Ruínas de Velmora](docs/screenshots/ruinas.png) |
 | ![Mapa](docs/screenshots/mapa.png) | ![Pausa e inventário](docs/screenshots/pausa.png) |
 
-## Gerar o executável
+## Gerar o executável e o instalador
 
 ```bash
 pip install pyinstaller
 ```
 
 ```bash
-python -m PyInstaller --noconfirm --windowed --name MareDeMentiras --add-data "assets;assets" main.py
+python -m PyInstaller --noconfirm --onefile --windowed --name MareDeMentiras --icon tools/icone.ico --add-data "assets;assets" --distpath dist/onefile main.py
 ```
 
-O jogo fica em `dist/MareDeMentiras/MareDeMentiras.exe`. Para enviar ao grupo, compacte a pasta
-`dist/MareDeMentiras` inteira em um .zip. O save e os recordes ficam na pasta `saves/` ao lado do
-executável.
+O executável portátil fica em `dist/onefile/MareDeMentiras.exe`; o save e os recordes ficam na pasta
+`saves/` ao lado dele. Para gerar o instalador, instale o [Inno Setup 6](https://jrsoftware.org/isinfo.php)
+e compile `tools/instalador.iss` (abrindo no Inno Setup ou com `ISCC.exe tools\instalador.iss`). Ele sai em
+`dist/instalador/MareDeMentiras-Setup.exe`. Instalado, o jogo grava o save em `%APPDATA%\MareDeMentiras`.
