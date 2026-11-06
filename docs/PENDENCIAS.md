@@ -26,9 +26,42 @@ Pendente / para outras frentes:
   ela e cai no `draw_character`). `objects.draw_character` 3 px acima do chão continua (arquivo da arte).
 - Arte: mexi só duas linhas de desenho em `bosses.py` (estrelinhas do Caelum no descanso e elipse da área no
   `CannonShot.draw`); podem trocar por arte própria.
-- Jogar as lutas de verdade para afinar: a vida nova dos chefes ainda não foi medida com o bot do QA.
+- Vida nova dos chefes medida com o bot em 06/11 (ver abaixo); falta só jogar com gente.
 - Decisão do Gabriel (03/11): manter vida dos chefes, Selka, descanso do Caelum, ritmo por dificuldade,
   volta ao chão firme da sala e empurrão da porta do teto.
+
+Desafio maior (04/11, sem mexer em Player/Physics/Dash/Combat):
+- Dificuldade dos inimigos em `Game.DIFFICULTIES`: `enemy_aggro` (0/1/2), `strong_damage` (1/2/2) e
+  `enemy_cooldown` (1,0/0,85/0,7). Fácil ficou igual ao de antes.
+- Perseguidores (`c`) dão bote no Normal/Difícil: recuam e piscam (0,42 s; 0,34 no Difícil), avançam e
+  ficam parados 0,65 s. O bote e o empurrão do escudo tiram 2 corações no Normal/Difícil; encostar segue 1.
+- Inimigo novo, atirador (letra `a`): mira piscando, atira, recarrega parado e recua de quem chega perto
+  (mais lento que a corrida; encurralado, não foge). Navio = pistoleiro, ilha/ruínas/templo = goblin
+  com pedras. Escudo já defende só de frente (golpe por trás ou reto para cima/baixo passa).
+- Fase 2 dos chefes: Tico emenda dois saltos; Aldric com poder salta logo depois do vento; Selka investe
+  logo depois do sinal do canhonaço; Caelum ganha a caçada de três raios seguidos.
+- Combinado com a Fases: ela posiciona os `a` e mais `c`/`s` nas salas (ainda não há `a` no mapa).
+- Desenho: em `creatures._ModelMixin.draw` o corpo pisca branco no aviso (`windup`/`aim`); a Arte pode trocar.
+- Testes novos em `tests/test_world.py`. Falta jogar de verdade para afinar os números.
+
+Medição e sons (06/11, sem commit):
+- `qa_chefes.py` com 3 sementes nas 3 dificuldades (vida 48/76/84/100 e fase 2 nova). Tempo da luta acordada
+  pelo bot: Tico 8–21 s, Aldric 16–34 s, Selka 32–78 s, Caelum 30–90 s (Fácil), 45–64 s (Normal), 33–169 s
+  (Difícil; 169 s numa semente com 30 "mortes"). Nenhuma luta passa de 90 s no Normal: **nenhum número mudou**.
+  Caelum intocado na mecânica (só ganhou o efeito `impacto_roxo` no acerto).
+- Sons ligados: música `boss_01.ogg` nas lutas (`Audio.MUSIC["boss"]`) e volta à música da zona quando o chefe
+  cai; `door_crash` no portão da arena; `ground_slam` nas quedas do Tico e do Aldric; `health_up` ao ganhar
+  coração; `slime_hit`/`slime_death` no slime (`Enemy.hit_sound`/`death_sound`); `ui_woosh` ao abrir a pausa.
+- Efeitos ligados: `morte_chefe` na morte do chefe, `impacto_critico` no golpe forte, `defesa` no golpe
+  defendido pelo escudo, `absorver` ao pegar habilidade, `coracoes` ao ganhar coração, `impacto_roxo` em
+  Caelum, espírito e lich (`Enemy.hit_fx`). `pressa` ainda sem uso (sugestão: amuleto de velocidade).
+- Teste novo `test_sounds_wired` (arquivos de todo som/música e os ligados).
+- QA da rota inteira numa só partida (script `qa_rota.py` na pasta de notas da coordenação; a Integração pode
+  copiar para `docs/qa/scripts/`): Cabine -> Toca -> Gávea -> ilha -> Altar -> final verdadeiro nas 3
+  dificuldades, **0 problemas**: portas levam à sala certa, prancha do Convés trancada antes do Aldric e aberta
+  depois, recompensas (Levitação, fragmento) aparecem, arenas reabrem, 3 páginas e final verdadeiro.
+  O bot se teleporta dentro da sala (alcance fica com `try_reach`). Rodado sobre o mapa de 06/11 cedo:
+  **rodar de novo depois que a Fases terminar** os atiradores `a` e os inimigos novos.
 
 ## Interface
 
@@ -113,6 +146,38 @@ Feito (04/11, dificuldade, sem commit): medidos os inimigos perto de cada pouso 
 - Tábuas: larguras conferidas (3 a 6 tiles; correndo cada tile leva ~0,1 s e cede em 0,45 s): sem mudança.
 - `test_fair_landings`: nenhum inimigo começa em pouso estreito logo depois de buraco, água ou tábuas.
 
+Feito (04/11, mais desafio, sem commit):
+- Cordame: enfrechate oeste 6 (10-15, linha 19) virou tábua podre (não dá para parar); rato novo no
+  enfrechate oeste 5, junto com a gaivota.
+- Praia: diabrete sobre a vala de espinhos (19, 13). Ninho virou desafio: galho podre + diabrete,
+  recompensa 60 moedas (item novo no índice 0 da sala; a torta passou a `praia:1`).
+- Floresta: diabrete sobre as tábuas do caminho rápido (espinhos embaixo).
+- Templo: espírito sobre a plataforma móvel; desafio da torre (opcional): da galeria, pedras soltas
+  (48-52, linha 6) até o cofre (54-57, linha 3) com 80 moedas e um espírito de guarda.
+- Testes de alcance novos para a torre do templo; fragmentos continuam 4 (o teste exige 1 coração).
+- Atirador novo da Gameplay (`a`): ponta da verga grande do Cordame (29, 12), fundo do penhasco da Praia
+  (57, 11, atrás do goblin e do lobo) e saída da Floresta (45, 5, mira quem sobe pelo elevador).
+  Porão 2: rato do chão leste virou pirata de escudo (`s`), junto com a gosma.
+
+Feito (06/11, combinações e desafios, sem commit):
+- Atirador (`a`) agora em 7 salas, sempre junto de outro inimigo, crescendo do navio ao templo:
+  Porão 1 (pistoleiro na prateleira alta, atira em quem sobe a escada; rato do chão leste virou capanga `c`),
+  Porão 2 (pistoleiro na prateleira do elevador + escudo e gosma no chão), Vergas (pistoleiro no lado
+  leste, com o canhão e a gaivota), Templo (saída com múmia, atirador e cavaleiro: `c` 50, `a` 55, `s` 57).
+  Cordame, Praia e Floresta continuam com os da rodada anterior.
+- Praia: vala de espinhos de 8 para 9 tiles (chão leste começa na coluna 24): pede pulo duplo ou dash,
+  com o diabrete por cima.
+- Terceiro desafio opcional (Porão 2, "vigas podres"): da prateleira alta, tábua podre (58-61, linha 7) e
+  jirau sob o teto (50-55, linha 5) com o fragmento que ficava na prateleira (realocado, total continua 4).
+  Sinal: caixotes de carga na prateleira e no jirau. Os outros dois: ninho da Praia e torre do Templo.
+  Atenção: a ordem dos itens do Porão 2 mudou (fragmento é `porao2:0`, carta 1 `porao2:1`); saves antigos
+  podem mostrar a carta/fragmento trocados.
+- Testes (`tests/test_ship.py`): alcance da tábua podre e do jirau (só dash), vala nova, `a` entra no
+  `test_fair_landings`, `test_enemies_not_in_walls` (inimigo de chão com chão embaixo e espaço em cima;
+  voador fora de parede) e `test_enemy_mix` (atirador em combinação nas salas das 4 áreas). Simulação de 8 s
+  em Porão 1/2, Vergas, Praia e Templo: todos ficam no próprio andar, ninguém cai em perigo.
+- Sugestão para a Arte: uma placa/marca visual no início dos 3 desafios (hoje o sinal são caixotes e baús).
+
 Pendente:
 - Falta jogar as salas de verdade (dificuldade humana) e conferir as capturas. Templo (saída com múmia e
   cavaleiro) ficou como está: área final, chão largo depois do meio-fio.
@@ -167,6 +232,12 @@ Feito (retomada 3/11):
   Pixel Food, pão reduzido, mapa enrolado, peixe seco e rolo de corda desenhados à mão), à esquerda do comerciante, que
   olha para ela (`tools/montar_banca.py` -> `objetos/banca_comerciante.png`, `objects.NPC.draw`). Captura
   `arte_capturas/conves_banca_comerciante.png`.
+- Figurantes de fundo (`background.WALKERS`): no máximo 2 por sala, com atividade. Convés: pescador na amurada
+  e aldeã carregando caixote devagar; Cabine e Ruínas: um parado; Praia: um parado e um passeando; Floresta: uma
+  passeando. Caminhada a ~12 px/s com pausa de 3 s nas pontas e passada mais lenta (`_draw_walker`). Captura
+  `arte_capturas/conves_figurantes.png`.
+- Testes: suíte completa 476/476 (antes da capitã e da banca); depois delas, `test_render_all` e
+  `test_dialogs_and_npcs` passam de novo. Sem commit.
 
 Pendente:
 - Gameplay: ligar os sons novos em `SFX_NAMES`/`audio.play`, `boss_01` nas lutas e os efeitos novos nos eventos.
@@ -194,6 +265,10 @@ Pendente:
   As outras duas falhas são de volta ao checkpoint (`volta ao último checkpoint`, água do porao2): área de gameplay.
 
 ## Integração e testes
+
+Feito (06/11):
+- Suíte completa: 494/494 (inimigos mais desafiadores, figurantes reduzidos, capitã caída, cenários).
+- Commit em `main`, executável novo em `dist\onefile\MareDeMentiras.exe` e release `v1.2` no GitHub.
 
 Feito (03/11):
 - Rodada 3 de QA com todos os scripts de `docs/qa/scripts/` (detalhes em `docs/QA.md`). Corrigidos desde a

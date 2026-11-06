@@ -166,6 +166,10 @@ class PlayState(State):
                 e.max_hp = e.hp = max(1, round(e.max_hp * mult))
             if e.is_boss:
                 e.pace = diff.get("boss_pace", 1.0)   # ritmo dos ataques (avisos mais longos no Fácil)
+            else:
+                e.aggro = diff.get("enemy_aggro", 0)
+                e.strong_damage = diff.get("strong_damage", 1)
+                e.cool_mult = diff.get("enemy_cooldown", 1.0)
         return out
 
     def spawn_enemy(self, enemy):
@@ -273,6 +277,7 @@ class PlayState(State):
         if self.player.alive and self.hazard_timer <= 0:
             if inp.was_pressed("pause"):
                 inp.consume()
+                self.app.audio.play("ui_woosh")
                 self.app.push(PauseState(self.app, self))
                 return
             if inp.was_pressed("map"):
@@ -357,7 +362,7 @@ class PlayState(State):
                 if not e.alive or not e.contact_damage or (e.is_boss and not e.awake):
                     continue
                 if p.overlaps(e):
-                    p.take_hit(e.contact_damage, e.cx, self)
+                    p.take_hit(e.damage_now(), e.cx, self)
             self._collect()
             self._check_hazards()
             self._check_transition()
@@ -430,7 +435,7 @@ class PlayState(State):
             room.fight_active = True
             self.effects.add_shake(6)
             self.audio.play("boss")
-            self.audio.play("door")          # o portão da arena fecha
+            self.audio.play("door_crash")    # o portão da arena fecha
             self.audio.play_music(AudioCfg.MUSIC["boss"])
             info = self._boss_info(room)
             if info is not None:
@@ -451,6 +456,7 @@ class PlayState(State):
             self.progress.bosses.add(room.id)
             self.effects.add_shake(12)
             self.effects.flash(0.3, (255, 240, 200))
+            self.audio.play_music(AudioCfg.MUSIC.get(room.zone, AudioCfg.MUSIC["default"]))
             self.hazards = []
             self.projectiles.clear()
             for e in self.enemies:
@@ -546,10 +552,18 @@ class PlayState(State):
         old_max = self.player.max_hp
         msg = pr.give(item.kind, item.arg)
         self.player.recompute_stats()
-        if self.player.max_hp > old_max:
+        gained_heart = self.player.max_hp > old_max
+        if gained_heart:
             self.player.hp = self.player.max_hp
         self.effects.burst(item.x, item.y - 20, 24, Colors.ITEM, speed=(60, 260), gravity=-50)
-        self.audio.play("ability" if item.kind == "ability" else "item")
+        if item.kind == "ability":
+            self.effects.sprite("absorver", self.player.cx, self.player.cy, fps=20, scale=2)
+            self.audio.play("ability")
+        elif gained_heart:
+            self.effects.sprite("coracoes", self.player.cx, self.player.cy - 10, fps=20)
+            self.audio.play("health_up")
+        else:
+            self.audio.play("item")
         self.save()
         if msg:
             self.app.push(MessageState(self.app, self, *msg))

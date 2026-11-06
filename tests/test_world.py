@@ -706,11 +706,168 @@ def test_caelum_rests():
           lowest is not None and lowest > boss.floor_y - 40, f"base={lowest} chão={boss.floor_y}")
 
 
+# ---------------------------------------------------------------------------
+# Inimigos mais desafiadores (Normal/Difícil) e fase 2 dos chefes
+# ---------------------------------------------------------------------------
+
+def test_enemy_difficulty():
+    from src.config import Game
+    for diff in ("facil", "normal", "dificil"):
+        s = _story(name=f"inimigos_{diff}.json", difficulty=diff)
+        s.goto("conves", 10, 18, enemies=True)
+        regular = [e for e in s.play.enemies if not e.is_boss]
+        d = Game.DIFFICULTIES[diff]
+        ok = all(e.aggro == d["enemy_aggro"] and e.strong_damage == d["strong_damage"] for e in regular)
+        check(f"inimigos recebem o ajuste do {diff}", regular and ok, str(len(regular)))
+    check("Fácil continua igual (sem bote, dano 1)",
+          Game.DIFFICULTIES["facil"]["enemy_aggro"] == 0 and Game.DIFFICULTIES["facil"]["strong_damage"] == 1)
+
+
+def _lab_chaser(aggro):
+    from src.enemies import Chaser
+    s = Sim()
+    s.goto("LB", 30, 14, enemies=True)
+    ch = next(e for e in s.play.enemies if isinstance(e, Chaser))
+    ch.aggro, ch.strong_damage = aggro, 2
+    s.p.invuln = 99
+    s.p.place(ch.cx - 200, 14 * T)
+    return s, ch
+
+
+def test_chaser_lunge():
+    s, ch = _lab_chaser(1)
+    seen = []
+    lunge_damage = None
+    for _ in range(int(4 / SIM_DT)):
+        s.step()
+        s.p.invuln = 99
+        if not seen or seen[-1] != ch.state:
+            seen.append(ch.state)
+        if ch.state == "lunge":
+            lunge_damage = ch.damage_now()
+        if "recover" in seen:
+            break
+    i = seen.index("windup") if "windup" in seen else -1
+    check("perseguidor avisa (recua e pisca) antes do bote",
+          i >= 0 and seen[i + 1:i + 3] == ["lunge", "recover"], str(seen))
+    check("o bote tira mais que encostar", lunge_damage == 2 and ch.damage_now() == ch.contact_damage)
+    vx = []
+    while ch.state == "recover":
+        vx.append(abs(ch.vx))
+        s.step()
+    check("depois do bote fica parado (janela para punir)", vx and vx[-1] < 5, f"{len(vx) * SIM_DT:.2f}s")
+    s, ch = _lab_chaser(0)
+    states = set()
+    for _ in range(int(3 / SIM_DT)):
+        s.step()
+        s.p.invuln = 99
+        states.add(ch.state)
+    check("no Fácil o perseguidor não dá bote", "windup" not in states and "lunge" not in states, str(states))
+
+
+def test_gunner():
+    from src.enemies import Gunner
+    s = Sim()
+    s.goto("LA", 6, 14)
+    g = Gunner(20 * T + T / 2, 14 * T)
+    s.play.enemies = [g]
+    s.p.place(10 * T, 14 * T)
+    s.p.invuln = 99
+    aimed = s.wait_until(lambda: g.state == "aim", 1.0)
+    check("atirador vê e mira (aviso)", aimed and g.telegraph > 0)
+    shot = s.wait_until(lambda: len(s.play.projectiles.items) > 0, 1.5)
+    check("atirador atira depois do aviso", shot and g.state == "reload")
+    x0 = g.cx
+    s.run(0.5)
+    check("recarrega parado", abs(g.cx - x0) < 3 and g.state == "reload")
+    s.play.projectiles.clear()
+    g.state, g.timer = "patrol", 0.0
+    s.p.place(g.cx - 90, 14 * T)
+    retreated = s.wait_until(lambda: g.state == "retreat", 0.5)
+    x0 = g.cx
+    s.run(0.3)
+    check("recua quando a jogadora chega perto", retreated and g.cx > x0 + 10, f"{g.cx - x0:.0f} px")
+    check("atirador é mais lento que a corrida", Enemies_speed() < 0.5 * PC_RUN())
+
+
+def Enemies_speed():
+    from src.config import Enemies
+    return Enemies.GUNNER_SPEED
+
+
+def PC_RUN():
+    from src.config import Player
+    return Player.RUN_SPEED
+
+
+def test_gunner_in_story():
+    from src.creatures import PirateGunner, StoneThrower, TYPES, ZONE_TYPES
+    check("letra 'a' vira atirador (navio e ilha)",
+          TYPES["a"] is PirateGunner and ZONE_TYPES["ilha"]["a"] is StoneThrower)
+
+
+def test_boss_phase2_patterns():
+    random.seed(7)
+    s = _story(name="fase2_tico.json")
+    s.goto("toca", 6, 15, enemies=True)
+    boss = s.play.boss
+    s.p.invuln = 99
+    s.wait_until(lambda: boss.awake, 4.0, held={"right"})
+    boss.hp = boss.max_hp // 2 - 1
+    landings, double = 0, False
+    prev = boss.state
+    for _ in range(int(25 / SIM_DT)):
+        s.step()
+        s.p.invuln = 99
+        if prev == "leap" and boss.state == "leap_tele":
+            double = True
+            break
+        prev = boss.state
+    check("Tico na fase 2 emenda dois saltos", double)
+
+    random.seed(8)
+    s = _story(name="fase2_caelum.json")
+    s.goto("altar", 6, 19, enemies=True)
+    boss = s.play.boss
+    s.p.invuln = 99
+    s.wait_until(lambda: boss.awake, 4.0, held={"right"})
+    boss.hp = boss.max_hp // 2 - 1
+    strikes = 0
+    for _ in range(int(40 / SIM_DT)):
+        s.step()
+        s.p.invuln = 99
+        for e in s.play.enemies:
+            if type(e).__name__ == "Illusion":
+                e.alive = False
+        if boss.state == "hunt":
+            strikes = max(strikes, 3 - boss.strikes_left)
+        if strikes >= 3 and boss.state == "idle":
+            break
+    check("Caelum na fase 2 caça com três raios seguidos", strikes >= 3, str(strikes))
+
+
+def test_sounds_wired():
+    """Todo som da lista e toda música configurada existem; slime e chefe usam os sons/efeitos próprios."""
+    from src.audio import AUDIO_DIR, MUSIC_DIR, SFX_NAMES
+    from src.bosses import Sorcerer
+    from src.config import Audio as AC
+    from src.creatures import TideSlime
+    missing = [n for n in SFX_NAMES
+               if not any(os.path.isfile(os.path.join(AUDIO_DIR, n + e)) for e in (".wav", ".ogg", ".mp3"))]
+    check("todo efeito sonoro tem arquivo", not missing, str(missing))
+    nomus = [m for m in set(AC.MUSIC.values()) if not os.path.isfile(os.path.join(MUSIC_DIR, m))]
+    check("toda música configurada existe", not nomus, str(nomus))
+    check("luta de chefe usa boss_01", AC.MUSIC["boss"] == "boss_01.ogg")
+    check("slime tem som próprio", TideSlime.hit_sound == "slime_hit" and TideSlime.death_sound == "slime_death")
+    check("Caelum mostra impacto roxo", Sorcerer.hit_fx == "impacto_roxo")
+
+
 TESTS = [
     test_world_structure, test_all_doors, test_new_game_start, test_ability_pickup, test_coins_and_bag,
     test_energy_and_heal, test_bench, test_shop, test_breakable_secret, test_shield, test_flier_and_jumper,
     test_boss, test_save_and_continue, test_map_and_screens,
     test_gates, test_reach_without_abilities, test_reach_with_dash, test_reach_with_double_jump,
     test_ceiling_door_nudge, test_hazard_returns_in_room, test_boss_tuning, test_selka_fights_up_close,
-    test_caelum_rests,
+    test_caelum_rests, test_enemy_difficulty, test_chaser_lunge, test_gunner, test_gunner_in_story,
+    test_boss_phase2_patterns, test_sounds_wired,
 ]

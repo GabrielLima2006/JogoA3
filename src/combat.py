@@ -93,6 +93,7 @@ def resolve_player_attack(player, enemies, projectiles, ctx):
                 # defendido: faísca metálica e o jogador é empurrado
                 player.vx = -direction * Enemies.SHIELD_BLOCK_RECOIL
                 ctx.effects.burst(hx, hy, 12, (220, 230, 255), speed=(100, 300), gravity=300)
+                ctx.effects.sprite("defesa", hx, hy, fps=24)
                 ctx.effects.add_hitstop(0.05)
                 ctx.audio.play("block")
                 continue
@@ -114,13 +115,16 @@ def resolve_player_attack(player, enemies, projectiles, ctx):
                 ctx.effects.ring(hx, hy, 34, 0.22, Colors.HEAVY_SLASH, 4)
                 ctx.effects.add_hitstop(FX.HIT_STOP_HEAVY)
                 ctx.effects.add_shake(FX.HIT_SHAKE_HEAVY)
+                ctx.effects.sprite("impacto_critico", hx, hy, fps=26)
                 ctx.audio.play("heavy_hit")
             else:
                 ctx.effects.burst(hx, hy, 10, Colors.QUICK_SLASH, speed=(80, 260), gravity=400,
                                   angle=math.atan2(ady, adx), spread=math.pi * 0.9)
                 ctx.effects.add_hitstop(FX.HIT_STOP_QUICK)
                 ctx.effects.add_shake(FX.HIT_SHAKE_QUICK)
-                ctx.audio.play("hit")
+                ctx.audio.play(enemy.hit_sound)
+            if enemy.hit_fx:
+                ctx.effects.sprite(enemy.hit_fx, hx, hy, fps=24, flip=(adx or atk.facing) < 0)
             if not enemy.alive:
                 # golpe final: mais faísca, tremor e pausa um pouco maior
                 ctx.effects.burst(enemy.cx, enemy.cy, 16, (255, 230, 200), speed=(120, 360), gravity=300)

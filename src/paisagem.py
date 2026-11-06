@@ -143,6 +143,47 @@ def foliage(seed, color, width=W * 2, height=120):
     return _cached(("foliage", seed, color, width, height), build)
 
 
+def canopy(seed, color, width=W * 2, height=90):
+    """Galhos com cachos de folhas pendendo da borda de cima da tela (primeiro plano)."""
+    def build():
+        rnd = random.Random(seed)
+        s = pygame.Surface((width, height), pygame.SRCALPHA)
+        claro = tuple(min(255, c + 14) for c in color[:3]) + (255,)
+        x = rnd.randint(0, 40)
+        while x < width:
+            # galho que desce e cachos de folhas compridas ao longo dele
+            comp = rnd.randint(24, 70)
+            dx = rnd.randint(-18, 18)
+            pygame.draw.line(s, color, (x, 0), (x + dx, comp), 2)
+            for k in range(rnd.randint(4, 8)):
+                t = rnd.uniform(0.2, 1.0)
+                fx, fy = x + dx * t, comp * t
+                lado = rnd.choice((-1, 1))
+                folha = [(fx, fy), (fx + lado * 9, fy + 3), (fx + lado * 12, fy + 9), (fx + lado * 4, fy + 6)]
+                pygame.draw.polygon(s, claro if k % 3 == 0 else color, folha)
+            x += rnd.randint(50, 140)
+        return s
+    return _cached(("canopy", seed, color, width, height), build)
+
+
+def broken_column(seed, color, height):
+    """Toco de coluna quebrada (silhueta) com ponta irregular e capitel caído ao lado."""
+    def build():
+        rnd = random.Random(seed)
+        w = 34
+        s = pygame.Surface((w + 30, height), pygame.SRCALPHA)
+        pygame.draw.rect(s, color, (6, 10, w - 12, height - 10))
+        pygame.draw.rect(s, color, (2, height - 10, w - 4, 10))          # base
+        topo = [(6, 10)]
+        for k in range(1, 6):
+            topo.append((6 + k * (w - 12) / 5, rnd.randint(0, 12)))
+        topo.append((w - 6, 10))
+        pygame.draw.polygon(s, color, topo + [(w - 6, 14), (6, 14)])
+        pygame.draw.rect(s, color, (w - 2, height - 12, 24, 12), border_radius=3)   # pedaço caído
+        return s
+    return _cached(("coluna", seed, color, height), build)
+
+
 def temple_hall(seed, wall, pillar, rune):
     """Parede do fundo do templo: arcos, colunas, correntes e runas que brilham."""
     def build():

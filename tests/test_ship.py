@@ -150,6 +150,8 @@ PATHS_NONE = [
     ("Porão 2: viga 3", "porao2", 33, 8, stands_on("porao2", 8, 23, 28)),
     ("Porão 2: viga 4", "porao2", 24, 8, stands_on("porao2", 8, 14, 19)),
     ("Porão 2: nicho da carta", "porao2", 15, 8, stands_on("porao2", 8, 13, 13)),
+    ("Porão 2: tábua podre do desafio", "porao2", 56, 10, stands_on("porao2", 7, 58, 61)),
+    ("Porão 2: jirau do fragmento (desafio)", "porao2", 60, 7, stands_on("porao2", 5, 50, 55)),
     ("Toca: plataforma", "toca", 4, 15, stands_on("toca", 12, 6, 10)),
     ("Toca: barris", "toca", 15, 15, stands_on("toca", 13, 19, 20)),
     ("Toca: plataforma do meio", "toca", 19, 13, stands_on("toca", 10, 17, 22)),
@@ -196,11 +198,11 @@ PATHS_DJ = [
     ("Vergas: do destroço à plataforma leste", "cordame2", 41, 16, stands_on("cordame2", 15, 48, 58)),
     ("Gávea: plataforma", "gavea", 14, 17, stands_on("gavea", 14, 5, 9)),
     ("Gávea: plataforma alta", "gavea", 8, 14, stands_on("gavea", 10, 14, 21)),
-    ("Praia: vala de espinhos", "praia", 12, 18, stands_on("praia", 18, 23, 35)),
+    ("Praia: vala de espinhos", "praia", 12, 18, stands_on("praia", 18, 24, 35)),
     ("Praia: coqueiro (pulo duplo)", "praia", 24, 18, stands_on("praia", 13, 25, 29)),
     ("Praia: penhasco (pulo duplo)", "praia", 33, 18, stands_on("praia", 12, 36, 58)),
     ("Praia: galho do ninho", "praia", 27, 13, stands_on("praia", 8, 16, 20)),
-    ("Praia: ninho", "praia", 18, 8, stands_on("praia", 5, 7, 11)),
+    ("Praia: ninho (desafio)", "praia", 18, 8, stands_on("praia", 5, 7, 11)),
     ("Floresta: 1", "floresta", 4, 37, stands_on("floresta", 34, 6, 11)),
     ("Floresta: 2", "floresta", 9, 34, stands_on("floresta", 31, 14, 19)),
     ("Floresta: 3 (tábuas)", "floresta", 17, 31, stands_on("floresta", 29, 23, 28)),
@@ -226,6 +228,8 @@ PATHS_DJ = [
     ("Templo: pilar B ao C", "templo", 35, 14, stands_on("templo", 15, 40, 41)),
     ("Templo: saída", "templo", 41, 15, stands_on("templo", 18, 47, 58)),
     ("Templo: galeria", "templo", 35, 14, stands_on("templo", 9, 30, 45)),
+    ("Templo: torre 1 (pedras soltas)", "templo", 44, 9, stands_on("templo", 6, 48, 52)),
+    ("Templo: torre 2 (cofre)", "templo", 50, 6, stands_on("templo", 3, 54, 57)),
     ("Templo: câmara selada", "templo", 31, 9, stands_on("templo", 8, 18, 25)),
     ("Altar: plataforma", "altar", 3, 19, stands_on("altar", 16, 6, 13)),
     ("Altar: altar", "altar", 17, 19, stands_on("altar", 16, 20, 23)),
@@ -352,9 +356,40 @@ def test_fair_landings():
     for room, row, c0, c1 in NARROW_LANDINGS:
         for y in range(max(0, row - 3), row):
             for x in range(c0 - 1, c1 + 2):
-                if rows[room][y][x] in "gcjsf":
+                if rows[room][y][x] in "gcjsfa":
                     bad.append(f"{room} ({x},{y})")
     check("nenhum inimigo começa num pouso estreito depois de perigo", not bad, ", ".join(bad))
+
+
+# Inimigos que andam: precisam de chão logo abaixo e espaço livre no tile e acima (altura até 34 px).
+GROUND_ENEMIES = "gcjsatkG"
+SUPPORT = "#-C=X|D"
+
+
+def test_enemies_not_in_walls():
+    bad = []
+    for d in chapter1.ROOM_DEFS:
+        rows = d["rows"]
+        for y, row in enumerate(rows):
+            for x, ch in enumerate(row):
+                if ch in GROUND_ENEMIES:
+                    above = rows[y - 1][x]
+                    below = rows[y + 1][x] if y + 1 < len(rows) else "#"
+                    if above in "#X|=D" or below not in SUPPORT:
+                        bad.append(f"{d['id']} {ch}({x},{y})")
+                elif ch == "f":
+                    if any(rows[y + dy][x + dx] in "#X" for dy in (-1, 0) for dx in (-1, 0, 1)):
+                        bad.append(f"{d['id']} f({x},{y})")
+    check("nenhum inimigo começa dentro de parede ou no ar", not bad, ", ".join(bad))
+
+
+def test_enemy_mix():
+    """Do navio ao templo, cada área tem combinações: atirador junto de outro inimigo."""
+    rows = {d["id"]: "".join(d["rows"]) for d in chapter1.ROOM_DEFS}
+    combos = [r for r, txt in rows.items() if "a" in txt and any(c in txt for c in "gcsjf")]
+    check("atiradores em combinação nas 4 áreas",
+          all(r in combos for r in ("porao1", "porao2", "cordame1", "cordame2", "praia", "floresta", "templo")),
+          ", ".join(combos))
 
 
 def test_crumble():
@@ -475,7 +510,7 @@ def test_items_and_letters():
     check("pegar a carta registra o texto", got)
     s.goto("praia", 25, 13)
     s.p.hp = 2
-    s.wait_until(lambda: "praia:0" in s.pr.collected, 1.0, held={"right"})
+    s.wait_until(lambda: "praia:1" in s.pr.collected, 1.0, held={"right"})
     check("comida recupera 2 corações", s.p.hp == 4)
     saved = Progress.load(s.save_path)
     check("cartas ficam salvas", saved is not None and "carta1" in saved.letters)
@@ -545,6 +580,7 @@ def test_render_all():
     check("todas as salas desenham com a protagonista", True)
 
 
-TESTS = [test_start_abilities, test_water_returns_to_checkpoint, test_structure, test_doors, test_crumble, test_movers, test_items_and_letters, test_secrets, test_fair_landings, test_dialogs_and_npcs,
+TESTS = [test_start_abilities, test_water_returns_to_checkpoint, test_structure, test_doors, test_crumble, test_movers, test_items_and_letters, test_secrets, test_fair_landings, test_enemies_not_in_walls,
+         test_enemy_mix, test_dialogs_and_npcs,
          test_endings, test_bosses, test_render_all, test_gates, test_reach_none, test_reach_dash, test_reach_double,
          test_reach_movers]

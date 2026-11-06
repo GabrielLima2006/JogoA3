@@ -25,10 +25,13 @@ class Game:
     }
     DIFFICULTIES = {
         "facil": {"label": "Fácil", "hp_bonus": 2, "enemy_hp": 0.75, "boss_pace": 0.85,
+                  "enemy_aggro": 0, "strong_damage": 1, "enemy_cooldown": 1.0,
                   "desc": "+2 corações. Inimigos e chefes com menos vida. Para curtir a história."},
         "normal": {"label": "Normal", "hp_bonus": 0, "enemy_hp": 1.0, "boss_pace": 1.0,
+                   "enemy_aggro": 1, "strong_damage": 2, "enemy_cooldown": 0.85,
                    "desc": "O desafio pensado para o jogo."},
         "dificil": {"label": "Difícil", "hp_bonus": -1, "enemy_hp": 1.35, "boss_pace": 1.1,
+                    "enemy_aggro": 2, "strong_damage": 2, "enemy_cooldown": 0.7,
                     "desc": "1 coração a menos. Inimigos e chefes bem mais resistentes."},
     }
 
@@ -38,11 +41,11 @@ class Audio:
     MUSIC_VOLUME = 0.32
     # ajuste fino por efeito (alguns arquivos vêm mais altos que outros)
     SFX_GAIN = {"checkpoint": 0.6, "buy": 0.6, "item": 0.7, "boss": 0.8, "ui_move": 0.6, "coin": 0.5,
-                "step": 0.35, "skid": 0.5}
+                "step": 0.35, "skid": 0.5, "ui_woosh": 0.6, "slime_hit": 0.8}
     # música por tela/zona (arquivos em assets/music/)
     MUSIC = {
         "menu": "title_01.ogg",
-        "boss": "dungeon_01.ogg",
+        "boss": "boss_01.ogg",
         "ilha": "forest_01.ogg",
         "ruínas": "forest_01.ogg",
         "templo": "dungeon_01.ogg",
@@ -238,8 +241,31 @@ class Enemies:
 
     KNOCKBACK_FRICTION = 1800.0
 
+    # investida dos perseguidores (só no Normal e no Difícil; no Fácil eles só encostam).
+    # Aviso: recuam e piscam; depois do bote ficam parados (janela para punir).
+    LUNGE_RANGE = 120.0
+    LUNGE_WINDUP = 0.42
+    LUNGE_WINDUP_HARD = 0.34       # no Difícil o aviso é um pouco mais curto
+    LUNGE_SPEED = 420.0
+    LUNGE_TIME = 0.22
+    LUNGE_RECOVER = 0.65
+    LUNGE_COOLDOWN = 1.6
+
+    # atirador: mantém distância, recua se a jogadora chega perto, mira (aviso) e atira.
+    # Depois do tiro recarrega parado; encurralado (parede ou beirada atrás) não foge.
+    GUNNER_HP = 8
+    GUNNER_SIZE = (26, 34)
+    GUNNER_SPEED = 110.0           # bem mais lento que a corrida: dá para alcançar
+    GUNNER_RANGE = 400.0
+    GUNNER_VERTICAL_RANGE = 160.0
+    GUNNER_RETREAT_RANGE = 150.0
+    GUNNER_AIM = 0.7
+    GUNNER_AIM_LOCK = 0.2          # a mira trava nos últimos instantes do aviso
+    GUNNER_RELOAD = 1.3
+    GUNNER_SHOT_SPEED = 320.0
+
     # moedas que cada inimigo solta
-    DROPS = {"crate": 3, "patroller": 4, "chaser": 8, "turret": 5, "flier": 5, "jumper": 7, "shield": 12, "guardian": 120}
+    DROPS = {"crate": 3, "patroller": 4, "chaser": 8, "turret": 5, "flier": 5, "jumper": 7, "shield": 12, "gunner": 7, "guardian": 120}
 
 
 class Boss:

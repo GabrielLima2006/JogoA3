@@ -26,6 +26,13 @@ class Enemy(Body):
     contact_damage = 1
     gravity = True
     knockback_resist = 1.0
+    hit_sound = "hit"        # som do golpe rápido acertando
+    death_sound = "enemy_death"
+    hit_fx = None            # efeito extra no acerto (ex.: impacto roxo nos mágicos)
+    # ajustes da dificuldade (PlayState os define ao criar o inimigo; o padrão é o Fácil)
+    aggro = 0               # 0 Fácil, 1 Normal, 2 Difícil
+    strong_damage = 1       # dano dos golpes fortes com aviso (investida, empurrão do escudo)
+    cool_mult = 1.0         # multiplica as recargas (menor = ataca mais vezes)
 
     def __init__(self, foot_x, foot_y, w, h):
         super().__init__(foot_x - w / 2, foot_y - h, w, h)
@@ -57,13 +64,19 @@ class Enemy(Body):
             ctx.effects.burst(self.cx, self.cy, 26, self.color, speed=(80, 340), life=(0.3, 0.7),
                               size=(3, 6), gravity=600)
             ctx.effects.ring(self.cx, self.cy, 40, 0.3, self.color, 3)
+            if self.is_boss:
+                ctx.effects.sprite("morte_chefe", self.cx, self.cy - 10, fps=16, scale=2)
             ctx.effects.add_shake(3)
-            ctx.audio.play("enemy_death")
+            ctx.audio.play(self.death_sound)
             ctx.on_enemy_killed(self)
 
     def blocks(self, spec, direction):
         """Retorna True se o golpe foi defendido (sem dano)."""
         return False
+
+    def damage_now(self):
+        """Dano de encostar agora (golpes fortes com aviso podem tirar mais)."""
+        return self.contact_damage
 
     # --- atualização comum ---
     def update(self, dt, room, player, ctx):
@@ -160,6 +173,13 @@ class Chaser(Enemy):
         self.state = "patrol"
         self.timer = 0.0
         self.lost_timer = 0.0
+        self.lunge_cool = 0.0
+
+    def damage_now(self):
+        return self.strong_damage if self.state == "lunge" else self.contact_damage
+
+    def _can_step(self, room, direction):
+        return not self.on_ground or (ground_ahead(self, room, direction) and not wall_ahead(self, room, direction))
 
     def _sees(self, player, room, max_range):
         if not player.alive:
@@ -188,7 +208,36 @@ class Chaser(Enemy):
             if self.timer <= 0:
                 self.state = "chase"
                 self.lost_timer = 0.0
+        elif self.state == "windup":
+            # aviso do bote: recua um pouco e pisca
+            back = -self.direction * 40 if self._can_step(room, -self.direction) else 0.0
+            self.vx = approach(self.vx, back, 1400 * dt)
+            self.timer -= dt
+            if self.timer <= 0:
+                self.state = "lunge"
+                self.timer = E.LUNGE_TIME
+                ctx.audio.play("dash")
+        elif self.state == "lunge":
+            self.vx = self.direction * E.LUNGE_SPEED if self._can_step(room, self.direction) else 0.0
+            self.timer -= dt
+            if self.timer <= 0:
+                self.state = "recover"
+                self.timer = E.LUNGE_RECOVER
+        elif self.state == "recover":
+            self.vx = approach(self.vx, 0.0, 1600 * dt)
+            self.timer -= dt
+            if self.timer <= 0:
+                self.state = "chase"
+                self.lunge_cool = E.LUNGE_COOLDOWN * self.cool_mult
         elif self.state == "chase":
+            self.lunge_cool = max(0.0, self.lunge_cool - dt)
+            dx = player.cx - self.cx
+            if (self.aggro and self.on_ground and self.lunge_cool <= 0 and player.alive
+                    and abs(dx) < E.LUNGE_RANGE and abs(player.cy - self.cy) < 60):
+                self.direction = 1 if dx > 0 else -1
+                self.state = "windup"
+                self.timer = E.LUNGE_WINDUP_HARD if self.aggro >= 2 else E.LUNGE_WINDUP
+                return
             if self._sees(player, room, E.CHASER_LOSE_RANGE):
                 self.lost_timer = 0.0
             else:
@@ -207,7 +256,7 @@ class Chaser(Enemy):
 
     def draw(self, surf, cam_x, cam_y):
         super().draw(surf, cam_x, cam_y)
-        if self.state in ("alert", "chase") and self.alive:
+        if self.state in ("alert", "chase", "windup") and self.alive:
             x = round(self.cx - cam_x)
             y = round(self.top - 22 - cam_y)
             col = Colors.CHASER_ALERT if self.state == "alert" else (255, 120, 90)
@@ -243,7 +292,7 @@ class Turret(Enemy):
                     ctx.projectiles.spawn(self.cx, self.cy, dx, dy)
                     ctx.audio.play("shoot")
                     ctx.effects.burst(self.cx, self.cy, 5, Colors.PROJECTILE, speed=(40, 120), gravity=0)
-                self.cooldown = E.TURRET_COOLDOWN
+                self.cooldown = E.TURRET_COOLDOWN * self.cool_mult
             return
         self.cooldown -= dt
         if self.cooldown <= 0 and in_range:
@@ -389,6 +438,9 @@ class Shield(Enemy):
             return False
         return True
 
+    def damage_now(self):
+        return self.strong_damage if self.state == "bash" else self.contact_damage
+
     def think(self, dt, room, player, ctx):
         self.guard_broken = False
         dx = player.cx - self.cx
@@ -435,6 +487,91 @@ class Shield(Enemy):
             sx = self.cx + self.direction * (self.w / 2 + 2) - cam_x
             pygame.draw.rect(surf, (210, 220, 240), (round(sx - 4), round(self.top + 4 - cam_y), 8, self.h - 6),
                              border_radius=3)
+
+
+class Gunner(Enemy):
+    """Atirador: guarda distância, recua de quem chega perto, mira com aviso e atira.
+
+    Depois do tiro fica recarregando, parado: é a hora de chegar perto. Não se joga de
+    bordas; encurralado (parede ou beirada atrás), para de fugir e mira mesmo assim.
+    """
+    color = Colors.TURRET
+    drop = "gunner"
+    max_hp = E.GUNNER_HP
+    shot_look = "bala"
+
+    def __init__(self, foot_x, foot_y):
+        super().__init__(foot_x, foot_y, *E.GUNNER_SIZE)
+        self.state = "patrol"
+        self.timer = 0.0
+        self.telegraph = 0.0
+        self.aim = (1.0, 0.0)
+
+    def _sees(self, player, room):
+        if not player.alive:
+            return False
+        dx, dy = player.cx - self.cx, player.cy - self.cy
+        if abs(dx) > E.GUNNER_RANGE or abs(dy) > E.GUNNER_VERTICAL_RANGE:
+            return False
+        return line_of_sight(room, self.cx, self.cy - 8, player.cx, player.cy - 6)
+
+    def _free(self, room, direction):
+        return ground_ahead(self, room, direction) and not wall_ahead(self, room, direction)
+
+    def _aim_start(self):
+        self.state = "aim"
+        self.timer = E.GUNNER_AIM
+
+    def think(self, dt, room, player, ctx):
+        dx = player.cx - self.cx
+        away = -1 if dx > 0 else 1
+        sees = self._sees(player, room)
+        st = self.state
+        if st == "patrol":
+            if self.on_ground and not self._free(room, self.direction):
+                self.direction *= -1
+            self.vx = approach(self.vx, self.direction * E.GUNNER_SPEED * 0.4, 900 * dt)
+            if sees:
+                self._aim_start()
+        elif st == "retreat":
+            self.direction = -away                       # recua olhando para a jogadora
+            if (not self.on_ground or not self._free(room, away)
+                    or abs(dx) > E.GUNNER_RETREAT_RANGE * 1.6 or not sees):
+                self._aim_start()                        # encurralado ou longe o bastante: mira
+            else:
+                self.vx = approach(self.vx, away * E.GUNNER_SPEED, 1200 * dt)
+        elif st == "aim":
+            self.vx = approach(self.vx, 0.0, 1600 * dt)
+            self.timer -= dt
+            if self.timer > E.GUNNER_AIM_LOCK:
+                self.direction = 1 if dx > 0 else -1
+                self.aim = (dx, player.cy - (self.top + 12))
+            if self.timer <= 0:
+                ctx.projectiles.spawn(self.cx + self.direction * 16, self.top + 12, *self.aim,
+                                      speed=E.GUNNER_SHOT_SPEED, look=self.shot_look)
+                ctx.effects.burst(self.cx + self.direction * 18, self.top + 12, 5, (255, 220, 120),
+                                  speed=(40, 140), gravity=0)
+                ctx.audio.play("shoot")
+                self.state = "reload"
+                self.timer = E.GUNNER_RELOAD * self.cool_mult
+        elif st == "reload":
+            self.vx = approach(self.vx, 0.0, 1600 * dt)
+            self.timer -= dt
+            if self.timer <= 0:
+                self.state = "patrol" if not sees else "aim"
+                self.timer = E.GUNNER_AIM
+        # chegou perto antes do tiro: recua, se houver chão atrás
+        close = sees and abs(dx) < E.GUNNER_RETREAT_RANGE and self.on_ground and self._free(room, away)
+        if close and (self.state == "patrol" or (self.state == "aim" and self.timer > E.GUNNER_AIM * 0.6)):
+            self.state = "retreat"
+        self.telegraph = self.timer if self.state == "aim" else 0.0
+
+    def body_color(self):
+        if self.flash > 0:
+            return (255, 255, 255)
+        if self.state == "aim" and int(self.timer * 20) % 2 == 0:
+            return Colors.PROJECTILE
+        return self.color
 
 
 class Guardian(Enemy):

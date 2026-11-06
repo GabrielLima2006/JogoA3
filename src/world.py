@@ -34,7 +34,7 @@ BOSS_LOCK = "="
 LOCKED = "D"
 WATER = "~"
 DOOR_CHARS = set("0123456789")
-ENTITY_CHARS = set("PB$RgctfjsG*Nk")
+ENTITY_CHARS = set("PB$RgctfjsG*Nka")
 CRUMBLE = "C"
 
 

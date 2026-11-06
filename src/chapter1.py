@@ -77,7 +77,8 @@ def room_porao1():
     g.put(3, 26, "*").put(50, 26, "*")
     g.put(8, 26, "j").put(38, 26, "g")
     g.put(9, 6, "k").put(12, 6, "k").put(7, 19, "k")
-    g.put(26, 19, "g").put(47, 19, "g").put(51, 19, "k")    # nenhum rato no chão estreito entre o buraco e os caixotes
+    g.put(10, 6, "a")                         # pistoleiro na prateleira alta: atira em quem sobe a escada
+    g.put(26, 19, "g").put(47, 19, "c").put(51, 19, "k")    # capanga depois dos caixotes; nada no chão estreito do buraco
     return g.rows()
 
 
@@ -92,15 +93,19 @@ def room_porao2():
     g.rect(38, 17, 40, 22)                    # ilha B
     g.rect(44, 20, 62, 22)                    # chão leste
     g.hline(51, 57, 10, "-")                  # prateleira alta (plataforma que sobe)
+    # desafio das vigas podres (opcional): da prateleira, tábua podre e o jirau do fragmento, sob o teto
+    g.hline(58, 61, 7, "C").hline(50, 55, 5, "-")
     # vigas do teto: a volta por cima, de leste para oeste
     g.hline(41, 46, 9, "-").hline(32, 37, 8, "C").hline(23, 28, 8, "-").hline(14, 19, 8, "-")
     # nicho sobre a entrada, fechado por madeira rachada: a carta 1
     g.rect(1, 8, 13, 9)
     g.rect(12, 3, 12, 5).rect(12, 6, 12, 7, "X")
-    g.put(4, 7, "*").put(55, 9, "*").put(39, 16, "*")
+    g.put(52, 4, "*").put(4, 7, "*").put(39, 16, "*")
+    g.put(54, 4, "k").put(56, 9, "k")         # caixotes de carga marcam o caminho até o jirau
+    g.put(53, 9, "a")                         # pistoleiro na prateleira: mira quem sobe no elevador
     g.put(4, 19, "B")
     g.put(16, 7, "g").put(46, 13, "f")       # rato na viga firme (não logo depois das tábuas); gaivota no chão leste
-    g.put(58, 19, "g").put(60, 19, "k").put(54, 19, "j")      # gosma longe do pouso da ilha B
+    g.put(58, 19, "s").put(60, 19, "k").put(54, 19, "j")      # gosma + pirata de escudo no chão leste
     return g.rows()
 
 
@@ -129,7 +134,7 @@ def room_cordame1():
     g.rect(19, 23, 19, 24, "X").clear(20, 23, 20, 24)   # oco no mastro (rachado do lado oeste)
     # subida oeste: enfrechates (o caminho principal)
     g.hline(9, 14, 33, "-").hline(2, 7, 30, "-").hline(9, 13, 27, "C").hline(14, 18, 25, "-")
-    g.hline(3, 8, 22, "-").hline(10, 15, 19, "-").hline(3, 7, 16, "-")
+    g.hline(3, 8, 22, "-").hline(10, 15, 19, "C").hline(3, 7, 16, "-")    # enfrechate podre: sem parar
     g.hline(8, 31, 13, "-")                   # verga grande, por cima do mastro
     # lado leste (opcional): gaivotas, tábuas e a plataforma que balança até o amuleto
     g.hline(25, 30, 33, "-").hline(32, 37, 30, "-").hline(26, 30, 27, "C").hline(33, 37, 25, "-")
@@ -138,7 +143,8 @@ def room_cordame1():
     g.hline(3, 8, 10, "-").hline(10, 15, 7, "-").hline(18, 22, 6, "C").hline(25, 28, 5, "-")
     g.rect(31, 4, 38, 4)
     g.put(20, 24, "*").put(36, 24, "*")
-    g.put(24, 12, "g")
+    g.put(24, 12, "g").put(5, 21, "g")       # rato no enfrechate oeste 5 + gaivota: dois de uma vez
+    g.put(29, 12, "a")                        # pistoleiro na ponta da verga: atira em quem sobe pelo leste
     g.put(36, 21, "f").put(26, 21, "f").put(13, 11, "f")      # gaivota acima do amuleto, não do pouso leste 2
     return g.rows()
 
@@ -160,6 +166,7 @@ def room_cordame2():
     g.put(4, 4, "*").put(40, 15, "*")
     g.put(3, 14, "B").put(56, 14, "t")       # canhão no fundo: alcança só o fim da plataforma móvel
     g.put(16, 4, "f").put(43, 14, "f")       # gaivota guarda a rota alta, não as tábuas
+    g.put(52, 14, "a")                        # pistoleiro no lado leste: atira em quem vem pela plataforma
     return g.rows()
 
 
@@ -182,19 +189,21 @@ def room_praia():
     g = Grid(60, 22)
     g.door("W", 14, 17, "1").door("E", 8, 11, "2")
     g.rect(1, 18, 14, 20)
-    g.hline(15, 22, 20, "^")                  # vala de espinhos (8)
-    g.rect(23, 18, 35, 20)
+    g.hline(15, 23, 20, "^")                  # vala de espinhos (9: pulo duplo ou dash)
+    g.rect(24, 18, 35, 20)
     g.rect(36, 12, 58, 20)                    # penhasco: 6 acima (pulo duplo)
     g.hline(25, 29, 13, "-")                  # copa do coqueiro: 5 acima (pulo duplo)
     # gruta dentro do penhasco, atrás da rocha rachada
     g.clear(37, 15, 53, 17).rect(36, 16, 36, 17, "X")
-    # ninho no alto (opcional): do coqueiro, galhos até caixas esquecidas por contrabandistas
-    g.hline(16, 20, 8, "-").hline(7, 11, 5, "-")
-    g.put(8, 4, "k").put(10, 4, "k")
+    # desafio do ninho (opcional): do coqueiro, galho podre e o ninho com o tesouro dos contrabandistas
+    g.hline(16, 20, 8, "C").hline(7, 11, 5, "-")
+    g.put(9, 4, "*").put(8, 4, "k").put(14, 3, "f")
     g.put(27, 12, "*").put(51, 17, "*")
     g.put(4, 17, "B").put(45, 17, "k")
     g.put(10, 17, "j").put(31, 17, "g").put(33, 17, "k")
     g.put(48, 11, "c").put(54, 11, "g").put(44, 6, "f")       # goblin, lobo e diabrete no alto
+    g.put(19, 13, "f")                        # diabrete sobre a vala: pular no ritmo dele
+    g.put(57, 11, "a")                        # atirador de pedras no fundo do penhasco, atrás do goblin e do lobo
     return g.rows()
 
 
@@ -214,8 +223,9 @@ def room_floresta():
     g.hline(15, 20, 10, "-").hline(24, 29, 8, "-").hline(32, 35, 7, "-")
     g.hline(22, 26, 3, "-")                   # copa alta (fragmento)
     g.rect(38, 6, 46, 6)
+    g.put(45, 5, "a")                         # atirador na saída: mira quem sobe pelo elevador
     g.put(24, 2, "*").put(4, 12, "*").put(45, 31, "*")
-    g.put(27, 21, "j").put(30, 16, "f").put(12, 22, "f")      # gosma no caminho longo, não no galho 2
+    g.put(27, 21, "j").put(30, 16, "f").put(12, 22, "f").put(25, 25, "f")   # diabrete sobre as tábuas      # gosma no caminho longo, não no galho 2
     g.put(3, 36, "B").put(9, 36, "j").put(14, 36, "g")
     return g.rows()
 
@@ -248,8 +258,12 @@ def room_templo():
     g.rect(5, 4, 17, 9).clear(7, 5, 16, 7).rect(17, 6, 17, 7, "X")
     g.put(9, 7, "*")
     g.put(3, 17, "B")
-    g.put(52, 17, "c").put(56, 17, "s")
+    g.put(50, 17, "c").put(55, 17, "a").put(57, 17, "s")      # múmia, atirador e cavaleiro na saída
     g.put(38, 8, "t").put(28, 5, "f")                          # lich na galeria e espírito
+    g.put(31, 11, "f")                        # espírito sobre a plataforma móvel: espinhos + inimigo
+    # desafio da torre (opcional): da galeria, pedras soltas até o cofre do sacerdote
+    g.hline(48, 52, 6, "C").hline(54, 57, 3, "-")
+    g.put(56, 2, "*").put(51, 3, "f")
     return g.rows()
 
 
@@ -272,7 +286,7 @@ ROOM_DEFS = [
     {"id": "porao1", "name": "Porão", "zone": "porão", "rows": room_porao1(),
      "items": [("charm", "lamina"), ("coins", 30)]},
     {"id": "porao2", "name": "Porão Alagado", "zone": "porão", "rows": room_porao2(),
-     "items": [("letter", "carta1"), ("fragment", None), ("food", "peixe")],
+     "items": [("fragment", None), ("letter", "carta1"), ("food", "peixe")],
      "movers": [{"x0": 18, "y0": 16, "x1": 26, "y1": 16, "w": 3, "speed": 90},
                 {"x0": 47, "y0": 19, "x1": 47, "y1": 10, "w": 3, "speed": 70}]},
     {"id": "toca", "name": "Toca dos Ratos", "zone": "porão", "rows": room_toca(), "boss": "rei_rato"},
@@ -284,12 +298,12 @@ ROOM_DEFS = [
      "movers": [{"x0": 36, "y0": 10, "x1": 43, "y1": 10, "w": 3, "speed": 95}]},
     {"id": "gavea", "name": "Cesto da Gávea", "zone": "convés", "rows": room_gavea(), "boss": "cavaleiro"},
     {"id": "praia", "name": "Praia de Velmora", "zone": "ilha", "rows": room_praia(),
-     "items": [("food", "torta"), ("coins", 40)]},
+     "items": [("coins", 60), ("food", "torta"), ("coins", 40)]},
     {"id": "floresta", "name": "Bosque dos Vaga-lumes", "zone": "ilha", "rows": room_floresta(),
      "items": [("fragment", None), ("letter", "carta3"), ("charm", "vigor")],
      "movers": [{"x0": 41, "y0": 25, "x1": 41, "y1": 11, "w": 3, "speed": 70}]},
     {"id": "ruinas", "name": "Ruínas de Velmora", "zone": "ruínas", "rows": room_ruinas(), "boss": "irma"},
-    {"id": "templo", "name": "Templo da Maré", "zone": "templo", "rows": room_templo(), "items": [("charm", "forca")],
+    {"id": "templo", "name": "Templo da Maré", "zone": "templo", "rows": room_templo(), "items": [("coins", 80), ("charm", "forca")],
      "movers": [{"x0": 23, "y0": 13, "x1": 30, "y1": 13, "w": 3, "speed": 110}]},
     {"id": "altar", "name": "Altar da Maré", "zone": "templo", "rows": room_altar(), "boss": "feiticeiro"},
 ]

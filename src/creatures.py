@@ -10,7 +10,8 @@ from . import pixelart, sprites
 import json
 import math
 
-from .enemies import Chaser, Enemy, Flier, Jumper, Patroller, Shield, Turret, approach, ground_ahead, wall_ahead
+from .enemies import (Chaser, Enemy, Flier, Gunner, Jumper, Patroller, Shield, Turret, approach, ground_ahead,
+                      wall_ahead)
 from .config import Enemies as E
 from .paths import asset
 
@@ -177,8 +178,9 @@ class _ModelMixin:
         if getattr(self, "telegraph", 0) > 0:
             state = "skulls_tele"
         lean = 10 if state in ("windup", "bash", "lunge", "charge") else 0
+        warn = state in ("windup", "aim") and int(t * 16) % 2 == 0
         draw_model(surf, self.model, self.cx - cam_x, self.bottom - cam_y, t, self.direction,
-                   abs(self.vx) > 20, self.flash > 0, lean, self.float_amp,
+                   abs(self.vx) > 20, self.flash > 0 or warn, lean, self.float_amp,
                    state=state, vy=getattr(self, "vy", 0.0), airborne=not getattr(self, "on_ground", True))
         if state == "alert":
             fr = sprites.effect("alerta")
@@ -217,11 +219,13 @@ class Imp(_ModelMixin, Flier):
 
 class Spirit(_ModelMixin, Flier):
     model = "espirito"
+    hit_fx = "impacto_roxo"
     float_amp = 4.0
 
 
 class Lich(_ModelMixin, Turret):
     model = "lich"
+    hit_fx = "impacto_roxo"
     float_amp = 2.0
 
 
@@ -262,6 +266,8 @@ class Hench(_ModelMixin, Chaser):
 class TideSlime(Jumper):
     """Slime da maré amaldiçoada (slime.png: linha 0 parado, linha 2 salto)."""
     color = (70, 140, 230)
+    hit_sound = "slime_hit"
+    death_sound = "slime_death"
 
     def draw(self, surf, cam_x, cam_y):
         frames = sprites.grid("inimigos/slime.png", 48, 32)
@@ -293,6 +299,93 @@ class ShieldPirate(_ModelMixin, Shield):
     model = "cavaleiro_escudo"
 
 
+class _ArmaMixin:
+    """Atirador com a arma na mão e aviso de mira bem visível: linha pontilhada até onde vai o
+    tiro (fica cheia quando a mira trava) e um anel que fecha na boca da arma até o disparo."""
+    arma = "pistola"
+
+    def draw(self, surf, cam_x, cam_y):
+        t = pygame.time.get_ticks() / 1000.0 + (self.x % 97) * 0.1
+        st = getattr(self, "state", "")
+        d = self.direction
+        draw_model(surf, self.model, self.cx - cam_x, self.bottom - cam_y, t, d, abs(self.vx) > 20,
+                   self.flash > 0, 0, 0.0, state="", vy=getattr(self, "vy", 0.0),
+                   airborne=not getattr(self, "on_ground", True))
+        boca = (self.cx + d * 16 - cam_x, self.top + 12 - cam_y)
+        if st == "aim":
+            ax, ay = self.aim
+            n = math.hypot(ax, ay) or 1.0
+            ux, uy = ax / n, ay / n
+            if ux * d < 0.2:                         # aviso sempre para o lado em que olha
+                ux, uy = d * 1.0, 0.0
+        elif st == "reload":
+            ux, uy = d * 0.5, -0.86                  # arma para cima, recarregando
+        else:
+            ux, uy = d * 0.7, 0.7                    # arma baixa
+        self._draw_arma(surf, boca, ux, uy, st, t)
+        if st == "aim":
+            self._draw_mira(surf, boca, ux, uy, t)
+        self.draw_hp(surf, cam_x, cam_y)
+
+    def _draw_arma(self, surf, boca, ux, uy, st, t):
+        d = self.direction
+        mao = (round(boca[0] - d * 7), round(boca[1] + 2))
+        if self.arma == "pistola":
+            ponta = (round(mao[0] + ux * 9), round(mao[1] + uy * 9))
+            pygame.draw.line(surf, (20, 18, 24), mao, ponta, 4)                 # contorno
+            pygame.draw.line(surf, (96, 98, 110), mao, ponta, 2)                # cano
+            pygame.draw.line(surf, (96, 62, 38), mao, (mao[0] - d * 2, mao[1] + 4), 3)   # cabo
+            if st == "reload" and int(t * 6) % 2 == 0:                          # fumacinha do cano
+                pygame.draw.circle(surf, (150, 150, 160), (ponta[0] + d, ponta[1] - 4), 2, 1)
+        else:
+            # pedra pontuda: erguida acima da cabeça enquanto mira, na mão no resto do tempo
+            if st == "aim":
+                c = (round(boca[0] - d * 30), round(boca[1] - 16 + math.sin(t * 20)))   # braço para trás
+                ombro = (round(boca[0] - d * 19), round(boca[1] - 7))
+                pygame.draw.line(surf, (24, 20, 26), ombro, (c[0], c[1] + 3), 4)
+                pygame.draw.line(surf, (126, 176, 66), ombro, (c[0], c[1] + 3), 2)
+            else:
+                c = (mao[0] + d * 2, mao[1] - 2)
+            pygame.draw.polygon(surf, (24, 20, 26), [(c[0] - 5, c[1] + 3), (c[0], c[1] - 6), (c[0] + 5, c[1] + 3)])
+            pygame.draw.polygon(surf, (140, 136, 130), [(c[0] - 3, c[1] + 2), (c[0], c[1] - 4), (c[0] + 3, c[1] + 2)])
+            surf.set_at((c[0] - 1, c[1] - 2), (200, 196, 186))
+
+    def _draw_mira(self, surf, boca, ux, uy, t):
+        k = max(0.0, min(1.0, self.timer / E.GUNNER_AIM))
+        travou = self.timer <= E.GUNNER_AIM_LOCK
+        cor = (255, 70, 50) if travou else (255, 150, 60)
+        comp = 120
+        x0, y0 = boca
+        passo = 6 if travou else 10
+        fase = (t * 60) % passo
+        dist = 6 + fase
+        while dist < comp:                                   # pontilhado que corre para a frente
+            px, py = round(x0 + ux * dist), round(y0 + uy * dist)
+            pygame.draw.rect(surf, (30, 8, 10), (px - 1, py - 1, 3, 3))
+            surf.set_at((px, py), cor)
+            if travou:
+                surf.set_at((px + 1, py), cor)
+            dist += passo
+        r = 3 + round(7 * k)                                 # anel que fecha até o tiro
+        pygame.draw.circle(surf, (30, 8, 10), (round(x0), round(y0)), r + 1, 1)
+        pygame.draw.circle(surf, cor, (round(x0), round(y0)), r, 1)
+        if travou and int(t * 20) % 2 == 0:                  # brilho na boca: vai disparar
+            pygame.draw.line(surf, (255, 240, 200), (x0 - 3, y0), (x0 + 3, y0))
+            pygame.draw.line(surf, (255, 240, 200), (x0, y0 - 3), (x0, y0 + 3))
+
+
+class PirateGunner(_ArmaMixin, _ModelMixin, Gunner):
+    """Pistoleiro do navio: recua, mira e atira; recarrega parado."""
+    model = "ladino"
+
+
+class StoneThrower(_ArmaMixin, _ModelMixin, Gunner):
+    """Goblin da ilha que atira pedras pontudas do mesmo jeito."""
+    model = "goblin"
+    shot_look = "espinho"
+    arma = "pedra"
+
+
 class Crate(Enemy):
     """Caixa de carga: quebra com um golpe e solta moedas."""
     color = (150, 104, 60)
@@ -310,10 +403,11 @@ class Crate(Enemy):
 
 # mesma letra do mapa, visual e comportamento de acordo com a zona da sala
 ZONE_TYPES = {
-    "ilha": {"g": Wolf, "c": Goblin, "f": Imp},
-    "ruínas": {"g": Wolf, "c": Goblin, "f": Imp, "s": DarkKnight},
-    "templo": {"c": Mummy, "f": Spirit, "t": Lich, "s": DarkKnight},
+    "ilha": {"g": Wolf, "c": Goblin, "f": Imp, "a": StoneThrower},
+    "ruínas": {"g": Wolf, "c": Goblin, "f": Imp, "s": DarkKnight, "a": StoneThrower},
+    "templo": {"c": Mummy, "f": Spirit, "t": Lich, "s": DarkKnight, "a": StoneThrower},
 }
 
 
-TYPES = {"g": Rat, "f": Gull, "c": Hench, "j": TideSlime, "t": Cannon, "s": ShieldPirate, "k": Crate}
+TYPES = {"g": Rat, "f": Gull, "c": Hench, "j": TideSlime, "t": Cannon, "s": ShieldPirate, "k": Crate,
+         "a": PirateGunner}

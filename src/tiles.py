@@ -67,6 +67,35 @@ def _wood_tile(palette, seed, top=False, vertical=False):
     return s
 
 
+def _detalhe(s, theme, i):
+    """Variação rara do topo de madeira: limo verde escorrendo (porão), chapa de ferro
+    rebitada ou tábua remendada (convés e interior). Só abaixo da linha de cima,
+    que é a borda de pisar e fica igual."""
+    rnd = random.Random(300 + i)
+    if theme == "bilge":
+        for _ in range(5):                                   # limo pingando da borda
+            x = rnd.randrange(1, T - 2)
+            comp = rnd.randint(3, 9)
+            pygame.draw.line(s, (58, 86, 54), (x, 4), (x, 4 + comp))
+            s.set_at((x, 4 + comp), (88, 120, 70))
+        pygame.draw.line(s, (70, 104, 60), (0, 4), (T - 1, 4))
+    elif i == 0:                                             # chapa de ferro com rebites
+        r = pygame.Rect(rnd.randint(4, 12), 7, 14, 10)
+        pygame.draw.rect(s, (52, 54, 62), r)
+        pygame.draw.rect(s, (30, 30, 36), r, 1)
+        pygame.draw.line(s, (96, 98, 110), (r.x + 1, r.y + 1), (r.right - 2, r.y + 1))
+        for cx, cy in ((r.x + 2, r.y + 3), (r.right - 3, r.y + 3), (r.x + 2, r.bottom - 3), (r.right - 3, r.bottom - 3)):
+            s.set_at((cx, cy), (150, 150, 160))
+    else:                                                    # tábua remendada mais clara
+        y = 4 + 8 * rnd.randint(0, 2)
+        x0 = rnd.randint(2, 12)
+        pygame.draw.rect(s, (140, 96, 58) if theme == "deck" else (104, 70, 46), (x0, y + 1, 14, 6))
+        pygame.draw.rect(s, (84, 54, 34), (x0, y + 1, 14, 6), 1)
+        for nx in (x0 + 2, x0 + 11):
+            s.set_at((nx, y + 3), (70, 70, 80))
+    return s
+
+
 def _oneway_wood(palette):
     base, dark, light, nail = palette
     s = pygame.Surface((T, T), pygame.SRCALPHA)
@@ -163,10 +192,57 @@ def solid_tile(ts, room, tx, ty):
     às paredes grossas."""
     def solid(a, b):
         return room.tile(a, b) in ("#", None, "X")
-    if not solid(tx, ty - 1):
-        return pick(ts["top"], tx, ty)
-    deep = all(solid(tx + dx, ty + dy) for dx in (-2, 0, 2) for dy in (-2, 0, 2))
-    return pick(ts["deep"] if deep else ts["fill"], tx, ty)
+    aberto = (not solid(tx, ty - 1), not solid(tx - 1, ty), not solid(tx + 1, ty), not solid(tx, ty + 1))
+    if aberto[0]:
+        base = pick(ts["top"], tx, ty)
+    else:
+        deep = all(solid(tx + dx, ty + dy) for dx in (-2, 0, 2) for dy in (-2, 0, 2))
+        base = pick(ts["deep"] if deep else ts["fill"], tx, ty)
+    if not any(aberto[1:]):
+        return base
+    return _bordas(base, aberto)
+
+
+_bordas_cache = {}
+
+
+def _bordas(base, aberto):
+    """Luz e sombra nas faces expostas (luz vem de cima, à esquerda) e cantos de fora gastos,
+    para a parede não parecer uma grade de quadrados iguais."""
+    key = (id(base), aberto)
+    img = _bordas_cache.get(key)
+    if img is not None:
+        return img
+    cima, esq, dir_, baixo = aberto
+    img = base.copy()
+    w, h = img.get_size()
+    if baixo:                                    # face de baixo: sombra de 4 px e linha escura
+        sombra = pygame.Surface((w, 4), pygame.SRCALPHA)
+        sombra.fill((0, 0, 0, 70))
+        img.blit(sombra, (0, h - 4))
+        pygame.draw.line(img, (12, 8, 16), (0, h - 1), (w - 1, h - 1))
+    if dir_:                                     # lado da sombra
+        sombra = pygame.Surface((3, h), pygame.SRCALPHA)
+        sombra.fill((0, 0, 0, 60))
+        img.blit(sombra, (w - 3, 0))
+        pygame.draw.line(img, (12, 8, 16), (w - 1, 0), (w - 1, h - 1))
+    if esq:                                      # lado da luz: filete claro e contorno
+        luz = pygame.Surface((1, h), pygame.SRCALPHA)
+        luz.fill((255, 240, 210, 40))
+        img.blit(luz, (1, 0))
+        pygame.draw.line(img, (12, 8, 16), (0, 0), (0, h - 1))
+    # cantos de fora: tira 1 px (e 2 no canto de baixo) para arredondar
+    for canto, (cx, cy) in (((cima and esq), (0, 0)), ((cima and dir_), (w - 1, 0)),
+                            ((baixo and esq), (0, h - 1)), ((baixo and dir_), (w - 1, h - 1))):
+        if canto:
+            img.set_at((cx, cy), (0, 0, 0, 0))
+            if cy == h - 1:
+                img.set_at((cx + (1 if cx == 0 else -1), cy), (0, 0, 0, 0))
+                img.set_at((cx, cy - 1), (0, 0, 0, 0))
+    if len(_bordas_cache) > 4000:
+        _bordas_cache.clear()
+    _bordas_cache[key] = img
+    return img
 
 
 def tileset(theme):
@@ -176,6 +252,7 @@ def tileset(theme):
     if theme in WOOD:
         pal = WOOD[theme]
         tops = [_wood_tile(pal, 100 + i, top=True) for i in range(6)]
+        tops = tops * 3 + [_detalhe(_wood_tile(pal, 120 + i, top=True), theme, i) for i in range(3)]   # detalhe raro
         fills = [_wood_tile(tuple(_shade(c, -14) for c in pal[:3]) + (pal[3],), 200 + i, vertical=True)
                  for i in range(6)]
         oneway = _oneway_wood(pal)

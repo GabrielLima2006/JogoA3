@@ -312,6 +312,7 @@ class RatKing(Boss):
         super().__init__(foot_x, foot_y, 60, 34)
         self.charge_dir = 1
         self.floor_y = foot_y
+        self.leaps_left = 0
 
     def think(self, dt, room, player, ctx):
         sp = (1.3 if self.phase2 else 1.0) * self.pace
@@ -330,6 +331,7 @@ class RatKing(Boss):
                 pick = self.choose(opts, w)
                 self.state = pick + "_tele"
                 self.timer = {"charge": 0.55, "leap": 0.4, "summon": 0.5}[pick] / sp
+                self.leaps_left = 2 if self.phase2 else 1
         elif st == "charge_tele":
             self.vx = approach(self.vx, -self.direction * 50, 1500 * dt)
             self.timer -= dt
@@ -372,9 +374,14 @@ class RatKing(Boss):
                     ctx.projectiles.spawn(self.cx + d * 34, self.bottom - 10, d, 0, speed=280 * sp, look="espinho")
                 ctx.effects.add_shake(9)
                 ctx.effects.sprite("fumaca_marrom", self.cx, self.bottom - 12, fps=16, scale=2)
-                ctx.audio.play("impact")
-                self.state = "idle"
-                self.timer = random.uniform(0.6, 0.9)
+                ctx.audio.play("ground_slam")
+                self.leaps_left -= 1
+                if self.leaps_left > 0:          # fase 2: agacha de novo e salta outra vez
+                    self.state = "leap_tele"
+                    self.timer = 0.35 / sp
+                else:
+                    self.state = "idle"
+                    self.timer = random.uniform(0.6, 0.9)
         elif st == "summon_tele":
             self.vx = 0.0
             self.timer -= dt
@@ -474,6 +481,9 @@ class RedKnight(Boss):
                     self.timer = 1.4 / sp
                     ctx.hazards.append(Gust(1 if dx > 0 else -1, force=280 if self.powered else 230))
                     ctx.audio.play("dash")
+                    if self.powered:
+                        self.state = "leap_tele"
+                        self.timer = 0.75 / sp
                 elif pick == "slash":
                     self.state = "slash_tele"
                     self.timer = 0.5 / sp
@@ -531,7 +541,7 @@ class RedKnight(Boss):
                                                   speed=(260 + i * 70) * sp, look="espinho")
                 ctx.effects.add_shake(11)
                 ctx.effects.sprite("fumaca_marrom", self.cx, self.bottom - 14, fps=16, scale=3)
-                ctx.audio.play("boss")
+                ctx.audio.play("ground_slam")
                 self.state = "recover"
                 self.timer = 0.6
 
@@ -716,8 +726,13 @@ class PirateSister(Boss):
                     x = max(40, min(room.width - 40, start + i * 110))
                     ctx.hazards.append(CannonShot(x, self.bottom, warn=0.9 + i * 0.18))
                 ctx.audio.play("attack_quick")
-                self.state = "idle"
-                self.timer = random.uniform(1.0, 1.3)
+                if self.phase2:
+                    self.state = "lunge_tele"
+                    self.timer = 0.6 / sp
+                    self.lunges_left = 1
+                else:
+                    self.state = "idle"
+                    self.timer = random.uniform(1.0, 1.3)
 
     def draw(self, surf, cam_x, cam_y):
         self.alpha = getattr(self, "alpha", 255)
@@ -779,6 +794,7 @@ class Sorcerer(Boss):
     color = (120, 220, 210)
     max_hp = BC.HP_SORCERER
     gravity = False
+    hit_fx = "impacto_roxo"
 
     def __init__(self, foot_x, foot_y):
         super().__init__(foot_x, foot_y - 120, 36, 80)
@@ -788,6 +804,7 @@ class Sorcerer(Boss):
         self.alpha = 255
         self.vy = 0.0
         self.attacks = 0         # ataques desde o último descanso
+        self.strikes_left = 0
         self.rest_x = 0.0
 
     def setup(self, room):
@@ -850,9 +867,9 @@ class Sorcerer(Boss):
                     return
                 opts, w = ["skulls", "lightning", "teleport", "illusion"], [3, 3, 2, 0 if decoys else 3]
                 if self.phase2:
-                    opts += ["wave", "summon", "tide"]
+                    opts += ["wave", "summon", "tide", "hunt"]
                     w += [2, 1 if sum(1 for e in ctx.enemies if isinstance(e, TideSlime)) < 2 else 0,
-                          0 if flooding else 2]
+                          0 if flooding else 2, 2]
                 pick = self.choose(opts, w)
                 if pick != "teleport":
                     self.attacks += 1
@@ -863,7 +880,8 @@ class Sorcerer(Boss):
                 else:
                     self.state = pick + "_tele"
                     self.timer = {"skulls": 0.55, "lightning": 0.45, "wave": 0.5, "summon": 0.5,
-                                  "illusion": 0.6, "tide": 0.7}[pick] / sp
+                                  "illusion": 0.6, "tide": 0.7, "hunt": 0.5}[pick] / sp
+                    self.strikes_left = 3
         elif st == "tele_out":
             self.vx = self.vy = 0.0
             self.timer -= dt
@@ -899,6 +917,23 @@ class Sorcerer(Boss):
                         ctx.hazards.append(Lightning(x, self.floor_y, warn=0.8 + i * 0.05))
                 self.state = "idle"
                 self.timer = random.uniform(1.0, 1.3)
+        elif st == "hunt_tele":
+            self.timer -= dt
+            if self.timer <= 0:
+                self.state = "hunt"
+                self.timer = 0.0
+        elif st == "hunt":
+            # cada raio marca o chão onde ela está; parar no lugar é levar o golpe
+            self.timer -= dt
+            if self.timer <= 0:
+                if self.strikes_left > 0:
+                    self.strikes_left -= 1
+                    x = max(30, min(room.width - 30, player.cx))
+                    ctx.hazards.append(Lightning(x, self.floor_y, warn=0.7))
+                    self.timer = 0.5
+                else:
+                    self.state = "idle"
+                    self.timer = random.uniform(0.9, 1.2)
         elif st == "wave_tele":
             self.timer -= dt
             if self.timer <= 0:
