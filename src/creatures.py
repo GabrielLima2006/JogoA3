@@ -114,6 +114,23 @@ def draw_model(surf, name, x, foot_y, t, facing, moving=False, white=False, lean
                     slash = sprites.variant(frames[int(t * 18) % len(frames)], facing < 0)
                     surf.blit(slash, slash.get_rect(center=(round(x + facing * 22), round(foot_y - 30))))
             return
+    if name == "diabrete":
+        # Folha de tools/animar_pose.py: flutua batendo; no alerta recolhe; na perseguição mergulha.
+        if state == "alert":
+            pose, ph = "attack", 0.5 / 3
+        elif state == "chase" or lean:
+            pose, ph = "attack", (1.5 + int(t * 10) % 2) / 3
+        else:
+            pose, ph = "idle", t * 1.6
+        quadro, pe = sprites.pose_anim(name, pose, ph)
+        if quadro is not None:
+            v = quadro
+            if alpha < 255:
+                v = quadro.copy()
+                v.set_alpha(alpha)
+            lift = round(math.sin(t * 2.5) * float_amp)
+            sprites.blit_anchor(surf, v, x, foot_y + lift, pe, flip=facing < 0, white=white, scale=scale)
+            return
     if name in ("espirito", "lich"):
         # Conjuração (tools/animar_pose.py): recolhe, carrega com brilho e lança para a frente.
         # Lich: alterna recolher/carregar no aviso do tiro. Espírito: carrega no alerta, lança ao perseguir.

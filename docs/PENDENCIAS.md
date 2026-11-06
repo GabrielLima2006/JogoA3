@@ -61,7 +61,8 @@ Medição e sons (06/11, sem commit):
   dificuldades, **0 problemas**: portas levam à sala certa, prancha do Convés trancada antes do Aldric e aberta
   depois, recompensas (Levitação, fragmento) aparecem, arenas reabrem, 3 páginas e final verdadeiro.
   O bot se teleporta dentro da sala (alcance fica com `try_reach`). Rodado sobre o mapa de 06/11 cedo:
-  **rodar de novo depois que a Fases terminar** os atiradores `a` e os inimigos novos.
+  rodado de novo depois da Fases (atiradores nas 7 salas, vala da Praia, desafio do Porão 2): **0 problemas**
+  nas 3 dificuldades; lutas acordadas no Normal 12/19/39/51 s. Nada a corrigir nem a repassar.
 
 ## Interface
 
@@ -264,7 +265,37 @@ Pendente:
 - Suíte (3/11): 433/436. `test_render_all` caía em `PirateSister.alpha`; já corrigido no `draw` (render passa).
   As outras duas falhas são de volta ao checkpoint (`volta ao último checkpoint`, água do porao2): área de gameplay.
 
+### Arte (6/11, sem commit)
+
+Feito (capturas `r2_*` em `arte_capturas` na pasta de notas):
+- Navio (`background.py`): cone e poça de luz quente embaixo das lanternas (param no primeiro piso ou plataforma),
+  feixe de luar das escotilhas, poças das lanternas da amurada no convés, rolos de corda, baldes, redes de pesca
+  e teias nos cantos do teto, bolhas subindo na água do porão. Luzes somadas por cima da cena, fracas.
+- Blocos de madeira (`tiles.py`): variação rara no topo (limo escorrendo no porão; chapa de ferro e tábua remendada
+  no convés e interior).
+- Ilha, ruínas e templo: arbustos, brotos e pedras do tileset da ilha e tocos de coluna de pedra no chão, escurecidos
+  (plano de trás); poça de luz dos braseiros.
+- Atirador `a` (`creatures._ArmaMixin`): pistoleiro com pistola na mão (baixa, mira, para cima na recarga com fumaça);
+  goblin com pedra pontuda erguida atrás da cabeça na mira. Aviso: linha pontilhada na direção do tiro (laranja,
+  fica vermelha e mais densa quando a mira trava), anel que fecha na boca da arma e brilho antes do disparo.
+- Diabrete: folha `anim_diabrete.png` (`tools/animar_pose.py diabrete`; a ferramenta agora aceita nomes e só refaz
+  esses). Flutua parado, recolhe no alerta e mergulha inclinado na perseguição. Antes aparecia virado ao contrário.
+- Retrato da Capitã caída (`objects.draw_portrait`, estilo `corpo`): busto como os outros, apagado e parado
+  (antes saía o corpo inteiro minúsculo).
+- Espírito/lich e a folga de 3 px de `draw_character` já estavam feitos na rodada de 3/11.
+- Suíte completa sem janela: 503/503.
+
+Falta:
+- Conferir em jogo (com janela, quando o Gabriel puder) a intensidade das luzes e se o aviso de mira está claro.
+- Ciclos de ataque restantes da lista acima (lobo, goblin, ladino, cavaleiro do escudo, Selka, Caelum).
+- Usar os pacotes `ch_02_world_building_foundations` etc. em `assets internet` se quiser trocar a decoração
+  desenhada em código por arte de pacote.
+
 ## Integração e testes
+
+Feito (06/11, v1.3):
+- Suíte completa sem janela: 503/503. Commit em `main`, `.exe` portátil e instalador novos, release `v1.3`
+  com a tag no commit da versão.
 
 Feito (06/11):
 - Suíte completa: 494/494 (inimigos mais desafiadores, figurantes reduzidos, capitã caída, cenários).

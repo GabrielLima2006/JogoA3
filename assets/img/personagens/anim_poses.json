@@ -254,5 +254,21 @@
    "attack": 3
   },
   "source": "npcs.png#22"
+ },
+ "diabrete": {
+  "frame": [
+   58,
+   49
+  ],
+  "anchor": [
+   29,
+   48
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "npcs.png#17"
  }
 }

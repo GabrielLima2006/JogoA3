@@ -265,12 +265,14 @@ def draw_portrait(surf, style, box, time=0.0):
     r = art.get_bounding_rect()
     if r.w == 0:
         return False
-    if style != "corpo":                                        # busto: cabeça e tronco
-        r = pygame.Rect(r.x, r.y, r.w, max(8, round(r.h * 0.55)))
+    r = pygame.Rect(r.x, r.y, r.w, max(8, round(r.h * 0.55)))   # busto: cabeça e tronco
     art = art.subsurface(r)
     k = max(1, min((box.w - 12) // r.w, (box.h - 12) // r.h))
     img = pygame.transform.scale(art, (r.w * k, r.h * k))
     bob = round(math.sin(time * 2) * 1)
+    if style == "corpo":                       # Capitã caída: mesmo busto, apagado e parado
+        img.fill((150, 156, 180, 255), special_flags=pygame.BLEND_RGBA_MULT)
+        bob = 0
     surf.blit(img, img.get_rect(midbottom=(box.centerx, box.bottom - 6 + bob)))
     return True
 

@@ -48,6 +48,8 @@ POSES = {
     # criaturas mágicas da folha da equipe: flutuam (sem passada) e conjuram no ataque
     "espirito": ("npcs.png#18", 50, 0.55, 0, False, True),
     "lich": ("npcs.png#22", 73, 0.55, 0, False, True),
+    # diabrete: voa (sem passada); no ataque recolhe as asas e mergulha de cabeça
+    "diabrete": ("npcs.png#17", 47, 0.55, 0, False, "mergulho"),
 }
 FRAMES = {"idle": 4, "walk": 6, "attack": 3}
 PAD = 6                                   # folga lateral para a passada e o ataque
@@ -185,8 +187,29 @@ def conjurar(base, hip):
     return [recolhe, brilho, lanca]
 
 
+def mergulhar(base, hip):
+    """Ataque do diabrete: sobe recolhido, depois mergulha inclinado para a frente e para baixo."""
+    w, h = base.get_size()
+    recolhe = pygame.Surface((w, h), pygame.SRCALPHA)
+    recolhe.blit(inclinar(base, hip, -4), (0, -1))
+    quadros = [recolhe]
+    for ang, dx, dy in ((-14, 1, 1), (-22, 2, 2)):
+        # corpo todo inclinado de cabeça para a frente (giro sem suavizar, pixel art preservado)
+        g = pygame.transform.rotate(inclinar(base, hip, 3), ang)
+        q = pygame.Surface((w, h), pygame.SRCALPHA)
+        q.blit(g, g.get_rect(center=(w // 2 + dx, h // 2 + dy)))
+        quadros.append(q)
+    return quadros
+
+
+# modelos da folha da equipe que já olham para a direita (não viram ao recortar)
+JA_OLHA_DIREITA = {"diabrete"}
+
+
 def gerar(nome, arquivo, altura, quadril, passada, quadrupede, magico=False):
     src = carregar(arquivo)
+    if nome in JA_OLHA_DIREITA:
+        src = pygame.transform.flip(src, True, False)
     src = src.subsurface(src.get_bounding_rect()).copy()
     body = reduzir(src, altura)
     bw, bh = body.get_size()
@@ -214,7 +237,9 @@ def gerar(nome, arquivo, altura, quadril, passada, quadrupede, magico=False):
             q2.blit(cisalhar(base, hip, -2, True, 1), (avanco // 2, 0))
             q = inclinar(q2, hip, avanco // 2)
         linhas["attack"].append(q)
-    if magico:
+    if magico == "mergulho":
+        linhas["attack"] = mergulhar(base, hip)
+    elif magico:
         linhas["attack"] = conjurar(base, hip)
 
     cols = max(FRAMES.values())
@@ -229,11 +254,19 @@ def gerar(nome, arquivo, altura, quadril, passada, quadrupede, magico=False):
 def main():
     pygame.init()
     pygame.display.set_mode((8, 8))
+    # python tools/animar_pose.py [nomes...]: só refaz os nomes dados (os outros ficam como estão)
+    so = sys.argv[1:]
+    caminho = os.path.join(DEST, "anim_poses.json")
     meta = {}
+    if so and os.path.exists(caminho):
+        with open(caminho, encoding="utf-8") as f:
+            meta = json.load(f)
     for nome, args in POSES.items():
+        if so and nome not in so:
+            continue
         meta[nome] = gerar(nome, *args)
         print(nome, meta[nome]["frame"])
-    with open(os.path.join(DEST, "anim_poses.json"), "w", encoding="utf-8") as f:
+    with open(caminho, "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=1, ensure_ascii=False)
 
 
