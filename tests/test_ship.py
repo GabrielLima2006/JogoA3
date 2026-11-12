@@ -392,6 +392,23 @@ def test_enemy_mix():
           ", ".join(combos))
 
 
+def test_enemy_variety():
+    """No navio, no máximo 2 do ladino (capanga `c` e pistoleiro `a` usam o mesmo modelo) por sala;
+    toda sala com inimigos mistura pelo menos 3 tipos."""
+    many, few = [], []
+    for d in chapter1.ROOM_DEFS:
+        txt = "".join(d["rows"])
+        if d["zone"] in ("interior", "convés", "porão") and txt.count("c") + txt.count("a") > 2:
+            many.append(d["id"])
+        if txt.count("s") > 1:
+            many.append(d["id"] + " (escudo)")
+        kinds = {ch for ch in txt if ch in "gcjsatf"}
+        if kinds and len(kinds) < 3:
+            few.append(d["id"])
+    check("sem enxame do ladino (até 2 por sala no navio) nem do escudo (1 por sala)", not many, ", ".join(many))
+    check("salas com inimigos misturam 3 tipos ou mais", not few, ", ".join(few))
+
+
 def test_crumble():
     s = game(name="tabua.json")
     s.goto("porao1", 12, 27)
@@ -640,6 +657,6 @@ def test_render_all():
 
 
 TESTS = [test_start_abilities, test_water_returns_to_checkpoint, test_structure, test_doors, test_crumble, test_movers, test_items_and_letters, test_secrets, test_all_secrets, test_every_item_pickable, test_fair_landings, test_enemies_not_in_walls,
-         test_enemy_mix, test_dialogs_and_npcs,
+         test_enemy_mix, test_enemy_variety, test_dialogs_and_npcs,
          test_endings, test_bosses, test_render_all, test_gates, test_reach_none, test_reach_dash, test_reach_double,
          test_reach_movers]

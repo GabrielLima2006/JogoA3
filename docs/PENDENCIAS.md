@@ -44,6 +44,11 @@ Pronto (`src/chapter1.py`, `tests/test_ship.py`; auditoria final em 12/11):
   começa em parede (`test_enemies_not_in_walls`) ou em pouso estreito depois de perigo (`test_fair_landings`).
   Pousos sem volta: nenhum (bolsões fechados por parede rachada têm saída pela própria parede; quedas caem
   em perigo, que devolve ao chão firme da sala).
+- Menos repetição (pedido do Gabriel na v1.4): ladino (capuz roxo; modelo do capanga `c` e do pistoleiro `a`
+  no navio) de 6 para 4 no navio, 1 por sala (só o pistoleiro). O capanga do Porão 1 virou gaivota e o das
+  Vergas virou rato. Escudo continua 1 pirata (Porão 2) e 1 cavaleiro negro (Templo), nunca 2 na mesma sala.
+  Teste `test_enemy_variety`: até 2 ladinos por sala no navio, até 1 escudo por sala, 3+ tipos por sala.
+  Para a Arte, se quiser: pistoleiro com visual próprio (hoje usa o mesmo `ladino` do capanga).
 - Saves antigos: a ordem dos itens do Porão 2 mudou (fragmento `porao2:0`, carta 1 `porao2:1`).
 
 Pendente:
@@ -83,6 +88,7 @@ Falta:
 ## Integração e testes
 
 Versões publicadas (instalador `MareDeMentiras-Setup.exe` + `.exe` portátil):
+- `v1.5` (12/11): menos inimigos repetidos no navio; versão para teste com amigos. Suíte 512/512.
 - `v1.4` (12/11): **versão final.** Rodada 4 de QA sem janela sem problemas abertos; suíte 510/510.
 - `v1.3` (06/11, commit `30086ea`): suíte 503/503 sem janela; instalador testado em modo silencioso.
 - `v1.2` (06/11): inimigos mais desafiadores; instalador novo (`tools/instalador.iss`, pt-BR, sem pedir

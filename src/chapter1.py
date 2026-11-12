@@ -78,7 +78,8 @@ def room_porao1():
     g.put(8, 26, "j").put(38, 26, "g")
     g.put(9, 6, "k").put(12, 6, "k").put(7, 19, "k")
     g.put(10, 6, "a")                         # pistoleiro na prateleira alta: atira em quem sobe a escada
-    g.put(26, 19, "g").put(47, 19, "c").put(51, 19, "k")    # capanga depois dos caixotes; nada no chão estreito do buraco
+    g.put(26, 19, "g").put(51, 19, "k")       # nada no chão estreito entre o buraco e os caixotes
+    g.put(48, 16, "f")                        # gaivota sobre o chão depois dos caixotes
     return g.rows()
 
 
@@ -166,7 +167,7 @@ def room_cordame2():
     g.put(4, 4, "*").put(40, 15, "*")
     g.put(3, 14, "B").put(56, 14, "t")       # canhão no fundo: alcança só o fim da plataforma móvel
     g.put(16, 4, "f").put(43, 14, "f")       # gaivota guarda a rota alta, não as tábuas
-    g.put(52, 14, "a").put(54, 14, "c")       # pistoleiro e capanga no lado leste: recebem quem vem pela plataforma
+    g.put(52, 14, "a").put(54, 14, "g")       # pistoleiro e rato no lado leste: recebem quem vem pela plataforma
     return g.rows()
 
 
