@@ -96,11 +96,18 @@ def draw_model(surf, name, x, foot_y, t, facing, moving=False, white=False, lean
 
     # Só estas duas criaturas ainda usam os retratos laterais recém-importados.
     # Os modelos sombreados da folha da equipe são melhores para os demais inimigos.
-    if name in ("lobo", "goblin"):
-        # Folha de tools/animar_pose.py: passada, respiração e bote a partir da vista east.
-        pose = "attack" if lean else ("walk" if moving and not airborne else "idle")
-        speed = {"attack": 5.0, "walk": 1.8 if name == "lobo" else 1.4, "idle": 0.8}[pose]
-        quadro, pe = sprites.pose_anim(name, pose, t * speed)
+    if name in ("lobo", "goblin", "ladino", "cavaleiro_escudo"):
+        # Folha de tools/animar_pose.py: passada, respiração e golpe com pose própria
+        # (preparo com a arma para trás, golpe com o tronco para a frente, recuperação).
+        golpe = {"windup": 0, "lunge": 1, "bash": 1, "charge": 1, "recover": 2}.get(state)
+        if golpe is None and lean:
+            golpe = 1
+        if golpe is not None:
+            pose, ph = "attack", (golpe + 0.5) / 3
+        else:
+            pose = "walk" if moving and not airborne else "idle"
+            ph = t * {"walk": 1.8 if name == "lobo" else 1.4, "idle": 0.8}[pose]
+        quadro, pe = sprites.pose_anim(name, pose, ph)
         if quadro is not None:
             v = quadro
             if alpha < 255:
@@ -108,7 +115,7 @@ def draw_model(surf, name, x, foot_y, t, facing, moving=False, white=False, lean
                 v.set_alpha(alpha)
             lift = round(math.sin(t * 2.5) * float_amp)
             sprites.blit_anchor(surf, v, x, foot_y + lift, pe, flip=facing < 0, white=white, scale=scale)
-            if lean and name == "goblin":            # porretada: mesmo corte dos outros inimigos
+            if golpe == 1 and name in ("goblin", "ladino", "cavaleiro_escudo"):   # rastro do golpe
                 frames = sprites.grid("efeitos/corte_h.png", 48, 48)
                 if frames:
                     slash = sprites.variant(frames[int(t * 18) % len(frames)], facing < 0)

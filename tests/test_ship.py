@@ -533,6 +533,65 @@ def test_secrets():
     check("atrás da madeira rachada está a carta 1", ok)
 
 
+# Paredes rachadas: (sala, coluna e linha do chão do lado de fora, direção da parede, chave do item atrás)
+SECRETS = [
+    ("porao1", 42, 27, "right", "porao1:1"),      # esconderijo da sentina
+    ("porao2", 13, 8, "left", "porao2:1"),        # nicho da carta 1
+    ("cordame1", 17, 25, "right", "cordame1:0"),  # oco do mastro
+    ("praia", 34, 18, "right", "praia:2"),        # gruta do penhasco
+    ("floresta", 9, 13, "left", "floresta:1"),    # árvore oca (carta 3)
+    ("templo", 19, 8, "left", "templo:1"),        # câmara selada (amuleto)
+]
+
+
+def test_all_secrets():
+    for room, tx, row, side, key in SECRETS:
+        s = game(("dash", "double_jump"), name="segredos_todos.json", flags=("atracado",))
+        s.goto(room, tx, row)
+        s.p.facing = 1 if side == "right" else -1
+        for _ in range(3):
+            s.step(set(), {"attack_quick"})
+            s.run(0.4)
+        broke = bool(s.play.room.broken)
+        got = s.wait_until(lambda: key in s.pr.collected, 3.0, held={side})
+        check(f"segredo de {room}: golpe abre a parede e o item atrás é pego", broke and got,
+              f"quebrou={broke}, pegou={got}")
+
+
+def _floor_under(rows, x, y):
+    """Primeira linha de apoio (chão, plataforma ou tábua) abaixo da coluna x, a partir da linha y."""
+    for yy in range(y + 1, len(rows)):
+        if rows[yy][x] in "#-C":
+            return yy
+    return None
+
+
+def test_every_item_pickable():
+    """Todo baú/item do mapa é pego andando no pouso logo abaixo dele (o pouso tem teste de alcance)."""
+    bad = []
+    for d in chapter1.ROOM_DEFS:
+        rows = d["rows"]
+        spots = [(x, y) for y, row in enumerate(rows) for x, ch in enumerate(row) if ch == "*"]
+        for i, (x, y) in enumerate(spots):
+            key = f"{d['id']}:{i}"
+            if key in {sec[4] for sec in SECRETS}:
+                continue                      # atrás de parede rachada: test_all_secrets
+            s = game(("dash", "double_jump"), name="itens_todos.json", flags=("atracado",))
+            floor = _floor_under(rows, x, y)
+            ok = False
+            for dx, held in ((-2, "right"), (2, "left"), (-1, "right"), (1, "left")):
+                sx = x + dx
+                if floor is None or rows[floor][sx] not in "#-C" or rows[floor - 1][sx] in "#X":
+                    continue
+                s.goto(d["id"], sx, floor)
+                if s.wait_until(lambda: key in s.pr.collected, 1.0, held={held}):
+                    ok = True
+                    break
+            if not ok:
+                bad.append(f"{key} ({x},{y})")
+    check("todo item do mapa pode ser pego do pouso embaixo dele", not bad, ", ".join(bad))
+
+
 def test_endings():
     for letters, true_end in ((("carta1", "carta2", "carta3"), True), (("carta1",), False)):
         s = game(("dash", "double_jump"), name=f"final{len(letters)}.json")
@@ -580,7 +639,7 @@ def test_render_all():
     check("todas as salas desenham com a protagonista", True)
 
 
-TESTS = [test_start_abilities, test_water_returns_to_checkpoint, test_structure, test_doors, test_crumble, test_movers, test_items_and_letters, test_secrets, test_fair_landings, test_enemies_not_in_walls,
+TESTS = [test_start_abilities, test_water_returns_to_checkpoint, test_structure, test_doors, test_crumble, test_movers, test_items_and_letters, test_secrets, test_all_secrets, test_every_item_pickable, test_fair_landings, test_enemies_not_in_walls,
          test_enemy_mix, test_dialogs_and_npcs,
          test_endings, test_bosses, test_render_all, test_gates, test_reach_none, test_reach_dash, test_reach_double,
          test_reach_movers]

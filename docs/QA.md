@@ -8,6 +8,29 @@ Rodada de teste exploratório de 22–23/10/2026, feita sobre a pasta de trabalh
 
 ---
 
+## Situação na rodada 4 (12/11, versão final)
+
+Rodada sem janela (`SDL_VIDEODRIVER=dummy`) com todos os scripts de `docs/qa/scripts/` sobre a versão final.
+Suíte oficial: 510/510. **Nenhum problema aberto.**
+
+| Item | Situação |
+|---|---|
+| 0, 6, 7, 8, 9, 11 | **Corrigidos** (rodada 3). Lobo da Floresta segue vivo, 0 moedas soltas. |
+| 1. Selka não ataca de perto | **Corrigido.** Agora usa investida, pistola e canhonaço; dano levado 14–37 por luta. |
+| 2. Volta à bola de outra sala | **Corrigido.** Canal do Porão 2 volta ao Porão 2; vala da Praia volta à Praia. |
+| 3. Chefes com muitos golpes | **Corrigido.** Normal: Tico 24, Aldric 38, Selka 42, Caelum 50 golpes; lutas de 11 a 64 s. Difícil até 68 golpes e 88 s (Caelum). |
+| 4, 5, 10, 12 | **Corrigidos.** Telas de morte, diário e pausa sem sobreposição; portas do teto (`conves:3`, `porao1:1`) param na sala de cima. |
+
+Também conferido:
+- 24 passagens sem prender nem dano; nenhum inimigo começa em parede nas 13 salas; 8 amuletos mudam o
+  atributo certo; voltar à bola, salvar/carregar, cura e bolsa (33 moedas) funcionam; 36 lutas de chefe
+  vencidas sem o chefe sair da arena.
+- Sprites depois da saída da feiticeira "sample": todo inimigo, NPC e chefe das 13 salas desenha com arte
+  própria, e os retratos de diálogo (Caelum, capitã caída, Tico, Aldric, Selka) também. A base "feiticeira"
+  de `src/elenco.py` ficou sem arquivo, mas nenhum personagem do jogo a usa.
+- Capturas do README refeitas (`docs/screenshots/`).
+- Não testado: "cair pelo fundo do Cordame 1" (posição antiga do script não tem chão desde o redesenho).
+
 ## Situação na rodada 3 (03/11)
 
 Rodado sobre o commit `305a156` mais as mudanças ainda sem commit das frentes. Todos os scripts de `docs/qa/scripts/` de novo; `qa_chefes.py` com 1 semente.

@@ -121,7 +121,8 @@ class HeroineSkin(Skin):
         return anims
 
 
-SKINS = {"ele": HeroSkin(), "ela": HeroineSkin(), "feiticeira_antiga": SorceressSkin()}
+# "feiticeira_antiga" saiu: o pacote "sample" da feiticeira não tem autor nem licença confirmados.
+SKINS = {"ele": HeroSkin(), "ela": HeroineSkin()}
 
 
 def state_of(player):

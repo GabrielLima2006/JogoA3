@@ -30,8 +30,8 @@ DEST = os.path.join(ROOT, "assets", "img", "personagens")
 # nome: (arquivo de origem em assets/img/personagens, altura final em px, quadril (fração da altura),
 #        passada máxima do pé em px, quadrúpede?)
 POSES = {
-    "lobo": ("inimigo_lobo.png", 44, 0.55, 4, True),
-    "goblin": ("inimigo_goblin.png", 52, 0.76, 5, False),
+    "lobo": ("inimigo_lobo.png", 44, 0.55, 4, True, "bote"),
+    "goblin": ("inimigo_goblin.png", 52, 0.76, 5, False, "golpe_curto"),
     "comerciante": ("npc_comerciante.png", 57, 0.62, 5, False),
     "ferreira": ("npc_ferreira.png", 57, 0.62, 5, False),
     "curandeira": ("npc_curandeira.png", 56, 0.64, 3, False),
@@ -43,16 +43,19 @@ POSES = {
     "ancia": ("npc_ancia.png", 52, 0.66, 3, False),
     "grumete": ("npc_grumete.png", 47, 0.60, 4, False),
     # chefes: tamanho original (1x), só ganham o movimento
-    "selka": ("selka.png", 62, 0.58, 5, False),
-    "caelum": ("caelum.png", 59, 0.72, 0, False),
+    "selka": ("selka.png", 62, 0.58, 5, False, "golpe"),
+    "caelum": ("caelum.png", 59, 0.72, 0, False, True),
     # criaturas mágicas da folha da equipe: flutuam (sem passada) e conjuram no ataque
     "espirito": ("npcs.png#18", 50, 0.55, 0, False, True),
     "lich": ("npcs.png#22", 73, 0.55, 0, False, True),
+    # capangas da folha da equipe: ladino (adaga) e cavaleiro do escudo (investida com o escudo)
+    "ladino": ("npcs.png#15", 57, 0.62, 4, False, "golpe"),
+    "cavaleiro_escudo": ("npcs.png#9", 59, 0.62, 4, False, "escudo"),
     # diabrete: voa (sem passada); no ataque recolhe as asas e mergulha de cabeça
     "diabrete": ("npcs.png#17", 47, 0.55, 0, False, "mergulho"),
 }
 FRAMES = {"idle": 4, "walk": 6, "attack": 3}
-PAD = 6                                   # folga lateral para a passada e o ataque
+PAD = 8                                   # folga lateral para a passada e o ataque
 
 
 def reduzir(src, altura):
@@ -187,6 +190,52 @@ def conjurar(base, hip):
     return [recolhe, brilho, lanca]
 
 
+def girar_tronco(base, hip, ang, dx=0, dy=0):
+    """Gira só a parte de cima do corpo em volta do quadril (pernas paradas no chão).
+    Giro sem suavizar: o pixel art continua nítido."""
+    w, h = base.get_size()
+    cima = pygame.Surface((w, hip), pygame.SRCALPHA)
+    cima.blit(base, (0, 0), pygame.Rect(0, 0, w, hip))
+    px = w // 2
+    tela = pygame.Surface((w * 2, hip * 2), pygame.SRCALPHA)       # pivô no centro
+    tela.blit(cima, (w - px, 0))
+    g = pygame.transform.rotate(tela, ang)
+    out = pygame.Surface((w, h), pygame.SRCALPHA)
+    out.blit(base, (0, hip), pygame.Rect(0, hip, w, h - hip))
+    out.blit(g, g.get_rect(center=(px + dx, hip + dy)))
+    return out
+
+
+def golpear(base, hip, escudo=False):
+    """Golpe de verdade (bípede olhando para a direita): arma para trás, tronco joga para a frente
+    no golpe e acompanha o movimento. Escudo: investida com o corpo baixo e o escudo na frente."""
+    if escudo:
+        return [girar_tronco(base, hip, 8, -1), girar_tronco(base, hip, -16, 4, 2), girar_tronco(base, hip, -7, 2, 1)]
+    return [girar_tronco(base, hip, 12, -1), girar_tronco(base, hip, -18, 3, 2), girar_tronco(base, hip, -8, 1, 1)]
+
+
+def golpe_curto(base, hip):
+    """Golpe de quem tem o quadril alto (goblin): giro menor para não parecer que cai."""
+    return [girar_tronco(base, hip, 7, -1), girar_tronco(base, hip, -11, 3, 1), girar_tronco(base, hip, -5, 1)]
+
+
+def bote(base, hip):
+    """Bote do lobo: agacha, salta esticado de cabeça para a frente e aterrissa."""
+    w, h = base.get_size()
+    corpo = base.subsurface(base.get_bounding_rect()).copy()
+    bw, bh = corpo.get_size()
+    agacha = pygame.Surface((w, h), pygame.SRCALPHA)
+    a = pygame.transform.scale(corpo, (bw + 2, bh - 4))
+    agacha.blit(a, a.get_rect(midbottom=(w // 2 - 1, h - 1)))
+    salto = pygame.Surface((w, h), pygame.SRCALPHA)
+    e = pygame.transform.rotate(pygame.transform.scale(corpo, (bw + 6, bh - 2)), -8)
+    salto.blit(e, e.get_rect(midbottom=(w // 2 + 4, h - 3)))
+    pouso = pygame.Surface((w, h), pygame.SRCALPHA)
+    p2 = pygame.transform.scale(corpo, (bw + 3, bh - 2))
+    pouso.blit(p2, p2.get_rect(midbottom=(w // 2 + 3, h - 1)))
+    return [agacha, salto, pouso]
+
+
 def mergulhar(base, hip):
     """Ataque do diabrete: sobe recolhido, depois mergulha inclinado para a frente e para baixo."""
     w, h = base.get_size()
@@ -239,6 +288,12 @@ def gerar(nome, arquivo, altura, quadril, passada, quadrupede, magico=False):
         linhas["attack"].append(q)
     if magico == "mergulho":
         linhas["attack"] = mergulhar(base, hip)
+    elif magico == "golpe_curto":
+        linhas["attack"] = golpe_curto(base, hip)
+    elif magico in ("golpe", "escudo"):
+        linhas["attack"] = golpear(base, hip, magico == "escudo")
+    elif magico == "bote":
+        linhas["attack"] = bote(base, hip)
     elif magico:
         linhas["attack"] = conjurar(base, hip)
 

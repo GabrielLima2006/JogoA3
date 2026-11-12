@@ -1,11 +1,11 @@
 {
  "lobo": {
   "frame": [
-   70,
+   74,
    46
   ],
   "anchor": [
-   35,
+   37,
    45
   ],
   "frames": {
@@ -17,11 +17,11 @@
  },
  "goblin": {
   "frame": [
-   29,
+   33,
    54
   ],
   "anchor": [
-   14,
+   16,
    53
   ],
   "frames": {
@@ -193,11 +193,11 @@
  },
  "selka": {
   "frame": [
-   39,
+   43,
    64
   ],
   "anchor": [
-   19,
+   21,
    63
   ],
   "frames": {
@@ -209,11 +209,11 @@
  },
  "caelum": {
   "frame": [
-   53,
+   57,
    61
   ],
   "anchor": [
-   26,
+   28,
    60
   ],
   "frames": {
@@ -270,5 +270,37 @@
    "attack": 3
   },
   "source": "npcs.png#17"
+ },
+ "ladino": {
+  "frame": [
+   50,
+   59
+  ],
+  "anchor": [
+   25,
+   58
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "npcs.png#15"
+ },
+ "cavaleiro_escudo": {
+  "frame": [
+   56,
+   61
+  ],
+  "anchor": [
+   28,
+   60
+  ],
+  "frames": {
+   "idle": 4,
+   "walk": 6,
+   "attack": 3
+  },
+  "source": "npcs.png#9"
  }
 }

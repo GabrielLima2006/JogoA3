@@ -166,7 +166,7 @@ def room_cordame2():
     g.put(4, 4, "*").put(40, 15, "*")
     g.put(3, 14, "B").put(56, 14, "t")       # canhão no fundo: alcança só o fim da plataforma móvel
     g.put(16, 4, "f").put(43, 14, "f")       # gaivota guarda a rota alta, não as tábuas
-    g.put(52, 14, "a")                        # pistoleiro no lado leste: atira em quem vem pela plataforma
+    g.put(52, 14, "a").put(54, 14, "c")       # pistoleiro e capanga no lado leste: recebem quem vem pela plataforma
     return g.rows()
 
 
@@ -198,6 +198,7 @@ def room_praia():
     # desafio do ninho (opcional): do coqueiro, galho podre e o ninho com o tesouro dos contrabandistas
     g.hline(16, 20, 8, "C").hline(7, 11, 5, "-")
     g.put(9, 4, "*").put(8, 4, "k").put(14, 3, "f")
+    g.put(25, 12, "k")                        # caixote no coqueiro: sinal do desafio do ninho
     g.put(27, 12, "*").put(51, 17, "*")
     g.put(4, 17, "B").put(45, 17, "k")
     g.put(10, 17, "j").put(31, 17, "g").put(33, 17, "k")
@@ -264,6 +265,7 @@ def room_templo():
     # desafio da torre (opcional): da galeria, pedras soltas até o cofre do sacerdote
     g.hline(48, 52, 6, "C").hline(54, 57, 3, "-")
     g.put(56, 2, "*").put(51, 3, "f")
+    g.put(45, 8, "k")                         # caixote na ponta da galeria: sinal do desafio da torre
     return g.rows()
 
 

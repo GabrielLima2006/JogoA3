@@ -993,9 +993,7 @@ class Sorcerer(Boss):
                                            0.5 if conjura else self.anim_t * 0.7)
             if quadro is not None:
                 # o arquivo original tem 2 px livres abaixo do pé; o quadro tem 1
-                base = pygame.Surface((quadro.get_width(), quadro.get_height() + 1), pygame.SRCALPHA)
-                base.blit(quadro, (0, 0))
-                img = base
+                img = _quadro_caelum(quadro)
                 escala = 2
             else:
                 escala = 1
@@ -1022,6 +1020,20 @@ class Sorcerer(Boss):
         shadow = pygame.Rect(0, 0, 50, 8)
         shadow.center = (round(self.cx - cam_x), round(self.floor_y - cam_y - 2))
         pygame.draw.ellipse(surf, (20, 60, 70), shadow)
+
+
+_CAELUM_PAD = {}
+
+
+def _quadro_caelum(quadro):
+    """Quadro do Caelum com 1 px a mais embaixo, guardado: sprites.variant usa id() como chave,
+    e uma superfície nova a cada desenho fazia o cache devolver uma pose velha."""
+    img = _CAELUM_PAD.get(id(quadro))
+    if img is None:
+        img = pygame.Surface((quadro.get_width(), quadro.get_height() + 1), pygame.SRCALPHA)
+        img.blit(quadro, (0, 0))
+        _CAELUM_PAD[id(quadro)] = img
+    return img
 
 
 class Illusion(Enemy):
@@ -1055,12 +1067,19 @@ class Illusion(Enemy):
         ctx.effects.sprite("fumaca_caveira", self.cx, self.cy, fps=18, scale=2)
 
     def draw(self, surf, cam_x, cam_y):
-        img = sprites.image("personagens", "caelum.png")
+        # Mesmo desenho do Caelum verdadeiro (folha de tools/animar_pose.py, 2x): respira e,
+        # perto de atirar, faz a mesma conjuração. A diferença é a falta de sombra e o tremor.
+        conjura = self.cool < 0.45
+        quadro, _ = sprites.pose_anim("caelum", "attack" if conjura else "idle",
+                                      0.5 if conjura else self.t * 0.7)
+        img = sprites.image("personagens", "caelum.png") if quadro is None else quadro
         if img is None:
             img = pixelart.sorcerer("idle", (self.t * 0.7) % 1.0, self.direction)
             img = sprites.variant(img, False, self.flash > 0).copy()
         else:
-            img = sprites.variant(img, self.direction < 0, self.flash > 0).copy()
+            if quadro is not None:
+                img = _quadro_caelum(quadro)
+            img = sprites.variant(img, self.direction < 0, self.flash > 0, 2 if quadro is not None else 1).copy()
         img.set_alpha(200 + int(40 * math.sin(self.t * 9)))
         lift = math.sin(self.t * 2.5) * 3
         surf.blit(img, img.get_rect(midbottom=(round(self.cx - cam_x), round(self.bottom - cam_y + 4 + lift))))

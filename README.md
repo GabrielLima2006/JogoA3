@@ -75,8 +75,8 @@ pip install -r requirements.txt
 python main.py
 ```
 
-No Windows também dá para usar o executável da pasta `dist/MareDeMentiras/` (ver
-[Gerar o executável](#gerar-o-executável)) ou dar dois cliques em `Jogar.bat`.
+No Windows também dá para dar dois cliques em `Jogar.bat` (instala o pygame-ce na primeira vez) ou gerar
+o executável (ver [Gerar o executável e o instalador](#gerar-o-executável-e-o-instalador)).
 
 ## 4. Controles
 
@@ -123,30 +123,25 @@ Os controles também aparecem no jogo, em **Como jogar** e na tela de pausa.
 
 ## 7. Créditos
 
-Todos os assets de terceiros são gratuitos. Autor, link e licença de cada um estão em
-[`assets/CREDITOS.md`](assets/CREDITOS.md) e também aparecem na tela **Créditos** do jogo.
-
-> **Personagens novos em produção (PixelLab):** os personagens e as animações estão sendo refeitos no
-> [PixelLab](https://www.pixellab.ai), ferramenta de geração de pixel art. Por enquanto só a protagonista foi
-> feita: [personagem no PixelLab](https://www.pixellab.ai/create-character/ef1888d6-775c-41a3-8d0c-693294b46e44).
-> Os demais personagens, inimigos e chefes ainda usam os sprites atuais e serão trocados aos poucos. Isso entra
-> na seção [Uso de IA](#9-uso-de-ia).
+Todos os assets de terceiros são gratuitos e têm licença conferida. Autor, link, licença e arquivos de cada
+pacote estão em [`assets/CREDITOS.md`](assets/CREDITOS.md) e também aparecem na tela **Créditos** do jogo.
 
 | Asset | Autor | Uso |
 |---|---|---|
 | Super Pixel Effects Gigapack (Free) | Will Tice / unTied Games | Efeitos de golpe, explosões, fumaça, fogo, raios |
-| Metroidvania Forge | [CONFIRMAR autor] | Capangas, Cavaleiro Rubro, slime, tiles da ilha, objetos, sons e músicas |
-| Feiticeira (idle & walk) | [CONFIRMAR autor] | Protagonista |
-| Dark VFX 01–02 / Smear VFX 01 | [CONFIRMAR autor] | Magias do vilão e rastro dos golpes |
-| UIBundleFree (Mediavel) | [CONFIRMAR autor] | Interface |
-| pixelfood | Ghostpixxells | Comidas (itens de cura) |
-| Tiny Texture Pack 1 e 2 | Screaming Brain Studios (CC0) | Paredes de madeira do navio |
+| Metroidvania Forge (CC BY 4.0) | Michael Games | Capangas, Cavaleiro Rubro, slime, tiles da ilha, objetos, sons e músicas |
+| Skeletons Free Pack | MonoPixelArt | Múmia e cavaleiro negro do Templo |
+| New free backgrounds | Craftpix | Céus dos fundos |
+| Dark VFX 01–02 / Smear VFX 01 | pimen | Magias do vilão e rastro dos golpes |
+| UI User Interface Pack – Medieval | ToffeeCraft | Interface |
+| pixelfood (CC0) | Ghostpixxells | Comidas (itens de cura) |
+| Tiny Texture Pack 1 e 2 (CC0) | Screaming Brain Studios | Paredes de madeira do navio |
 | Fonte Alagard | Hewett Tsoi | Todos os textos (os acentos são desenhados pelo jogo) |
 
-As animações de golpe, pulo, queda, dash, dano e morte da protagonista foram criadas pela equipe a partir
-do sprite original (`tools/gerar_feiticeira.py`). Os outros humanos (tripulação, irmã da capitã, capangas)
-são variações do sprite dela com outras cores, cabelos e acessórios (`src/elenco.py`). O Rei dos Ratos, o
-Feiticeiro da Maré, ratos, gaivotas, canhões e ícones de itens foram desenhados no código (`src/pixelart.py`).
+A protagonista, o Rei dos Ratos, Selka, a Capitã Maren, Caelum, os NPCs, o lobo e o goblin foram gerados
+pelo Gabriel no [PixelLab](https://www.pixellab.ai) (ver a seção [Uso de IA](#9-uso-de-ia)); as animações
+saem dessas poses por `tools/gerar_heroina.py` e `tools/animar_pose.py`. Ratos, gaivotas, canhões e ícones
+de itens foram desenhados no código (`src/pixelart.py`).
 
 ## 8. Tecnologia
 

@@ -866,7 +866,8 @@ class PlayState(State):
         self.effects.draw_world(surf, cam_x, cam_y)
         self._draw_water(surf, cam_x, cam_y)
         self.background.draw_front(surf, cam_x, cam_y, self.time)
-        near = self.nearby_interactable() if self.player.alive else None
+        # "[W] Loja" etc. só com o jogo na frente (some atrás de loja, banco, diálogo e pausa)
+        near = self.nearby_interactable() if self.player.alive and self.app.state is self else None
         if near is not None:
             near.draw_prompt(surf, cam_x, cam_y)
 
@@ -928,7 +929,7 @@ class PauseState(Overlay):
         restart = "Confirmar? (apaga o save)" if self.confirm_restart else "Reiniciar jogo"
         self.menu = ui.Menu([("Continuar", "resume"), ("Voltar à bola de cristal", "bench"), (som, "sound"),
                              (restart, "restart"), ("Menu inicial", "menu"), ("Sair do jogo", "quit")],
-                            center_y=190, spacing=36, size=34)
+                            center_y=180, spacing=31, size=30)
         self.menu.index = index
 
     def frame(self, dt, inp):
@@ -962,8 +963,8 @@ class PauseState(Overlay):
         ui.dim(surf, 190)
         ui.text(surf, "PAUSADO", 44, (Display.WIDTH // 2, 40), Colors.UI_TEXT, "center", title=True)
         self.menu.draw(surf)
-        ui.draw_inventory(surf, self.play.progress, self.play.player, 40, 330)
-        ui.draw_controls(surf, 480, 318, title=False, compact=True)
+        ui.draw_inventory(surf, self.play.progress, self.play.player, 40, 296)
+        ui.draw_controls(surf, 480, 295, title=False, compact=True)
 
 
 class MapState(Overlay):
@@ -983,6 +984,7 @@ class MapState(Overlay):
             self.cache = surf.copy()
         else:
             surf.blit(self.cache, (0, 0))
+        ui.draw_map_hover(surf, self.app.input.mouse_pos)   # nome da sala sob o mouse (por cima do cache)
 
 
 class MessageState(Overlay):
@@ -1078,6 +1080,7 @@ class ListState(Overlay):
         ui.text(surf, f"Moedas: {self.play.progress.coins}", 26, (Display.WIDTH - 40, 34), Colors.COIN, "topright")
         self.rects = []
         entries = self.entries()
+        ui.panel(surf, pygame.Rect(130, 80, 700, max(80, 38 * len(entries) + 32)))
         y = 96
         for i, (label, info, _desc, enabled, _a) in enumerate(entries):
             sel = i == self.index
@@ -1094,8 +1097,8 @@ class ListState(Overlay):
         if self.notice_t > 0:
             ui.text(surf, self.notice, 26, (Display.WIDTH // 2, Display.HEIGHT - 44), Colors.ITEM, "center")
         else:
-            ui.text(surf, "W/S navegar · Enter escolher · ESC sair", 20, (Display.WIDTH // 2, Display.HEIGHT - 40),
-                    Colors.UI_DIM, "center")
+            ui.hints(surf, [("W|S", "navegar"), ("Enter", "escolher"), ("Esc", "sair")],
+                     (Display.WIDTH // 2, Display.HEIGHT - 36))
 
 
 class BenchState(Overlay):
@@ -1176,7 +1179,7 @@ class ShopState(ListState):
                 if sid.startswith("charm:"):
                     desc = CHARMS[sid[6:]]["desc"]
                 else:
-                    desc = {"map": "Mostra as salas que você já visitou (M ou Tab).",
+                    desc = {"map": "Mostra as salas que você já visitou (Tab).",
                             "fragment": "Junte 4 fragmentos para ganhar +1 de vida máxima.",
                             "notch": "Mais espaço para equipar amuletos."}[sid]
                 info = "vendido" if sold else f"{price} moedas"
