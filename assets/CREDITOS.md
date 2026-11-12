@@ -28,10 +28,9 @@ páginas dos pacotes em 12/11/2026.
   (animações geradas por `tools/gerar_heroina.py` a partir da vista "west") e
   `img/chefes/rei_rato_{parado,andando,ataque}.png` (vista "south-west"). Termos do PixelLab: a propriedade
   do conteúdo gerado é de quem gerou (ver tabela acima). Texto da seção "Uso de IA" do relatório: decisão do grupo.
-- Modelos de NPCs/criaturas da folha da equipe (`assets/fontes/npcs_modelos.webp` → `img/personagens/npcs.png`,
-  por `tools/importar_modelos.py`): usados nos inimigos diabrete, espírito, lich, ladino e cavaleiro do escudo,
-  além de reserva para outros modelos. A folha veio da equipe e não tem autor externo registrado aqui:
-  quem a fez deve indicar a origem (e, se for de IA, citar na seção "Uso de IA" do relatório).
+- Modelos de NPCs/criaturas (`assets/fontes/npcs_modelos.webp` → `img/personagens/npcs.png`,
+  por `tools/importar_modelos.py`): folha gerada pelo autor (Gabriel Costa); usada nos inimigos diabrete,
+  espírito, lich, ladino e cavaleiro do escudo, além de reserva para outros modelos (ver "Uso de IA").
 - Elenco humano: recoloração por região da base do espadachim (Metroidvania Forge) com acessórios desenhados
   por código (`src/elenco.py`). Os NPCs em cena usam as artes PixelLab; a base da feiticeira "sample" foi retirada.
 - Feiticeiro da Maré, ratos, gaivotas, canhões e caixotes: desenhados por código em `src/pixelart.py`.
@@ -44,7 +43,7 @@ páginas dos pacotes em 12/11/2026.
 
 ## Uso de IA
 
-Personagens principais gerados e escolhidos pelo autor no PixelLab; IA usada como assistente de programação. Cenários, sons, fonte e parte dos inimigos vêm de pacotes do itch.io, creditados acima.
+Personagens principais e parte dos inimigos gerados e escolhidos pelo autor (PixelLab e outras ferramentas de IA); IA usada como assistente de programação. Cenários, sons, fonte e parte dos inimigos vêm de pacotes do itch.io, creditados acima.
 
 ## Observações
 
