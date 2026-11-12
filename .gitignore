@@ -16,3 +16,11 @@ dist/
 # notas locais de ferramentas
 AGENTS.md
 CLAUDE.md
+
+# arquivos do sistema e temporários
+Thumbs.db
+desktop.ini
+.DS_Store
+*.log
+*.zip
+.claude/

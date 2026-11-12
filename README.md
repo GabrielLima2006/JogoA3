@@ -1,184 +1,100 @@
+<div align="center">
+
 # Maré de Mentiras
 
-Metroidvania 2D de ação em pixel art, feito em Python com pygame-ce.
+**Metroidvania 2D de ação em pixel art, a bordo de um navio enfeitiçado e numa ilha que esconde um templo.**
 
-![Convés do navio](docs/screenshots/conves.png)
+![Convés da Gaivota Rubra](docs/screenshots/conves.png)
 
-## ▶ Como jogar (Windows)
+[![Baixar para Windows](https://img.shields.io/badge/Baixar-Windows-2b6cb0?style=for-the-badge)](https://github.com/GabrielLima2006/JogoA3/releases/latest)
 
-1. Baixe **MareDeMentiras-Setup.exe** em [Releases](https://github.com/GabrielLima2006/JogoA3/releases/latest).
-2. Abra o instalador e siga os passos. Não precisa instalar Python nem nada: o jogo já vem pronto.
-   Ele fica no Menu Iniciar (e na Área de Trabalho, se você marcar) e pode ser removido em
-   "Aplicativos instalados".
+Instalador para Windows, sem precisar instalar Python. Leva de 40 a 60 minutos para terminar.
+
+</div>
+
+## Sobre
+
+Nyra, uma meio-demônia de chifres que finge ser feiticeira, viaja no navio da Capitã Maren rumo à ilha de
+Velmora. A capitã cai envenenada, a tripulação fica enfeitiçada e uma criatura chamada Maré desperta sob o
+Templo. Para chegar ao fim, Nyra atravessa o navio, sobe o mastro na tempestade, desembarca na ilha e
+descobre quem está por trás de tudo. Três páginas escondidas do diário da capitã contam a história inteira
+e liberam o final verdadeiro.
+
+<div align="center">
+
+![Trecho de jogo na floresta](docs/screenshots/gameplay.gif)
+
+</div>
+
+## Como jogar
+
+1. Baixe **MareDeMentiras-Setup.exe** na [versão mais recente](https://github.com/GabrielLima2006/JogoA3/releases/latest).
+2. Abra o instalador e siga os passos. O jogo fica no Menu Iniciar (e na Área de Trabalho, se você marcar)
+   e pode ser removido em "Aplicativos instalados".
 3. Se o Windows avisar "O Windows protegeu o computador", clique em **Mais informações** e depois em
    **Executar assim mesmo** (o instalador não é assinado).
 
 Prefere não instalar? Na mesma página há o **MareDeMentiras.exe** portátil: é só dar dois cliques.
 
-Quem for mexer no código pode rodar pelo `Jogar.bat` (precisa do Python 3.12; ele instala o
-pygame-ce na primeira vez).
+Pelo código-fonte (Python 3.10 ou mais novo): `pip install -r requirements.txt` e `python main.py`,
+ou dois cliques em `Jogar.bat`, que instala o pygame-ce na primeira vez.
 
-## 1. Identificação
-
-| | |
-|---|---|
-| **Jogo** | Maré de Mentiras |
-| **Grupo** | [nome do grupo] |
-| **Disciplina** | Usabilidade, desenvolvimento web, mobile e jogos |
-| **Professor** | Elzo Brito dos Santos Filho |
-| **Instituição** | Universidade São Judas Tadeu (USJT), 2026 |
-
-| Integrante | RA |
-|---|---|
-| [nome] | [RA] |
-| [nome] | [RA] |
-| [nome] | [RA] |
-
-## 2. Descrição
-
-> **Sinopse:** Nyra, uma meio-demônia de chifres que finge ser feiticeira, viaja no navio da Capitã Maren
-> rumo à ilha de Velmora. A capitã cai envenenada, a tripulação fica enfeitiçada e uma criatura chamada Maré
-> está acordando sob o Templo. Por trás de tudo está Caelum, o melhor amigo de Nyra, banido da academia de magia
-> por um erro que era dela.
->
-> História completa (personagens, falas, atos e finais): [docs/HISTORIA.md](docs/HISTORIA.md)
-
-**Duração estimada:** 40 a 60 minutos na primeira vez; 60 a 80 minutos para pegar tudo; 15 a 20 minutos
-para quem já conhece o caminho. (Estimativa; o tempo real aparece no HUD e fica salvo nos recordes.)
-
-
-No reino de Aurel, Nyra esconde os chifres sob o capuz e vende truques como se fosse feiticeira. A bordo da
-Gaivota Rubra, ela enfrenta a tripulação enfeitiçada, sobe o mastro na tempestade, desembarca em Velmora e
-chega ao Templo da Maré. Cada chefe tem uma mecânica ligada ao mundo: os ratos do porão, o vento no
-alto do mastro, o canhonaço do navio pirata e as ilusões do Feiticeiro da Maré. Três páginas escondidas do
-diário da capitã revelam a história inteira e liberam o final verdadeiro.
-
-- **3 áreas:** navio (cabine, convés, porão, cordame), ilha (praia, floresta, ruínas) e Templo da Maré.
-- **4 chefes:** Tico (Rei dos Ratos, investida e ratos), Aldric (Cavaleiro Rubro, rajadas de vento), Selka
-  (Canhoneira da Tempestade, canhonaço) e Caelum (Feiticeiro da Maré, ilusões e maré). Todos têm duas fases.
-- **Habilidades:** dash (Passo ilusório) desde o começo; pulo duplo (Levitação) depois do primeiro chefe,
-  abrindo caminho para o mastro e a ilha.
-- **Parkour:** plataformas móveis, tábuas que desabam, espinhos, água e saltos que exigem as habilidades.
-- **Itens:** moedas, comida que cura, amuletos, fragmentos de vida, loja e ferreiro.
-- **Três dificuldades** (7, 5 ou 4 corações).
-- **Dois finais:** comum e verdadeiro (com as 3 páginas do diário).
-
-## 3. Como rodar
-
-Requisitos: Python 3.10 ou mais novo.
-
-```bash
-pip install -r requirements.txt
-```
-
-```bash
-python main.py
-```
-
-No Windows também dá para dar dois cliques em `Jogar.bat` (instala o pygame-ce na primeira vez) ou gerar
-o executável (ver [Gerar o executável e o instalador](#gerar-o-executável-e-o-instalador)).
-
-## 4. Controles
+## Controles
 
 | Tecla | Ação |
 |---|---|
 | A / D ou setas | Mover |
-| Espaço | Pular (segurar = pulo mais alto) |
-| Espaço no ar | Pulo duplo (depois do primeiro chefe) |
+| Espaço | Pular (segurar = pulo mais alto; no ar, pulo duplo depois do primeiro chefe) |
 | Shift esquerdo | Dash |
 | Botão esquerdo do mouse | Ataque rápido |
 | Botão direito do mouse | Ataque pesado |
 | W / S + ataque | Golpe para cima, na diagonal ou para baixo (no ar, quica em inimigos e espinhos) |
 | S | Descer de plataformas finas |
-| F (segurar) | Curar (gasta o orbe de foco) |
+| F (segurar) | Curar com o orbe de foco |
 | W ou seta para cima | Interagir (bola de cristal, loja, personagens) |
 | Tab | Mapa |
-| M | Ligar/desligar o som |
-| ESC ou P | Pausar (continuar, som, reiniciar, menu) |
+| M | Som |
+| ESC ou P | Pausa e inventário |
 
-Os controles também aparecem no jogo, em **Como jogar** e na tela de pausa.
+## Recursos
 
-## 5. Regras
+- **4 chefes, cada um com duas fases:** Tico, o Rei dos Ratos (investidas e ratos), Aldric, o Cavaleiro
+  Rubro (rajadas de vento no alto do mastro), Selka, a Canhoneira da Tempestade (pistola, bote e canhonaço)
+  e Caelum, o Feiticeiro da Maré (ilusões, raios e maré).
+- **13 salas em 3 regiões:** o navio Gaivota Rubra (cabine, convés, porões, toca, cordame e gávea), a ilha
+  de Velmora (praia, floresta e ruínas) e o Templo da Maré.
+- **Habilidades que abrem caminho:** dash desde o começo e pulo duplo depois do primeiro chefe.
+- **Parkour:** plataformas móveis, tábuas que desabam, espinhos, água e saltos que pedem as habilidades.
+- **8 amuletos** para equipar na bola de cristal: Lâmina, Força, Ímã, Foco, Vigor, Vento, Coletor e Bússola.
+- **Loja, ferreiro, comida que cura, fragmentos de vida** e um mapa para comprar.
+- **3 dificuldades** (7, 5 ou 4 corações) e **2 finais**, com nota S, A, B ou C na tela de resultado.
 
-- **Objetivo:** vencer o chefe final no Templo da Maré. Vencer os chefes anteriores libera habilidades
-  e caminhos novos.
-- **Vida:** cada golpe recebido tira um coração. Com zero corações você **perde**: volta à última
-  bola de cristal e deixa parte das moedas para trás.
-- **Cura:** golpes acertados enchem o orbe de foco; segure **F** para trocar foco por um coração.
-  Comida recupera 2 corações.
-- **Salvar:** a bola de cristal (W) salva o jogo e recupera a vida.
-- **Perigos:** espinhos e água ferem e devolvem você ao último chão firme. Tábuas rachadas desabam
-  pouco depois de pisadas.
-- **Vitória:** derrotar o chefe final. Com as 3 cartas da capitã você vê o **final verdadeiro**.
-- **Pontuação:** na tela final aparecem tempo, quedas, cartas, pontos e uma nota (S, A, B ou C).
-  O HUD mostra corações, moedas, cartas e o tempo de jogo o tempo todo.
+## Capturas
 
-## 6. Divisão de tarefas
-
-| Integrante | Tarefas |
-|---|---|
-| [nome] | [ex.: programação da movimentação e combate] |
-| [nome] | [ex.: level design e roteiro] |
-| [nome] | [ex.: arte, sons e créditos] |
-
-## 7. Créditos
-
-Todos os assets de terceiros são gratuitos e têm licença conferida. Autor, link, licença e arquivos de cada
-pacote estão em [`assets/CREDITOS.md`](assets/CREDITOS.md) e também aparecem na tela **Créditos** do jogo.
-
-| Asset | Autor | Uso |
+| | | |
 |---|---|---|
-| Super Pixel Effects Gigapack (Free) | Will Tice / unTied Games | Efeitos de golpe, explosões, fumaça, fogo, raios |
-| Metroidvania Forge (CC BY 4.0) | Michael Games | Capangas, Cavaleiro Rubro, slime, tiles da ilha, objetos, sons e músicas |
-| Skeletons Free Pack | MonoPixelArt | Múmia e cavaleiro negro do Templo |
-| New free backgrounds | Craftpix | Céus dos fundos |
-| Dark VFX 01–02 / Smear VFX 01 | pimen | Magias do vilão e rastro dos golpes |
-| UI User Interface Pack – Medieval | ToffeeCraft | Interface |
-| pixelfood (CC0) | Ghostpixxells | Comidas (itens de cura) |
-| Tiny Texture Pack 1 e 2 (CC0) | Screaming Brain Studios | Paredes de madeira do navio |
-| Fonte Alagard | Hewett Tsoi | Todos os textos (os acentos são desenhados pelo jogo) |
+| ![Menu](docs/screenshots/menu.png) | ![Convés](docs/screenshots/conves.png) | ![Porão](docs/screenshots/porao.png) |
+| ![Aldric, na Gávea](docs/screenshots/chefe_aldric.png) | ![Floresta](docs/screenshots/floresta.png) | ![Ruínas de Velmora](docs/screenshots/ruinas.png) |
+| ![Templo da Maré](docs/screenshots/templo.png) | ![Mapa](docs/screenshots/mapa.png) | ![Pausa e inventário](docs/screenshots/pausa.png) |
 
-A protagonista, o Rei dos Ratos, Selka, a Capitã Maren, Caelum, os NPCs, o lobo e o goblin foram gerados
-pelo Gabriel no [PixelLab](https://www.pixellab.ai) (ver a seção [Uso de IA](#9-uso-de-ia)); as animações
-saem dessas poses por `tools/gerar_heroina.py` e `tools/animar_pose.py`. Ratos, gaivotas, canhões e ícones
-de itens foram desenhados no código (`src/pixelart.py`).
+## Feito com
 
-## 8. Tecnologia
-
-- **Linguagem:** Python 3.12
-- **Biblioteca:** pygame-ce 2.5
-- **Executável:** PyInstaller
-- **Testes:** suíte própria sem dependências (`python tests/run_tests.py`), que simula o jogo sem
-  janela e confere física, salas, portas, chefes, menus e se todos os saltos obrigatórios são possíveis
-  com as habilidades de cada trecho.
-
-Estrutura:
+- **Python 3.12** e **[pygame-ce](https://pyga.me/) 2.5**
+- **PyInstaller** (executável) e **Inno Setup** (instalador)
+- Testes automáticos próprios (`python tests/run_tests.py`): simulam o jogo sem janela e conferem física,
+  salas, portas, chefes, menus e se todos os saltos obrigatórios são possíveis.
 
 ```
-main.py              ponto de entrada (estados: menu, jogo, pausa, finais)
-src/                 código do jogo (física, jogador, inimigos, chefes, salas, interface)
-assets/img/          imagens (personagens, chefes, efeitos, tiles, objetos, interface)
-assets/sons/         efeitos sonoros e músicas
-assets/fonts/        fonte
-tests/               testes automáticos
-docs/screenshots/    capturas de tela do README
+main.py      ponto de entrada
+src/         código do jogo (física, jogador, inimigos, chefes, salas, interface)
+assets/      imagens, sons, músicas e fonte
+tests/       testes automáticos
+tools/       ferramentas de arte e o script do instalador
+docs/        história, capturas e documentos de desenvolvimento
 ```
 
-## 9. Uso de IA
-
-[O grupo vai preencher esta seção: quais partes foram feitas com ajuda de IA, quais ferramentas
-foram usadas e como o grupo revisou o resultado.]
-
-## 10. Screenshots
-
-| | |
-|---|---|
-| ![Menu](docs/screenshots/menu.png) | ![Porão](docs/screenshots/porao.png) |
-| ![Chefe: Aldric, na Gávea](docs/screenshots/chefe_aldric.png) | ![Templo da Maré](docs/screenshots/templo.png) |
-| ![Floresta](docs/screenshots/floresta.png) | ![Ruínas de Velmora](docs/screenshots/ruinas.png) |
-| ![Mapa](docs/screenshots/mapa.png) | ![Pausa e inventário](docs/screenshots/pausa.png) |
-
-## Gerar o executável e o instalador
+<details>
+<summary>Gerar o executável e o instalador</summary>
 
 ```bash
 pip install pyinstaller
@@ -188,7 +104,20 @@ pip install pyinstaller
 python -m PyInstaller --noconfirm --onefile --windowed --name MareDeMentiras --icon tools/icone.ico --add-data "assets;assets" --distpath dist/onefile main.py
 ```
 
-O executável portátil fica em `dist/onefile/MareDeMentiras.exe`; o save e os recordes ficam na pasta
-`saves/` ao lado dele. Para gerar o instalador, instale o [Inno Setup 6](https://jrsoftware.org/isinfo.php)
-e compile `tools/instalador.iss` (abrindo no Inno Setup ou com `ISCC.exe tools\instalador.iss`). Ele sai em
-`dist/instalador/MareDeMentiras-Setup.exe`. Instalado, o jogo grava o save em `%APPDATA%\MareDeMentiras`.
+O portátil sai em `dist/onefile/MareDeMentiras.exe` e salva na pasta `saves/` ao lado dele. Para o
+instalador, compile `tools/instalador.iss` no [Inno Setup 6](https://jrsoftware.org/isinfo.php); ele sai em
+`dist/instalador/MareDeMentiras-Setup.exe`. Instalado, o jogo salva em `%APPDATA%\MareDeMentiras`.
+
+</details>
+
+## Créditos
+
+Todos os assets de terceiros são gratuitos e têm licença conferida. Autor, link e licença de cada pacote
+estão em [`assets/CREDITOS.md`](assets/CREDITOS.md), e os créditos também aparecem no próprio jogo.
+História completa: [`docs/HISTORIA.md`](docs/HISTORIA.md).
+
+## Autor
+
+**Gabriel Costa** ([@GabrielLima2006](https://github.com/GabrielLima2006)): trabalho A3 da disciplina
+Usabilidade, desenvolvimento web, mobile e jogos (prof. Elzo Brito dos Santos Filho), Universidade São Judas
+Tadeu (USJT), 2026.
