@@ -42,6 +42,10 @@ páginas dos pacotes em 12/11/2026.
 - `sons/efeitos/step.wav` e `skid.wav`: gerados por `tools/gerar_sons.py`.
 - Acentos da fonte (á, ã, ç, é, ê, í, ó, õ, ú…): compostos pixel a pixel em `src/fonte.py`.
 
+## Uso de IA
+
+Personagens principais gerados e escolhidos pelo autor no PixelLab; IA usada como assistente de programação. Cenários, sons, fonte e parte dos inimigos vêm de pacotes do itch.io, creditados acima.
+
 ## Observações
 
 - O logo "Metroidvania Forge" não é usado no jogo.
