@@ -43,7 +43,7 @@ páginas dos pacotes em 12/11/2026.
 
 ## Uso de IA
 
-Personagens principais e parte dos inimigos gerados e escolhidos pelo autor (PixelLab e outras ferramentas de IA); IA usada como assistente de programação. Cenários, sons, fonte e parte dos inimigos vêm de pacotes do itch.io, creditados acima.
+Personagens desenhados pelo autor e depois aprimorados e animados no PixelLab; IA usada como assistente de programação. Cenários, sons, fonte e parte dos inimigos vêm de pacotes do itch.io, creditados acima.
 
 ## Observações
 
