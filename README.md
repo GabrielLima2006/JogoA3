@@ -17,7 +17,7 @@ Instalador para Windows, sem precisar instalar Python. Leva de 40 a 60 minutos p
 | | |
 |---|---|
 | **Jogo** | Maré de Mentiras |
-| **Grupo** | [NOME DO GRUPO] |
+| **Grupo** | Equipe Maré de Mentiras |
 | **Unidade curricular** | Usabilidade, desenvolvimento web, mobile e jogos |
 | **Professor** | Elzo Brito dos Santos Filho |
 | **Instituição** | Universidade São Judas Tadeu (USJT), 2026 |
