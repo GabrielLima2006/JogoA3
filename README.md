@@ -220,5 +220,4 @@ História completa: [`docs/HISTORIA.md`](docs/HISTORIA.md).
 ## Documentação
 
 - [Como o jogo foi feito](docs/COMO_O_JOGO_FOI_FEITO.md): arquitetura, estados, física, combate, salas e testes.
-- [Guia da apresentação](docs/GUIA_APRESENTACAO.md): roteiro e o que cada integrante explica.
 - [História completa](docs/HISTORIA.md) e [créditos dos assets](assets/CREDITOS.md).

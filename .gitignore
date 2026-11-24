@@ -27,3 +27,7 @@ desktop.ini
 
 # notas pessoais (cofre do Obsidian)
 docs/obsidian/
+
+# documentos internos da apresentação
+docs/GUIA_APRESENTACAO.md
+docs/A3_AUDITORIA.md
