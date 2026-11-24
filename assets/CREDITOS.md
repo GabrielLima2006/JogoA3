@@ -17,19 +17,19 @@ páginas dos pacotes em 12/11/2026.
 | pixelfood | Ghostpixxells | https://ghostpixxells.itch.io/pixelfood | CC0 1.0 (domínio público), uso livre inclusive comercial | `img/itens/*.png`; frasco de geleia (`61_jam`) reduzido na `img/objetos/banca_comerciante.png` |
 | Tiny Texture Pack 1 e 2 | Screaming Brain Studios | https://screamingbrainstudios.itch.io/ (`License.txt` do pacote) | CC0 (domínio público) | `img/fundos/madeira_escura.png` |
 | Alagard (fonte) | Hewett Tsoi (Pix3M) | https://www.dafont.com/alagard.font | "100% Free" na DaFont; o autor pede apenas crédito ("Give credit if used") | `fonts/alagard.ttf` |
-| Personagens PixelLab: Selka, Capitã Maren e Caelum | PixelLab / Gabriel Lima | https://pixellab.ai/ | Termos de serviço: https://pixellab.ai/termsofservice — o usuário mantém a propriedade do que gera ("You retain ownership of any content you create using PixelLab"); proibido usar as imagens para treinar modelos; uso sujeito à licença Open RAIL-M | `img/personagens/selka.png`, `maren.png`, `caelum.png`; `maren_caida.png` é desenho à mão do projeto com a paleta de `maren.png` |
-| NPCs e criaturas PixelLab: comerciante, ferreira, curandeira, pescador, estudioso, bardo, ancião, anciã, aldeã, grumete, lobo e goblin | PixelLab / Gabriel Lima | https://pixellab.ai/ | Termos de serviço: https://pixellab.ai/termsofservice — o usuário mantém a propriedade do que gera ("You retain ownership of any content you create using PixelLab"); proibido usar as imagens para treinar modelos; uso sujeito à licença Open RAIL-M | `img/personagens/npc_*.png`, `inimigo_lobo.png`, `inimigo_goblin.png`; fontes em `assets/fontes/pixellab/`. As folhas `anim_*.png` (parado, andando, ataque, também de Selka e Caelum) são derivadas dessas poses por `tools/animar_pose.py` |
+| Personagens PixelLab: Selka, Capitã Maren, Caelum e Aldric | PixelLab / Gabriel Lima Costa | https://pixellab.ai/ | Termos de serviço: https://pixellab.ai/termsofservice — o usuário mantém a propriedade do que gera ("You retain ownership of any content you create using PixelLab"); proibido usar as imagens para treinar modelos; uso sujeito à licença Open RAIL-M | `img/personagens/selka.png`, `maren.png`, `caelum.png`; `maren_caida.png` é desenho à mão do projeto com a paleta de `maren.png`; `img/chefes/aldric_{parado,andando,ataque}.png`: Aldric desenhado pelo autor e aprimorado e animado no PixelLab |
+| NPCs e criaturas PixelLab: comerciante, ferreira, curandeira, pescador, estudioso, bardo, ancião, anciã, aldeã, grumete, lobo e goblin | PixelLab / Gabriel Lima Costa | https://pixellab.ai/ | Termos de serviço: https://pixellab.ai/termsofservice — o usuário mantém a propriedade do que gera ("You retain ownership of any content you create using PixelLab"); proibido usar as imagens para treinar modelos; uso sujeito à licença Open RAIL-M | `img/personagens/npc_*.png`, `inimigo_lobo.png`, `inimigo_goblin.png`; fontes em `assets/fontes/pixellab/`. As folhas `anim_*.png` (parado, andando, ataque, também de Selka e Caelum) são derivadas dessas poses por `tools/animar_pose.py` |
 
 ## Feito pela equipe
 
 - **Protagonista** (feiticeira de chifres) e **Rei dos Ratos** (garoto de boné montado no rato gigante):
-  modelos feitos pelo Gabriel no PixelLab (32x32 e 48x48, 8 direções). Originais em
+  modelos feitos por Gabriel Lima Costa no PixelLab (32x32 e 48x48, 8 direções). Originais em
   `assets/fontes/heroina/` e `assets/fontes/rei_rato/`. No jogo: `img/personagens/heroina.png`
   (animações geradas por `tools/gerar_heroina.py` a partir da vista "west") e
   `img/chefes/rei_rato_{parado,andando,ataque}.png` (vista "south-west"). Termos do PixelLab: a propriedade
   do conteúdo gerado é de quem gerou (ver tabela acima). Texto da seção "Uso de IA" do relatório: decisão do grupo.
 - Modelos de NPCs/criaturas (`assets/fontes/npcs_modelos.webp` → `img/personagens/npcs.png`,
-  por `tools/importar_modelos.py`): folha gerada pelo autor (Gabriel Costa); usada nos inimigos diabrete,
+  por `tools/importar_modelos.py`): folha gerada pelo autor (Gabriel Lima Costa); usada nos inimigos diabrete,
   espírito, lich, ladino e cavaleiro do escudo, além de reserva para outros modelos (ver "Uso de IA").
 - Elenco humano: recoloração por região da base do espadachim (Metroidvania Forge) com acessórios desenhados
   por código (`src/elenco.py`). Os NPCs em cena usam as artes PixelLab; a base da feiticeira "sample" foi retirada.

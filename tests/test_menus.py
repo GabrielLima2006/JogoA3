@@ -165,6 +165,13 @@ def test_credits_and_hints():
     st.scroll = st.total
     _press(app, frames=30)
     check("rolagem para no fim do texto", st.scroll == st.total)
+    from src.menus import CREDITS
+    from src import ui as _ui
+    texts = [m for m, _, _ in CREDITS]
+    check("créditos sem texto provisório de edição", not any("editar em" in m or "Nome do integrante" in m for m in texts))
+    check("créditos não citam a feiticeira removida", not any("Feiticeira (idle" in m for m in texts))
+    widest = max(_ui.font(20).size(m)[0] for m in texts)
+    check("toda linha dos créditos cabe no painel", widest <= st.BOX.w - 40, str(widest))
     import pygame
     from src import ui
     layer = pygame.Surface((960, 30), pygame.SRCALPHA)

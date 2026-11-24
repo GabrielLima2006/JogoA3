@@ -1235,12 +1235,53 @@ class ShopState(ListState):
         self.say(f"Arma melhorada para o nível {pr.weapon_level}!")
 
 
+# narração curta de derrota: pelo chefe da luta em andamento ou pela região da sala
+DEATH_LINES_BOSS = {
+    "rei_rato": ("Os ratos de Tico guincham sobre a água escura do porão.",
+                 "Lá em cima, a Capitã Maren ainda respira. Por pouco tempo."),
+    "cavaleiro": ("O vento de Aldric uiva no cesto da gávea.",
+                  "Sem essa vitória, a Gaivota Rubra nunca chega a Velmora."),
+    "irma": ("Os canhões de Selka silenciam sobre as ruínas.",
+             "No templo, o filho dela e os desaparecidos continuam presos."),
+    "feiticeiro": ("Caelum ergue as mãos e a Maré sobe mais um palmo.",
+                   "Aurel ainda vai pagar pelo silêncio de dez anos atrás."),
+}
+DEATH_LINES_ZONE = {
+    "interior": ("A chuva bate no casco da Gaivota Rubra.",
+                 "A capitã envenenada ainda espera por respostas."),
+    "convés": ("A tempestade varre o convés da Gaivota Rubra.",
+               "A capitã envenenada ainda espera por respostas."),
+    "porão": ("A água escura do porão cobre seus passos.",
+              "Os ratos voltam a uivar, e o veneno continua sem nome."),
+    "ilha": ("A maré de Velmora apaga suas pegadas na areia.",
+             "Os desaparecidos de Aurel continuam esperando."),
+    "ruínas": ("As pedras das ruínas guardam mais um silêncio.",
+               "O caminho até o Templo da Maré continua à sua frente."),
+    "templo": ("O templo inteiro respira junto com a Maré.",
+               "Lá embaixo, o que dorme está quase acordado."),
+}
+
+
+def death_lines(play):
+    """Duas linhas de narração para a tela de derrota (vazio fora da história)."""
+    if play.story is None:
+        return ()
+    room = play.room
+    boss = play.boss
+    if room.boss and boss is not None and boss.alive and getattr(boss, "awake", False):
+        lines = DEATH_LINES_BOSS.get(room.boss)
+        if lines:
+            return lines
+    return DEATH_LINES_ZONE.get(room.zone, DEATH_LINES_ZONE["interior"])
+
+
 class DeathState(Overlay):
     def __init__(self, app, play):
         super().__init__(app, play)
         self.t = 0.0
+        self.narration = death_lines(play)
         label = "Tentar de novo (último ponto salvo)" if play.story is not None else "Voltar ao último banco"
-        self.menu = ui.Menu([(label, "respawn"), ("Menu inicial", "menu")], center_y=320, size=34)
+        self.menu = ui.Menu([(label, "respawn"), ("Menu inicial", "menu")], center_y=356, size=34)
 
     def frame(self, dt, inp):
         self.play.effects.update(dt)
@@ -1256,14 +1297,16 @@ class DeathState(Overlay):
         self.play.draw(surf)
         ui.dim(surf, 200)
         title = "VOCÊ CAIU" if self.play.story is not None else "VOCÊ MORREU"
-        ui.text(surf, title, 64, (Display.WIDTH // 2, 150), Colors.HP_FULL, "center", title=True)
+        ui.text(surf, title, 64, (Display.WIDTH // 2, 118), Colors.HP_FULL, "center", title=True)
+        for i, line in enumerate(self.narration):
+            ui.text(surf, line, 22, (Display.WIDTH // 2, 170 + i * 26), Colors.UI_TEXT, "center")
         if self.play.story is not None:
             ui.text(surf, "A maré quase levou você... mas a história ainda não acabou.", 26,
-                    (Display.WIDTH // 2, 210), Colors.UI_DIM, "center")
+                    (Display.WIDTH // 2, 238), Colors.UI_DIM, "center")
         bag = self.play.progress.bag
         if bag:
             ui.text(surf, f"{bag[3]} moedas ficaram para trás. Volte para buscá-las.", 26,
-                    (Display.WIDTH // 2, 252), Colors.COIN, "center")
+                    (Display.WIDTH // 2, 276), Colors.COIN, "center")
         self.menu.draw(surf)
 
 
@@ -1377,6 +1420,7 @@ class EndingState(Overlay):
         play.progress.flags.add("zerado")
         play.save()
         app.audio.play_music(AudioCfg.MUSIC["menu"])
+        app.audio.play("ability")      # fanfarra de vitória ao abrir o desfecho
 
     def frame(self, dt, inp):
         self.t += dt
@@ -1443,6 +1487,7 @@ class ResultsState(State):
                    getattr(app, "records_path", None))
         self.menu = ui.Menu([("Jogar de novo", "again"), ("Menu inicial", "menu")], center_y=430, size=34)
         self.t = 0.0
+        app.audio.play("health_up")    # brilho de vitória no resultado
 
     def frame(self, dt, inp):
         self.t += dt

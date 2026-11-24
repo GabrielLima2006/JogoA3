@@ -862,6 +862,45 @@ def test_sounds_wired():
     check("Caelum mostra impacto roxo", Sorcerer.hit_fx == "impacto_roxo")
 
 
+def test_victory_sounds():
+    """Desfecho e resultado tocam som de vitória."""
+    from src.states import EndingState, ResultsState
+    pr = Progress()
+    pr.chapter = 1
+    pr.abilities = {"dash", "double_jump"}
+    s = Sim(progress=pr, save_name="vitoria.json")
+    s.app.records_path = os.path.join(os.path.dirname(s.save_path), "recordes_vitoria.json")
+    played = []
+    orig = s.app.audio.play
+    s.app.audio.play = lambda name: (played.append(name), orig(name))
+    s.play.load_room(s.play.world.rooms["altar"])
+    EndingState(s.app, s.play)
+    check("desfecho toca som de vitória", "ability" in played, str(played))
+    played.clear()
+    ResultsState(s.app, s.play, True)
+    check("resultado toca som de vitória", "health_up" in played, str(played))
+
+
+def test_death_narration():
+    """Tela de derrota narra pela região e, na luta, pelo chefe; o menu continua o mesmo."""
+    from src.states import DEATH_LINES_BOSS, DEATH_LINES_ZONE, DeathState
+    pr = Progress()
+    pr.chapter = 1
+    pr.abilities = {"dash", "double_jump"}
+    s = Sim(progress=pr, save_name="derrota.json")
+    s.play.load_room(s.play.world.rooms["porao2"])
+    st = DeathState(s.app, s.play)
+    check("derrota narra pela região", st.narration == DEATH_LINES_ZONE["porão"], str(st.narration))
+    check("derrota mantém o menu", [o[1] for o in st.menu.options] == ["respawn", "menu"])
+    s.play.load_room(s.play.world.rooms["altar"])
+    boss = s.play.boss
+    boss.wake()
+    st = DeathState(s.app, s.play)
+    check("derrota na luta narra pelo chefe", st.narration == DEATH_LINES_BOSS["feiticeiro"], str(st.narration))
+    texts = [t for pair in list(DEATH_LINES_BOSS.values()) + list(DEATH_LINES_ZONE.values()) for t in pair]
+    check("narração de derrota cabe na tela", all(len(t) <= 64 for t in texts))
+
+
 TESTS = [
     test_world_structure, test_all_doors, test_new_game_start, test_ability_pickup, test_coins_and_bag,
     test_energy_and_heal, test_bench, test_shop, test_breakable_secret, test_shield, test_flier_and_jumper,
@@ -869,5 +908,5 @@ TESTS = [
     test_gates, test_reach_without_abilities, test_reach_with_dash, test_reach_with_double_jump,
     test_ceiling_door_nudge, test_hazard_returns_in_room, test_boss_tuning, test_selka_fights_up_close,
     test_caelum_rests, test_enemy_difficulty, test_chaser_lunge, test_gunner, test_gunner_in_story,
-    test_boss_phase2_patterns, test_sounds_wired,
+    test_boss_phase2_patterns, test_sounds_wired, test_victory_sounds, test_death_narration,
 ]

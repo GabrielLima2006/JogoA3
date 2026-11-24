@@ -3,7 +3,7 @@
 ; Compilar: "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" tools\instalador.iss
 ; Resultado: dist\instalador\MareDeMentiras-Setup.exe
 
-#define Versao "1.5"
+#define Versao "1.6"
 
 [Setup]
 AppId={{6E3B1F2A-7C4D-4E8B-9A51-3D2C7F0B8E61}
