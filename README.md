@@ -12,6 +12,24 @@ Instalador para Windows, sem precisar instalar Python. Leva de 40 a 60 minutos p
 
 </div>
 
+## Identificação
+
+| | |
+|---|---|
+| **Jogo** | Maré de Mentiras |
+| **Grupo** | [NOME DO GRUPO] |
+| **Unidade curricular** | Usabilidade, desenvolvimento web, mobile e jogos |
+| **Professor** | Elzo Brito dos Santos Filho |
+| **Instituição** | Universidade São Judas Tadeu (USJT), 2026 |
+
+| Integrante | RA |
+|---|---|
+| Gabriel Lima Costa | 825251531 |
+| Arthur Santana dos Santos | 825169114 |
+| Gabriel Araujo Francisquete | 826188750 |
+| Glória Fattorelli Carrion | 8261106681 |
+| [5º INTEGRANTE] | [RA] |
+
 ## Sobre
 
 Nyra, uma meio-demônia de chifres que finge ser feiticeira, viaja no navio da Capitã Maren rumo à ilha de
@@ -36,8 +54,24 @@ e liberam o final verdadeiro.
 
 Prefere não instalar? Na mesma página há o **MareDeMentiras.exe** portátil: é só dar dois cliques.
 
-Pelo código-fonte (Python 3.10 ou mais novo): `pip install -r requirements.txt` e `python main.py`,
-ou dois cliques em `Jogar.bat`, que instala o pygame-ce na primeira vez.
+### Como rodar pelo código-fonte
+
+Pré-requisitos: **Python 3.10 ou mais novo** (com `pip`) e Windows, Linux ou macOS.
+
+```bash
+git clone https://github.com/GabrielLima2006/JogoA3.git
+cd JogoA3
+```
+
+```bash
+pip install -r requirements.txt
+```
+
+```bash
+python main.py
+```
+
+No Windows também dá para dar dois cliques em `Jogar.bat`, que instala o pygame-ce na primeira vez.
 
 ## Controles
 
@@ -55,6 +89,20 @@ ou dois cliques em `Jogar.bat`, que instala o pygame-ce na primeira vez.
 | Tab | Mapa |
 | M | Som |
 | ESC ou P | Pausa e inventário |
+
+## Regras
+
+- **Objetivo (vitória):** atravessar o navio, a ilha e o Templo e derrotar Caelum, o Feiticeiro da Maré,
+  no Altar. Cada chefe vencido libera habilidades e caminhos novos.
+- **Vida e derrota:** cada golpe recebido tira um coração. Com zero corações a personagem cai: não é fim de
+  jogo, ela volta à última bola de cristal usada e deixa as moedas numa bolsa no lugar onde caiu (dá para
+  buscar de volta). Espinhos e água tiram um coração e devolvem ao último chão firme da sala.
+- **Salvar e curar:** a bola de cristal (W) salva o jogo e recupera a vida; segurar **F** troca o orbe de foco,
+  que enche ao acertar golpes, por um coração; comida recupera corações.
+- **Pontuação:** no fim aparecem tempo, quedas, moedas, páginas do diário, pontos e nota.
+  Pontos = 10000 − 2 × segundos − 300 × quedas + 5 × moedas + 1000 × páginas do diário.
+  Nota **S** (3 páginas e até 3 quedas), **A** (até 6 quedas), **B** (até 12) ou **C**.
+- **Finais:** com as 3 páginas do diário da capitã você vê o **final verdadeiro**.
 
 ## Recursos
 
@@ -110,14 +158,67 @@ instalador, compile `tools/instalador.iss` no [Inno Setup 6](https://jrsoftware.
 
 </details>
 
+## Divisão de tarefas
+
+| Integrante | Tarefas |
+|---|---|
+| Gabriel Lima Costa | Visão geral do projeto, laço do jogo e estados, movimento, pulo e tela, salas, mapa e save, demo e integração |
+| Arthur Santana dos Santos | Combate, inimigos, chefes e dificuldades |
+| Glória Fattorelli Carrion | Interface, som e configurações |
+| Gabriel Araujo Francisquete | História, usabilidade e teste de instalação |
+| [5º INTEGRANTE] | Arte e assets, créditos, declaração de IA e slides |
+
 ## Créditos
 
 Todos os assets de terceiros são gratuitos e têm licença conferida. Autor, link e licença de cada pacote
 estão em [`assets/CREDITOS.md`](assets/CREDITOS.md), e os créditos também aparecem no próprio jogo.
 História completa: [`docs/HISTORIA.md`](docs/HISTORIA.md).
 
-## Autor
+## Uso de IA
 
-**Gabriel Costa** ([@GabrielLima2006](https://github.com/GabrielLima2006)): trabalho A3 da disciplina
-Usabilidade, desenvolvimento web, mobile e jogos (prof. Elzo Brito dos Santos Filho), Universidade São Judas
-Tadeu (USJT), 2026.
+| Ferramenta | Para quê | Arquivos |
+|---|---|---|
+| **Claude Code** (Anthropic), assistente de programação | As mecânicas mais simples foram feitas pelo grupo à mão: **movimento, pulo e tamanho da tela/janela**. O restante do código foi desenvolvido com auxílio da IA e **revisado e testado pelo grupo** | ver lista abaixo |
+| **PixelLab** (pixellab.ai) | Todos os personagens foram **desenhados à mão pelo grupo** e depois aprimorados e animados com IA no PixelLab | ver lista abaixo |
+| — | **História:** escrita pelo grupo (textos em `src/chapter1.py` e `src/menus.py`, `docs/HISTORIA.md`) | — |
+| — | **Assets de terceiros** (itch.io, Craftpix, DaFont): não são de IA; autor, link e licença em [`assets/CREDITOS.md`](assets/CREDITOS.md) | — |
+
+**Feito à mão pelo grupo (sem IA):** movimento e pulo da personagem (`Player._horizontal`,
+`Player._gravity`, `Player._try_jump` em `src/player.py`; valores em `Player` e `Physics` de
+`src/config.py`) e tela/janela (`App.__init__` em `main.py`; `Display` em `src/config.py`).
+
+**Código desenvolvido com auxílio do Claude Code (revisado e testado pelo grupo):**
+
+| Parte | Arquivos |
+|---|---|
+| Laço, estados, pausa, morte, final | `main.py` (`App.run`), `src/states.py` |
+| Física e colisão com tiles | `src/physics.py`, `src/camera.py`, `src/movers.py` |
+| Jogador (dash, ataques, cura, dano) e combate | `src/player.py` (exceto as funções acima), `src/combat.py`, `src/amuletos.py` |
+| Inimigos | `src/enemies.py`, `src/creatures.py` |
+| Chefes | `src/bosses.py` |
+| Salas, portas e mapa | `src/chapter1.py` (estrutura das salas), `src/rooms.py`, `src/world.py` |
+| Save e recordes | `src/progress.py`, `src/records.py`, `src/paths.py` |
+| Som | `src/audio.py` |
+| Interface, menus, HUD, fonte | `src/ui.py`, `src/menus.py`, `src/fonte.py`, `src/input.py` |
+| Visual por código e efeitos | `src/effects.py`, `src/background.py`, `src/paisagem.py`, `src/tiles.py`, `src/pixelart.py`, `src/elenco.py`, `src/sprites.py`, `src/skins.py`, `src/objects.py` |
+| Testes e bot de QA | `tests/` (`run_tests.py`, `helpers.py`, `test_*.py`), `docs/qa/scripts/` |
+| Ferramentas de arte e instalador | `tools/` (`animar_pose.py`, `importar_*.py`, `gerar_*.py`, `montar_banca.py`, `desenhar_maren_caida.py`, `capturar.py`, `instalador.iss`), `MareDeMentiras.spec`, `Jogar.bat` |
+
+**Personagens desenhados pelo grupo e aprimorados/animados no PixelLab:**
+- Protagonista Nyra: `assets/img/personagens/heroina.png` (originais em `assets/fontes/heroina/`).
+- Chefes: Tico, o Rei dos Ratos — `assets/img/chefes/rei_rato_{parado,andando,ataque}.png`
+  (originais em `assets/fontes/rei_rato/`); Aldric — `assets/img/chefes/aldric_{parado,andando,ataque}.png`;
+  Selka e Caelum — `assets/img/personagens/selka.png`, `caelum.png`, `anim_selka.png`, `anim_caelum.png`.
+- Capitã Maren: `assets/img/personagens/maren.png` (`maren_caida.png` desenhada à mão com a paleta dela).
+- NPCs: `assets/img/personagens/npc_*.png` e `anim_*.png` (aldeã, anciã, ancião, bardo, comerciante,
+  curandeira, estudioso, ferreira, grumete, pescador).
+- Inimigos: `assets/img/personagens/inimigo_lobo.png`, `inimigo_goblin.png` e as folhas `anim_*.png`
+  (diabrete, espírito, lich, ladino, cavaleiro do escudo); folhas de modelos `npcs.png` e
+  `feiticeira_modelos.png`.
+- Originais exportados do PixelLab: `assets/fontes/pixellab/`.
+
+## Documentação
+
+- [Como o jogo foi feito](docs/COMO_O_JOGO_FOI_FEITO.md): arquitetura, estados, física, combate, salas e testes.
+- [Guia da apresentação](docs/GUIA_APRESENTACAO.md): roteiro e o que cada integrante explica.
+- [História completa](docs/HISTORIA.md) e [créditos dos assets](assets/CREDITOS.md).
