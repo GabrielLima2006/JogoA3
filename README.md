@@ -28,7 +28,7 @@ Instalador para Windows, sem precisar instalar Python. Leva de 40 a 60 minutos p
 | Arthur Santana dos Santos | 825169114 |
 | Gabriel Araujo Francisquete | 826188750 |
 | Glória Fattorelli Carrion | 8261106681 |
-| [5º INTEGRANTE] | [RA] |
+| Cauã Sevecenco Rocha | 82618895 |
 
 ## Sobre
 
@@ -166,7 +166,7 @@ instalador, compile `tools/instalador.iss` no [Inno Setup 6](https://jrsoftware.
 | Arthur Santana dos Santos | Combate, inimigos, chefes e dificuldades |
 | Glória Fattorelli Carrion | Interface, som e configurações |
 | Gabriel Araujo Francisquete | História, usabilidade e teste de instalação |
-| [5º INTEGRANTE] | Arte e assets, créditos, declaração de IA e slides |
+| Cauã Sevecenco Rocha | Arte e assets, créditos, declaração de IA e slides |
 
 ## Créditos
 

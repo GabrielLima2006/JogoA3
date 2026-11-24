@@ -1,6 +1,5 @@
 - Créditos (24/11): `CREDITS` em `src/menus.py` com os integrantes (Gabriel Lima Costa, Arthur Santana dos
-  Santos, Gabriel Araujo Francisquete, Glória Fattorelli Carrion) e a linha "[Quinto integrante]" para
-  trocar pelo nome (a fonte não tem "º"); pacotes iguais a `assets/CREDITOS.md` (sem a feiticeira removida;
+  Santos, Gabriel Araujo Francisquete, Glória Fattorelli Carrion, Cauã Sevecenco Rocha); pacotes iguais a `assets/CREDITOS.md` (sem a feiticeira removida;
   com Skeletons, Craftpix, pimen, ToffeeCraft), linha do PixelLab e da IA. Teste em `test_credits_and_hints`.# Pendências por área
 
 ## Gameplay

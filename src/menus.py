@@ -641,7 +641,7 @@ CREDITS = [
     ("Arthur Santana dos Santos", 24, Colors.UI_TEXT),
     ("Gabriel Araujo Francisquete", 24, Colors.UI_TEXT),
     ("Glória Fattorelli Carrion", 24, Colors.UI_TEXT),
-    ("[Quinto integrante]", 24, Colors.UI_TEXT),
+    ("Cauã Sevecenco Rocha", 24, Colors.UI_TEXT),
     ("", 10, None),
     ("Programação, design de fases e roteiro", 30, Colors.UI_ACCENT),
     ("Equipe Maré de Mentiras", 24, Colors.UI_TEXT),
