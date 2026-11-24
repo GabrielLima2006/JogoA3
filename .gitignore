@@ -24,3 +24,6 @@ desktop.ini
 *.log
 *.zip
 .claude/
+
+# notas pessoais (cofre do Obsidian)
+docs/obsidian/
